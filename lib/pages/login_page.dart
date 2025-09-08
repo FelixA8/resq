@@ -26,6 +26,14 @@ class _LoginPageState extends State<LoginPage> {
           backgroundColor: const Color(0xFFB71C1C),
         ),
       );
+      Navigator.pushNamed(
+        context,
+        '/otpView', // Make sure this route is defined in your MaterialApp routes
+        arguments: {
+          'phone': _phoneController.text,
+          'isResponseTeam': _isResponseTeam,
+        },
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
