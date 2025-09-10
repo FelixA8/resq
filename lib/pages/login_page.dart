@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:resqapp/theme/theme_app.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+   const LoginPage({super.key});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -10,6 +11,8 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _phoneController = TextEditingController();
   bool _isResponseTeam = false;
+
+  static const theme = ResQTheme();
 
   @override
   void dispose() {
@@ -23,14 +26,14 @@ class _LoginPageState extends State<LoginPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('OTP sent to +62${_phoneController.text}'),
-          backgroundColor: const Color(0xFFB71C1C),
+          backgroundColor:  Color(theme.colors.primary),
         ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Please enter a phone number'),
-          backgroundColor: Colors.red,
+          backgroundColor: Color(theme.colors.primary),
         ),
       );
     }
@@ -60,15 +63,15 @@ class _LoginPageState extends State<LoginPage> {
           SafeArea(
             child: Column(
               children: [
-                const SizedBox(height: 70), // Add space between top and logo
+                SizedBox(height: 70),
                 // Logo section
                 Expanded(
                   flex: 3,
                   child: Center(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 36),
+                      padding: EdgeInsets.symmetric(horizontal: theme.padding.xl3),
                       child: Image.asset(
-                        'assets/images/Logo.png',
+                        'assets/images/logo.png',
                         fit: BoxFit.contain,
                       ),
                     ),
@@ -79,7 +82,7 @@ class _LoginPageState extends State<LoginPage> {
                 Expanded(
                   flex: 4,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 21),
+                    padding: EdgeInsets.symmetric(horizontal: theme.padding.lm),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.end, // Push content to the bottom
                       children: [
@@ -91,7 +94,7 @@ class _LoginPageState extends State<LoginPage> {
                               width: 67,
                               height: 51,
                               decoration: BoxDecoration(
-                                color: const Color(0xFFD9D9D9),
+                                color:  Color(0xFFD9D9D9),
                                 borderRadius: BorderRadius.circular(10), // All corners radius 10
                               ),
                               child: Row(
@@ -99,7 +102,7 @@ class _LoginPageState extends State<LoginPage> {
                                 children: [
                                   // Flag image
                                   Padding(
-                                    padding: const EdgeInsets.only(right: 4),
+                                    padding:  EdgeInsets.only(right: 4),
                                     child: Image.asset(
                                       'assets/images/indonesia_flag.png', // Make sure this asset exists
                                       width: 18,
@@ -107,49 +110,49 @@ class _LoginPageState extends State<LoginPage> {
                                       fit: BoxFit.contain,
                                     ),
                                   ),
-                                  const Text(
+                                   Text(
                                     '+62',
                                     style: TextStyle(
                                       fontFamily: 'SF Pro',
                                       fontWeight: FontWeight.w500,
-                                      fontSize: 15,
+                                      fontSize: theme.text.m,
                                       color: Colors.black,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            const SizedBox(width: 8), // Add space between the two containers
+                             SizedBox(width: 8), // Add space between the two containers
                             // Phone number input container
                             Expanded(
                               child: Container(
                                 height: 51,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFD9D9D9),
-                                  borderRadius: BorderRadius.circular(10), // All corners radius 10
+                                  color:  Color(0xFFD9D9D9),
+                                  borderRadius: BorderRadius.circular(theme.size.s), // All corners radius 10
                                 ),
                                 child: Center(
                                   child: TextField(
                                     controller: _phoneController,
                                     keyboardType: TextInputType.phone,
-                                    style: const TextStyle(
+                                    style:  TextStyle(
                                       fontFamily: 'SF Pro',
                                       fontWeight: FontWeight.w500,
-                                      fontSize: 15,
+                                      fontSize: theme.text.m,
                                       color: Colors.black,
                                     ),
                                     textAlignVertical: TextAlignVertical.center, // Center text vertically
-                                    decoration: const InputDecoration(
+                                    decoration:  InputDecoration(
                                       hintText: 'Nomor telepon',
                                       hintStyle: TextStyle(
                                         fontFamily: 'SF Pro',
                                         fontWeight: FontWeight.w500,
                                         fontSize: 15,
-                                        color: Color(0xFF7B7B7D),
+                                        color: Color(theme.colors.neutral.med),
                                       ),
                                       border: InputBorder.none,
                                       isCollapsed: true,
-                                      contentPadding: EdgeInsets.symmetric(horizontal: 16), // Only horizontal padding
+                                      contentPadding: EdgeInsets.symmetric(horizontal: theme.padding.m), // Only horizontal padding
                                     ),
                                   ),
                                 ),
@@ -158,7 +161,7 @@ class _LoginPageState extends State<LoginPage> {
                           ],
                         ),
                         
-                        const SizedBox(height: 28),
+                         SizedBox(height: 28),
                         
                         // Send OTP button
                         SizedBox(
@@ -167,16 +170,16 @@ class _LoginPageState extends State<LoginPage> {
                           child: ElevatedButton(
                             onPressed: _sendOTP,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFB71C1C),
+                              backgroundColor:  Color(theme.colors.primary),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              padding: const EdgeInsets.symmetric(
+                              padding:  EdgeInsets.symmetric(
                                 horizontal: 143,
                                 vertical: 16,
                               ),
                             ),
-                            child: const Text(
+                            child:  Text(
                               'Kirim OTP',
                               style: TextStyle(
                                 fontFamily: 'SF Pro',
@@ -188,7 +191,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         
-                        const SizedBox(height: 9),
+                         SizedBox(height: 9),
                         
                         // Response team checkbox
                         Row(
@@ -205,14 +208,14 @@ class _LoginPageState extends State<LoginPage> {
                                 height: 14,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: _isResponseTeam ? const Color(0xFFB71C1C) : Colors.transparent,
+                                  color: _isResponseTeam ?  Color(0xFFB71C1C) : Colors.transparent,
                                   border: Border.all(
-                                    color: const Color(0xFF7B7979),
+                                    color:  Color(theme.colors.neutral.med),
                                     width: 0.1,
                                   ),
                                 ),
                                 child: _isResponseTeam
-                                    ? const Icon(
+                                    ?  Icon(
                                         Icons.check,
                                         size: 10,
                                         color: Colors.white,
@@ -220,8 +223,8 @@ class _LoginPageState extends State<LoginPage> {
                                     : null,
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            const Text(
+                             SizedBox(width: 8),
+                             Text(
                               'Masuk sebagai response team',
                               style: TextStyle(
                                 fontFamily: 'SF Pro',
@@ -230,11 +233,11 @@ class _LoginPageState extends State<LoginPage> {
                                 color: Colors.black,
                               ),
                             ),
-                            const SizedBox(width: 3),
-                            const Icon(
+                             SizedBox(width: 3),
+                             Icon(
                               Icons.keyboard_arrow_right,
                               size: 18,
-                              color: Color(0xFFB71C1C),
+                              color: Color(theme.colors.primary),
                             ),
                           ],
                         ),
@@ -244,7 +247,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 
                 // Add bottom padding to move content slightly up from the bottom
-                const SizedBox(height: 35),
+                 SizedBox(height: 35),
               ],
             ),
           ),
