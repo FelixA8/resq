@@ -79,7 +79,7 @@ class _LoginPageState extends State<LoginPage> {
                     child: Padding(
                       padding: EdgeInsets.symmetric(horizontal: theme.padding.xl3),
                       child: Image.asset(
-                        'assets/images/logo.png',
+                        'assets/images/Logo.png',
                         fit: BoxFit.contain,
                       ),
                     ),
@@ -102,7 +102,7 @@ class _LoginPageState extends State<LoginPage> {
                               width: 67,
                               height: 51,
                               decoration: BoxDecoration(
-                                color:  Color(0xFFD9D9D9),
+                                color:  Color(theme.colors.neutral.low),
                                 borderRadius: BorderRadius.circular(10), // All corners radius 10
                               ),
                               child: Row(
@@ -237,7 +237,7 @@ class _LoginPageState extends State<LoginPage> {
                               style: TextStyle(
                                 fontFamily: 'SF Pro',
                                 fontWeight: FontWeight.w400,
-                                fontSize: 15,
+                                fontSize: theme.text.m,
                                 color: Colors.black,
                               ),
                             ),
