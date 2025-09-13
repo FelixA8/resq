@@ -54,41 +54,44 @@ class _LoginPageState extends State<LoginPage> {
         children: [
           Positioned.fill(
             child: Container(
-              color: Colors.white
+              color: Colors.white,
             ),
-          ),
-          Positioned.fill(
-            child: Opacity(
-              opacity: 0.19, 
-              child: Image.asset(
-              'assets/images/backgrounds/background.png',
-              fit: BoxFit.cover,
-            )
-            ,
-            ),
-            
           ),
           SafeArea(
             child: Column(
               children: [
-                SizedBox(height: 70),
+                SizedBox(height: 100), // Reduced from 140 to 40
                 // Logo section
-                Expanded(
-                  flex: 3,
+                Container(
+                  width: double.infinity,
                   child: Center(
                     child: Padding(
                       padding: EdgeInsets.symmetric(horizontal: theme.padding.xl3),
-                      child: Image.asset(
-                        'assets/images/logos/resq-logo.png',
-                        fit: BoxFit.contain,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            width: MediaQuery.of(context).size.width * 0.58,
+                            child: Image.asset(
+                              'assets/images/logos/resq-logo.png',
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                          SizedBox(
+                            width: MediaQuery.of(context).size.width * 0.78,
+                            child: Image.asset(
+                              'assets/images/illustrations/login-illustration.png',
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 ),
-                
+               
                 // Login form section
                 Expanded(
-                  flex: 4,
                   child: Padding(
                     padding: EdgeInsets.symmetric(horizontal: theme.padding.lm),
                     child: Column(
@@ -205,32 +208,6 @@ class _LoginPageState extends State<LoginPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _isResponseTeam = !_isResponseTeam;
-                                });
-                              },
-                              child: Container(
-                                width: 14,
-                                height: 14,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: _isResponseTeam ?  Color(0xFFB71C1C) : Colors.transparent,
-                                  border: Border.all(
-                                    color:  Color(theme.colors.neutral.med),
-                                    width: 0.1,
-                                  ),
-                                ),
-                                child: _isResponseTeam
-                                    ?  Icon(
-                                        Icons.check,
-                                        size: 10,
-                                        color: Colors.white,
-                                      )
-                                    : null,
-                              ),
-                            ),
                              SizedBox(width: 8),
                              Text(
                               'Masuk sebagai response team',
