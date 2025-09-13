@@ -5,7 +5,7 @@ import '../../components/progress_bar.dart';
 import 'progressBarViewModel.dart';
 
 class ProgressBarView extends StatelessWidget {
-  const ProgressBarView({Key? key}) : super(key: key);
+  const ProgressBarView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -21,16 +21,7 @@ class ProgressBarView extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Container(
-              constraints: BoxConstraints(
-                maxHeight: 94,
-              ),
-              child: Image.asset(
-                'assets/images/logo.png',
-                height: 94,
-                fit: BoxFit.contain,
-              ),
-            ),
+            Image.asset('assets/images/logos/resq-logo.png', height: 94),
             const SizedBox(height: 16),
             ProgressBar(progress: viewModel.progress),
           ],

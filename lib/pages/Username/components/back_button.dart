@@ -5,15 +5,17 @@ import 'package:flutter/material.dart';
 class CustomBackButton extends StatelessWidget {
   final VoidCallback onPressed;
 
-  const CustomBackButton({
-    Key? key,
-    required this.onPressed,
-  }) : super(key: key);
+  const CustomBackButton({super.key, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      icon: const Icon(Icons.arrow_back, color: Colors.red),
+      icon: Image.asset(
+        'assets/images/icons/back-left.png',
+        width: 24,
+        height: 24,
+        color: Colors.red,
+      ),
       onPressed: onPressed,
     );
   }

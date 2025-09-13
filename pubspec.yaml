@@ -66,8 +66,8 @@ flutter:
   assets:
     - assets/images/logos/resq-logo.png
     - assets/images/backgrounds/background.png
-    - assets/images/checkbox.png
     - assets/images/icons/indonesian-flag.png
+    - assets/images/icons/back-left.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
