@@ -29,7 +29,7 @@ class OTPInputView extends StatelessWidget {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
               Text(
                 'Masukkan kode OTP yang telah dikirimkan\nkepada anda melalui pesan!',
                 textAlign: TextAlign.center,
@@ -37,7 +37,7 @@ class OTPInputView extends StatelessWidget {
                   fontSize: 12,
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: List.generate(

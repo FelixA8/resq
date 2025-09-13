@@ -21,9 +21,15 @@ class ProgressBarView extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Image.asset(
-              'assets/images/Logo.png',
-              height: 94,
+            Container(
+              constraints: BoxConstraints(
+                maxHeight: 94,
+              ),
+              child: Image.asset(
+                'assets/images/logo.png',
+                height: 94,
+                fit: BoxFit.contain,
+              ),
             ),
             const SizedBox(height: 16),
             ProgressBar(progress: viewModel.progress),
