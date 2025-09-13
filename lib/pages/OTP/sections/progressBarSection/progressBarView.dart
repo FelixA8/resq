@@ -21,7 +21,7 @@ class ProgressBarSection extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Image.asset('assets/images/logo.png', height: 94),
+            Image.asset('assets/images/logos/resq-logo.png', height: 94),
             const SizedBox(height: 16),
             ProgressBar(progress: viewModel.progress),
           ],
