@@ -51,27 +51,17 @@ class UsernameScreen extends StatelessWidget {
                             ..setUsernameViewModel(mainViewModel),
                 ),
               ],
-              child: Stack(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const ProgressBarView(),
-                        const SizedBox(height: 32),
-                        const UsernameInputView(),
-                        const Spacer(),
-                        const ConfirmationButtonView(),
-                      ],
-                    ),
-                  ),
-                  if (mainViewModel.isLoading)
-                    Container(
-                      color: Colors.black26,
-                      child: const Center(child: CircularProgressIndicator()),
-                    ),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    const ProgressBarView(),
+                    const SizedBox(height: 32),
+                    const UsernameInputView(),
+                    const Spacer(),
+                    const ConfirmationButtonView(),
+                  ],
+                ),
               ),
             );
           },
