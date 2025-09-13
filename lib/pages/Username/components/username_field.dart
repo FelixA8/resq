@@ -15,11 +15,11 @@ class UsernameField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextField(
-      controller: TextEditingController(text: value),
+      // controller: TextEditingController(text: value),
       onChanged: onChanged,
       decoration: InputDecoration(
         filled: true,
-        fillColor: Colors.grey[200],
+        fillColor: Color(0xFFD9D9D9),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide.none,

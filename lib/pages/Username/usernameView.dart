@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'usernameViewModel.dart';
-import 'sections/progress_bar_section.dart';
-import 'sections/username_input_section.dart';
-import 'sections/confirmation_button_section.dart';
+import 'sections/progressBarSection/progressBarView.dart';
+import 'sections/progressBarSection/progressBarViewModel.dart';
+import 'sections/usernameInput/usernameInputView.dart';
+import 'sections/usernameInput/usernameInputViewModel.dart';
+import 'sections/confirmationButton/confirmationButtonView.dart';
+import 'sections/confirmationButton/confirmationButtonViewModel.dart';
 
 class UsernameView extends StatelessWidget {
-  const UsernameView({Key? key}) : super(key: key);
+  const UsernameView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -18,58 +21,58 @@ class UsernameView extends StatelessWidget {
 }
 
 class UsernameScreen extends StatelessWidget {
-  const UsernameScreen({Key? key}) : super(key: key);
+  const UsernameScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
         child: Consumer<UsernameViewModel>(
-          builder: (context, viewModel, child) {
-            return Stack(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ProgressBarSection(
-                        onBackPressed: () => Navigator.of(context).pop(),
-                      ),
-                      const SizedBox(height: 32),
-                      UsernameInputSection(
-                        username: viewModel.username,
-                        onUsernameChanged: viewModel.setUsername,
-                        isValid: viewModel.isValid,
-                      ),
-                      const Spacer(),
-                      ConfirmationButtonSection(
-                        onConfirm: () async {
-                          if (await viewModel.saveUsername()) {
-                            // Navigate to next screen or show success message
-                            if (context.mounted) {
-                              // TODO: Navigate to next screen
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Username saved successfully!'),
-                                ),
-                              );
-                            }
-                          }
-                        },
-                        isEnabled: viewModel.isValid && !viewModel.isLoading,
-                      ),
-                    ],
-                  ),
+          builder: (context, mainViewModel, child) {
+            return MultiProvider(
+              providers: [
+                ChangeNotifierProvider(
+                  create:
+                      (context) =>
+                          ProgressBarViewModel()..setOnBackPressed(
+                            () => Navigator.of(context).pop(),
+                          ),
                 ),
-                if (viewModel.isLoading)
-                  Container(
-                    color: Colors.black26,
-                    child: const Center(
-                      child: CircularProgressIndicator(),
+                ChangeNotifierProvider(
+                  create:
+                      (context) =>
+                          UsernameInputViewModel()
+                            ..setMainViewModel(mainViewModel),
+                ),
+                ChangeNotifierProvider(
+                  create:
+                      (context) =>
+                          ConfirmationButtonViewModel()
+                            ..setUsernameViewModel(mainViewModel),
+                ),
+              ],
+              child: Stack(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const ProgressBarView(),
+                        const SizedBox(height: 32),
+                        const UsernameInputView(),
+                        const Spacer(),
+                        const ConfirmationButtonView(),
+                      ],
                     ),
                   ),
-              ],
+                  if (mainViewModel.isLoading)
+                    Container(
+                      color: Colors.black26,
+                      child: const Center(child: CircularProgressIndicator()),
+                    ),
+                ],
+              ),
             );
           },
         ),
