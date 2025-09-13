@@ -79,7 +79,7 @@ class _LoginPageState extends State<LoginPage> {
                     child: Padding(
                       padding: EdgeInsets.symmetric(horizontal: theme.padding.xl3),
                       child: Image.asset(
-                        'assets/images/Logo.png',
+                        'assets/images/logo.png',
                         fit: BoxFit.contain,
                       ),
                     ),

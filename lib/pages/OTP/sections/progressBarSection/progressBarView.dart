@@ -1,26 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../username/components/back_button.dart';
+import '../../../username/components/progress_bar.dart';
+import 'progressBarViewModel.dart';
 
 class ProgressBarSection extends StatelessWidget {
-  const ProgressBarSection({Key? key}) : super(key: key);
+  const ProgressBarSection({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Image.asset(
-            'assets/images/Logo.png',
-            height: 60,
-          ),
-        ),
-        const SizedBox(height: 20),
-        const LinearProgressIndicator(
-          value: 0.33, // 1/3 progress
-          backgroundColor: Colors.black38,
-          valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
-        ),
-      ],
+    return Consumer<ProgressBarViewModel>(
+      builder: (context, viewModel, child) {
+        return Column(
+          children: [
+            Row(
+              children: [
+                CustomBackButton(onPressed: viewModel.handleBackPressed),
+                const Spacer(),
+                const SizedBox(width: 48),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Image.asset('assets/images/logo.png', height: 94),
+            const SizedBox(height: 16),
+            ProgressBar(progress: viewModel.progress),
+          ],
+        );
+      },
     );
   }
 }

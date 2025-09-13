@@ -20,16 +20,19 @@ class ResendOTPSection extends StatelessWidget {
           'Tidak menerima kode OTP anda?',
           style: TextStyle(
             fontSize: 12,
-            color: Colors.grey[600],
+            color: Colors.black,
           ),
         ),
-        const SizedBox(height: 6),
+        // const SizedBox(height: 3),
         TextButton(
           onPressed: canResend ? onResendPressed : null,
+          style: TextButton.styleFrom(
+            padding: EdgeInsets.only(top: 0),
+          ),
           child: Text(
             canResend ? 'Kirim Ulang Kode OTP' : 'Tunggu $timeLeft detik',
             style: TextStyle(
-              color: canResend ? Colors.red : Colors.grey,
+              color: canResend ? Color(0xFFB71C1C) : Colors.grey,
               fontWeight: FontWeight.bold,
               fontSize: 20,
             ),
