@@ -4,6 +4,7 @@ import 'otpViewModel.dart';
 import 'sections/progressBarSection/progressBarView.dart';
 import 'sections/otpInputSection/otpInputView.dart';
 import 'sections/resendOtpSection/resendOtpView.dart';
+import '../Username/usernameView.dart';
 
 class OTPView extends StatelessWidget {
   final String phoneNumber;
@@ -31,13 +32,14 @@ class OTPView extends StatelessWidget {
                         const SizedBox(height: 40),
                         OTPInputView(
                           phoneNumber: phoneNumber,
-                          onOTPCompleted: (otp) async {
-                            bool isValid = await viewModel.validateOTP(otp);
-                            if (isValid) {
-                              // TODO: Navigate to main page
-                              if (context.mounted) {
-                                Navigator.pushReplacementNamed(context, '/main');
-                              }
+                          onOTPCompleted: (otp) {
+                            if (context.mounted) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const UsernameView(),
+                                ),
+                              );
                             }
                           },
                         ),
