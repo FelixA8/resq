@@ -10,7 +10,7 @@ class ProgressBarSection extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 20),
           child: Image.asset(
-            'assets/images/Logo.png',
+            'assets/images/logos/resq-logo.png',
             height: 60,
           ),
         ),

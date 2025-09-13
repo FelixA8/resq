@@ -61,7 +61,7 @@ class _LoginPageState extends State<LoginPage> {
             child: Opacity(
               opacity: 0.19, 
               child: Image.asset(
-              'assets/images/background.png',
+              'assets/images/backgrounds/background.png',
               fit: BoxFit.cover,
             )
             ,
@@ -79,7 +79,7 @@ class _LoginPageState extends State<LoginPage> {
                     child: Padding(
                       padding: EdgeInsets.symmetric(horizontal: theme.padding.xl3),
                       child: Image.asset(
-                        'assets/images/logo.png',
+                        'assets/images/logos/resq-logo.png',
                         fit: BoxFit.contain,
                       ),
                     ),
@@ -112,7 +112,7 @@ class _LoginPageState extends State<LoginPage> {
                                   Padding(
                                     padding:  EdgeInsets.only(right: 4),
                                     child: Image.asset(
-                                      'assets/images/indonesia_flag.png', // Make sure this asset exists
+                                      'assets/images/icons/indonesian-flag.png', // Make sure this asset exists
                                       width: 18,
                                       height: 12,
                                       fit: BoxFit.contain,
