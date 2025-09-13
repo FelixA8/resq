@@ -94,7 +94,7 @@ class _LoginPageState extends State<LoginPage> {
                               width: 67,
                               height: 51,
                               decoration: BoxDecoration(
-                                color:  Color(0xFFD9D9D9),
+                                color:  Color(theme.colors.neutral.low),
                                 borderRadius: BorderRadius.circular(10), // All corners radius 10
                               ),
                               child: Row(
