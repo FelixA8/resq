@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'pages/login_page.dart';
-import 'pages/OTP/otpView.dart'; // <-- Update this line
+import 'pages/otp/otpView.dart'; // <-- Update this line
 
 void main() {
   runApp(const MyApp());
