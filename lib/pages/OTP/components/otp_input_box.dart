@@ -21,7 +21,7 @@ class OTPInputBox extends StatelessWidget {
       width: 50,
       height: 50,
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey),
+        color: Color(0xFFD9D9D9),
         borderRadius: BorderRadius.circular(8),
       ),
       child: TextField(
