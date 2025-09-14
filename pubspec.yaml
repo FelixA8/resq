@@ -66,17 +66,11 @@ flutter:
   assets:
 
     # Logos
-    - assets/images/Logo.png
     - assets/images/logos/resq-logo.png
     - assets/images/logos/resq-response-team-logo.png
     
     # Backgrounds
-    - assets/images/background.png
     - assets/images/backgrounds/background.png
-    
-    # UI Elements
-    - assets/images/checkbox.png
-    - assets/images/indonesia_flag.png
 
     # Illustrations
     - assets/images/illustrations/login-illustration.png
