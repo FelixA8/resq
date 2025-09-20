@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../username/components/back_button.dart';
-import '../../../username/components/progress_bar.dart';
+import '../../../../components/back_button.dart';
+import '../../../../components/progress_bar.dart';
 import 'progressBarViewModel.dart';
 
 class ProgressBarSection extends StatelessWidget {

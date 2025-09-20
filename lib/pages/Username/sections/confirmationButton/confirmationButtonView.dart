@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../components/confirmation_button.dart';
+import '../../../../components/confirmation_button.dart';
 import 'confirmationButtonViewModel.dart';
 
 class ConfirmationButtonView extends StatelessWidget {

@@ -6,11 +6,11 @@ class UsernameField extends StatelessWidget {
   final bool isValid;
 
   const UsernameField({
-    Key? key,
+    super.key,
     required this.value,
     required this.onChanged,
     required this.isValid,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

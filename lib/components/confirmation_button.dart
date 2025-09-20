@@ -5,10 +5,10 @@ class ConfirmationButton extends StatelessWidget {
   final bool isEnabled;
 
   const ConfirmationButton({
-    Key? key,
+    super.key,
     required this.onPressed,
     required this.isEnabled,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -20,16 +20,11 @@ class ConfirmationButton extends StatelessWidget {
           backgroundColor: Color(0xFFB71C1C),
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
         child: const Text(
           'Konfirmasi',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ),
     );
