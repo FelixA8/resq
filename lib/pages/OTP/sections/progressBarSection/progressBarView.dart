@@ -17,12 +17,11 @@ class ProgressBarSection extends StatelessWidget {
               children: [
                 CustomBackButton(onPressed: viewModel.handleBackPressed),
                 const Spacer(),
-                const SizedBox(width: 48),
               ],
             ),
             const SizedBox(height: 8),
-            Image.asset('assets/images/logos/resq-logo.png', height: 94),
-            const SizedBox(height: 16),
+            Image.asset('assets/images/logos/resq-logo.png', height: 60),
+            const SizedBox(height: 10),
             ProgressBar(progress: viewModel.progress),
           ],
         );

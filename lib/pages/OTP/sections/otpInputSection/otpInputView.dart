@@ -32,7 +32,7 @@ class OTPInputView extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 12),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 15),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: List.generate(

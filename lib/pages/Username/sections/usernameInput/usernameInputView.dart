@@ -24,7 +24,7 @@ class UsernameInputView extends StatelessWidget {
               style: TextStyle(fontSize: 12, color: Colors.black54),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 15),
             UsernameField(
               value: viewModel.username,
               onChanged: viewModel.handleUsernameChanged,

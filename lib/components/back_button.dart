@@ -14,7 +14,6 @@ class CustomBackButton extends StatelessWidget {
         'assets/images/icons/back-left.png',
         width: 24,
         height: 24,
-        color: Colors.red,
       ),
       onPressed: onPressed,
     );

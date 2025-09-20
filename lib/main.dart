@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'pages/login_page.dart';
-import 'pages/otp/otpView.dart'; // <-- Update this line
+import 'package:provider/provider.dart';
+import 'pages/LoginPage/LoginPageViewModel.dart';
+import 'pages/LoginPage/LoginPageView.dart';
+import 'pages/otp/otpView.dart';
 
 void main() {
   runApp(const MyApp());
@@ -17,7 +19,10 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFB71C1C)),
         fontFamily: 'SF Pro',
       ),
-      home: const LoginPage(),
+      home: ChangeNotifierProvider(
+        create: (_) => LoginPageViewModel(),
+        child: const LoginPageView(),
+      ),
       routes: {
         '/otpView': (context) {
           // Get arguments from Navigator

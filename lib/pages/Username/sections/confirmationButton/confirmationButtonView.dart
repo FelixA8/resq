@@ -18,6 +18,7 @@ class ConfirmationButtonView extends StatelessWidget {
                     ? () => viewModel.handleConfirm(context)
                     : () {},
             isEnabled: viewModel.isEnabled,
+            text: 'Konfirmasi', // Add the required text parameter
           ),
         );
       },
