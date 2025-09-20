@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:resqapp/pages/userMap/userMapView.dart';
 import 'pages/login_page.dart';
 import 'pages/otp/otpView.dart'; // <-- Update this line
 
@@ -12,6 +13,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'ResQ',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFB71C1C)),
@@ -24,6 +26,9 @@ class MyApp extends StatelessWidget {
           final args = ModalRoute.of(context)!.settings.arguments as Map?;
           final phone = args?['phone'] ?? '';
           return OTPView(phoneNumber: phone);
+        },
+        '/usermapview': (context) {
+          return UserMapView();
         },
       },
     );
