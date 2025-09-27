@@ -21,13 +21,16 @@ class ResendOTPSection extends StatelessWidget {
           style: TextStyle(
             fontSize: 12,
             color: Colors.black,
+            fontFamily: 'SF Pro',
           ),
         ),
-        // const SizedBox(height: 3),
+        const SizedBox(height: 8),
         TextButton(
           onPressed: canResend ? onResendPressed : null,
           style: TextButton.styleFrom(
-            padding: EdgeInsets.only(top: 0),
+            padding: EdgeInsets.zero, // Remove all padding
+            minimumSize: Size(0, 0), // Remove min size
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap, // Shrink tap target
           ),
           child: Text(
             canResend ? 'Kirim Ulang Kode OTP' : 'Tunggu $timeLeft detik',
@@ -35,6 +38,7 @@ class ResendOTPSection extends StatelessWidget {
               color: canResend ? Color(0xFFB71C1C) : Colors.grey,
               fontWeight: FontWeight.bold,
               fontSize: 20,
+              fontFamily: 'SF Pro',
             ),
           ),
         ),
