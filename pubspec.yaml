@@ -38,6 +38,7 @@ dependencies:
   firebase_database: ^12.0.0
   firebase_messaging: ^16.0.0
   flutter_map: ^8.2.1
+  provider: ^6.0.5
 
 dev_dependencies:
   flutter_test:
@@ -63,10 +64,53 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/images/logo.png
-    - assets/images/background.png
-    - assets/images/checkbox.png
-    - assets/images/indonesia_flag.png
+
+    # Logos
+    - assets/images/logos/resq-logo.png
+    - assets/images/logos/resq-response-team-logo.png
+    
+    # Backgrounds
+    - assets/images/backgrounds/background.png
+
+    # Illustrations
+    - assets/images/illustrations/login-illustration.png
+    
+    # Icons
+    - assets/images/icons/annotation.png
+    - assets/images/icons/back-left.png
+    - assets/images/icons/back-right.png
+    - assets/images/icons/camera.png
+    - assets/images/icons/checkbox-checked.png
+    - assets/images/icons/earthquake-scale.png
+    - assets/images/icons/edit.png
+    - assets/images/icons/expand-down.png
+    - assets/images/icons/guides.png
+    - assets/images/icons/indonesian-flag.png
+    - assets/images/icons/logout.png
+    - assets/images/icons/map-disaster-earthquake.png
+    - assets/images/icons/map-disaster-eruption.png
+    - assets/images/icons/map-disaster-flood.png
+    - assets/images/icons/map-disaster-landslide.png
+    - assets/images/icons/map-disaster-tsunami.png
+    - assets/images/icons/map-evacuation-point.png
+    - assets/images/icons/menu-back.png
+    - assets/images/icons/menu-hamburger.png
+    - assets/images/icons/navbar-disaster-grey.png
+    - assets/images/icons/navbar-disaster-red.png
+    - assets/images/icons/navbar-evacuation-point-grey.png
+    - assets/images/icons/navbar-evacuation-point-red.png
+    - assets/images/icons/navbar-map-grey.png
+    - assets/images/icons/navbar-map-red.png
+    - assets/images/icons/navbar-report-grey.png
+    - assets/images/icons/profile.png
+    - assets/images/icons/radius.png
+    - assets/images/icons/report.png
+    - assets/images/icons/tsunami.png
+    - assets/images/icons/warning.png
+    - assets/images/icons/water-height.png
+    - assets/images/icons/water-speed.png
+
+    
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
