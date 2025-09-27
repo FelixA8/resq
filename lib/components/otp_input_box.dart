@@ -8,12 +8,12 @@ class OTPInputBox extends StatelessWidget {
   final FocusNode focusNode;
 
   const OTPInputBox({
-    Key? key,
+    super.key,
     required this.controller,
     required this.autoFocus,
     required this.onChanged,
     required this.focusNode,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -36,9 +36,7 @@ class OTPInputBox extends StatelessWidget {
           counterText: '',
           border: InputBorder.none,
         ),
-        inputFormatters: [
-          FilteringTextInputFormatter.digitsOnly,
-        ],
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
         onChanged: (value) {
           if (value.length == 1) {
             onChanged(value);
