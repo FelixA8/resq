@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:provider/provider.dart';
+import 'package:resqapp/pages/SideMenuDrawer/SideDrawerView.dart';
 import 'package:resqapp/pages/userMap/models/disasterReport.dart';
 import 'package:resqapp/pages/userMap/models/safetyPoint.dart';
 import 'package:resqapp/pages/userMap/userMapViewModel.dart';
@@ -15,14 +16,29 @@ class UserMapView extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (context) => UserMapViewModel(),
       child: Scaffold(
+        drawer: SideDrawerView(
+          onClose: () => Navigator.of(context).pop(),
+          onGuideTap: () {
+            // TODO: Implement navigation to guide page
+            Navigator.of(context).pop();
+          },
+          onProfileTap: () {
+            // TODO: Implement navigation to profile page
+            Navigator.of(context).pop();
+          },
+          onLogoutTap: () {
+            // TODO: Implement logout logic
+            Navigator.of(context).pop();
+          },
+        ),
         appBar: AppBar(
           backgroundColor: Colors.white,
           elevation: 0,
-          leading: Consumer<UserMapViewModel>(
-            builder: (context, viewModel, child) {
+          leading: Builder(
+            builder: (context) {
               return IconButton(
                 onPressed: () {
-                  print("Icon tapped!");
+                  Scaffold.of(context).openDrawer();
                 },
                 icon: Image.asset(
                   'assets/images/icons/menu-hamburger.png',
