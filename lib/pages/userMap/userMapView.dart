@@ -74,7 +74,9 @@ class UserMapView extends StatelessWidget {
                         ),
                       ],
                     ),
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/reportDisaster');
+                    },
                   ),
                 );
               },
