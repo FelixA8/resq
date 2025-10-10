@@ -75,7 +75,9 @@ class UserMapView extends StatelessWidget {
                         ),
                       ],
                     ),
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/reportDisaster');
+                    },
                   ),
                 );
               },
@@ -317,7 +319,7 @@ class UserMapView extends StatelessWidget {
     );
   }
 
-  void _showSafetyPointDetails(BuildContext context, SafetyPoint point) {
+  void showSafetyPointDetails(BuildContext context, SafetyPoint point) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
