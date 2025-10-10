@@ -98,28 +98,6 @@ class LoginFormSection extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              GestureDetector(
-                onTap: viewModel.toggleResponseTeam,
-                child: Container(
-                  width: 14,
-                  height: 14,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: viewModel.isResponseTeam ? Color(0xFFB71C1C) : Colors.transparent,
-                    border: Border.all(
-                      color: Color(theme.colors.neutral.med),
-                      width: 0.1,
-                    ),
-                  ),
-                  child: viewModel.isResponseTeam
-                      ? const Icon(
-                          Icons.check,
-                          size: 10,
-                          color: Colors.white,
-                        )
-                      : null,
-                ),
-              ),
               const SizedBox(width: 8),
               const Text(
                 'Masuk sebagai response team',
@@ -131,10 +109,15 @@ class LoginFormSection extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 3),
-              Icon(
-                Icons.keyboard_arrow_right,
-                size: 18,
-                color: Color(theme.colors.primary),
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(context, '/responseLogin');
+                },
+                child: Icon(
+                  Icons.keyboard_arrow_right,
+                  size: 18,
+                  color: Color(theme.colors.primary),
+                ),
               ),
             ],
           ),
