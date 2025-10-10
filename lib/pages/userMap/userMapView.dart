@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:provider/provider.dart';
-import 'package:resqapp/pages/userMap/models/disasterReport.dart';
+import 'package:resqapp/pages/userMap/models/disaster.dart';
 import 'package:resqapp/pages/userMap/models/safetyPoint.dart';
+import 'package:resqapp/pages/userMap/sections/bottomModalSheetSection/mapBottomModalView.dart';
 import 'package:resqapp/pages/userMap/userMapViewModel.dart';
 import 'package:resqapp/theme/theme_app.dart';
 class UserMapView extends StatelessWidget {
@@ -133,6 +134,31 @@ class UserMapView extends StatelessWidget {
                               ),
                             ),
                           ),
+                        ...viewModel.disasters.map((disaster) {
+                          return Marker(
+                            point: disaster.location,
+                            width: 46,
+                            height: 46,
+                            child: GestureDetector(
+                              onTap: () async {
+                                // Center the map on the disaster location first
+                                viewModel.moveToLocation(disaster.location);
+                                // Small delay to let the map center before showing sheet
+                                await Future.delayed(Duration(milliseconds: 300));
+                                if (context.mounted) {
+                                  showDisasterBottomSheet(context, disaster);
+                                }
+                              },
+                              child: Center(
+                                  child: Image.asset(
+                                   disaster.icon,
+                                    height: 48,
+                                    width: 48,
+                                  ),
+                                ),
+                            ),
+                          );
+                        }),
                       ],
                     ),
                   ],
@@ -145,7 +171,7 @@ class UserMapView extends StatelessWidget {
                     ),
                   ),
                 // Error message
-                if (viewModel.errorMessage != null)
+                if (viewModel.error != null)
                   Positioned(
                     bottom: 100,
                     left: 16,
@@ -166,23 +192,19 @@ class UserMapView extends StatelessWidget {
                               SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  viewModel.errorMessage!,
+                                  viewModel.error!.message,
                                   style: TextStyle(color: Colors.red.shade700),
                                 ),
                               ),
                               IconButton(
                                 icon: Icon(Icons.close, color: Colors.red.shade700),
                                 onPressed: () {
-                                  viewModel.clearErrorMessage();
+                                  viewModel.clearError();
                                 },
                               ),
                             ],
                           ),
-                          if (viewModel.errorMessage!.contains('permission') || 
-                              viewModel.errorMessage!.contains('disabled') ||
-                              viewModel.errorMessage!.contains('timeout') ||
-                              viewModel.errorMessage!.contains('Unable to determine') ||
-                              viewModel.errorMessage!.contains('Location services'))
+                          if (viewModel.error!.requiresUserAction)
                             Padding(
                               padding: EdgeInsets.only(top: 8),
                               child: Row(
@@ -200,18 +222,19 @@ class UserMapView extends StatelessWidget {
                                       padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                     ),
                                   ),
-                                  ElevatedButton.icon(
-                                    onPressed: () {
-                                      viewModel.retryLocationRequest();
-                                    },
-                                    icon: Icon(Icons.refresh, size: 16),
-                                    label: Text('Retry'),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.red.shade700,
-                                      foregroundColor: Colors.white,
-                                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  if (viewModel.error!.isRetryable)
+                                    ElevatedButton.icon(
+                                      onPressed: () {
+                                        viewModel.retryLocationRequest();
+                                      },
+                                      icon: Icon(Icons.refresh, size: 16),
+                                      label: Text('Retry'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.red.shade700,
+                                        foregroundColor: Colors.white,
+                                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                      ),
                                     ),
-                                  ),
                                 ],
                               ),
                             ),
@@ -246,15 +269,28 @@ class UserMapView extends StatelessWidget {
     );
   }
 
-  void showDisasterDetails(BuildContext context, DisasterReport report) {
+  void showDisasterBottomSheet(BuildContext context, Disaster disaster) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => MapBottomModalView(
+        disaster: disaster,
+      ),
+    );
+  }
+
+  void showDisasterDetails(BuildContext context, Disaster disaster) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Row(
           children: [
-            Icon(
-              context.read<UserMapViewModel>().getDisasterIcon(report.type),
-              color: context.read<UserMapViewModel>().getDisasterColor(report.type),
+            Image.asset(
+              disaster.icon,
+              color: disaster.color,
+              width: 24,
+              height: 24,
             ),
             SizedBox(width: 8),
             Text('Detail Bencana'),
@@ -264,13 +300,13 @@ class UserMapView extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Jenis: ${report.type}'),
+            Text('Jenis: ${disaster.displayName}'),
             SizedBox(height: 8),
-            Text('Deskripsi: ${report.description}'),
+            Text('Deskripsi: ${disaster.description}'),
             SizedBox(height: 8),
-            Text('Tingkat: ${report.severity}'),
+            Text('Radius: ${disaster.impactedRadius} km'),
             SizedBox(height: 8),
-            Text('Waktu: ${report.timestamp.toString().substring(0, 16)}'),
+            Text('Waktu: ${disaster.timestamp.toString().substring(0, 16)}'),
           ],
         ),
         actions: [
@@ -290,8 +326,8 @@ class UserMapView extends StatelessWidget {
         title: Row(
           children: [
             Icon(
-              context.read<UserMapViewModel>().getSafetyPointIcon(point.type),
-              color: context.read<UserMapViewModel>().getSafetyPointColor(point.type),
+              point.type.icon,
+              color: point.type.color,
             ),
             SizedBox(width: 8),
             Text('Titik Aman'),
@@ -303,7 +339,7 @@ class UserMapView extends StatelessWidget {
           children: [
             Text('Nama: ${point.name}'),
             SizedBox(height: 8),
-            Text('Jenis: ${point.type}'),
+            Text('Jenis: ${point.type.displayName}'),
           ],
         ),
         actions: [

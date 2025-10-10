@@ -1,74 +1,113 @@
-
 // ViewModel
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:resqapp/pages/userMap/models/disasterReport.dart';
+import 'package:resqapp/pages/userMap/models/disaster.dart';
 import 'package:resqapp/pages/userMap/models/safetyPoint.dart';
+import 'package:resqapp/pages/userMap/models/locationError.dart';
 
 class UserMapViewModel extends ChangeNotifier {
-  final MapController _mapController = MapController();
-  LatLng _currentLocation = LatLng(-6.2088, 106.8456); // Jakarta default
-  List<DisasterReport> _disasterReports = [];
-  List<SafetyPoint> _safetyPoints = [];
-  bool _isLoading = false;
-  String? _errorMessage;
-  bool _hasLocationPermission = false;
+  final MapController mapController = MapController();
+  LatLng currentLocation = LatLng(-6.2088, 106.8456); // Jakarta default
+  List<Disaster> disasters = [];
+  List<SafetyPoint> safetyPoints = [];
+  bool isLoading = false;
+  LocationError? error;
+  bool hasLocationPermission = false;
   bool _locationServiceEnabled = false;
-
-  // Getters
-  MapController get mapController => _mapController;
-  LatLng get currentLocation => _currentLocation;
-  List<DisasterReport> get disasterReports => _disasterReports;
-  List<SafetyPoint> get safetyPoints => _safetyPoints;
-  bool get isLoading => _isLoading;
-  String? get errorMessage => _errorMessage;
-  bool get hasLocationPermission => _hasLocationPermission;
-  bool get locationServiceEnabled => _locationServiceEnabled;
+  Disaster? selectedDisaster;
 
   UserMapViewModel() {
-
     getQuickLocation();
+    _initializeData();
   }
 
-  void initializeData() {
-
+  void _initializeData() {
+    // Add sample disasters for testing with type-specific properties
+    disasters = [
+      VolcanoDisaster(
+        id: '1',
+        location: LatLng(-6.2088, 106.8556),
+        description: 'Erupsi gunung berapi dengan tinggi kolom abu 3.5 km',
+        timestamp: DateTime.now(),
+        address: 'Jl. Akasia 9-12, Kapasa, Kec. Tamalanrea, Kota Makassar, Sulawesi Selatan 90245',
+        impactedRadius: 256,
+        alertStatus: '3.5 M',
+      ),
+      EarthquakeDisaster(
+        id: '2',
+        location: LatLng(-6.1888, 106.8656),
+        description: 'Gempa bumi berkekuatan 6.5 SR',
+        timestamp: DateTime.now(),
+        address: 'Jl. Gatot Subroto, Jakarta Selatan',
+        impactedRadius: 150,
+        strength: 3.32,
+        tsunamiPotential: false,
+        alertStatus: 'Siaga 3',
+      ),
+      FloodDisaster(
+        id: '3',
+        location: LatLng(-6.1988, 106.8356),
+        description: 'Banjir setinggi 2 meter dengan arus deras',
+        timestamp: DateTime.now(),
+        address: 'Jl. Sudirman, Jakarta Pusat',
+        impactedRadius: 50,
+        waterHeight: 3.5,
+        waterFlowSpeed: 35,
+      ),
+      TsunamiDisaster(
+        id: '4',
+        location: LatLng(-6.2188, 106.8256),
+        description: 'Tsunami dengan tinggi gelombang 3.5 meter',
+        timestamp: DateTime.now(),
+        address: 'Jl. Akasia 9-12, Kapasa, Kec. Tamalanrea, Kota Makassar, Sulawesi Selatan 90245',
+        impactedRadius: 256,
+        waveHeight: 3.5,
+        alertStatus: 'Siaga 3',
+      ),
+      LandslideDisaster(
+        id: '5',
+        location: LatLng(-6.2288, 106.8756),
+        description: 'Longsor dengan area terdampak 256 km',
+        timestamp: DateTime.now(),
+        address: 'Jl. Akasia 9-12, Kapasa, Kec. Tamalanrea, Kota Makassar, Sulawesi Selatan 90245',
+        impactedRadius: 256,
+        alertStatus: '3.5 M',
+      ),
+    ];
+    notifyListeners();
   }
 
   Future<void> _getCurrentLocation() async {
     try {
-      _isLoading = true;
-      _errorMessage = null;
+      isLoading = true;
+      error = null;
       notifyListeners();
 
-      // Check if location services are enabled
       _locationServiceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!_locationServiceEnabled) {
-        _errorMessage = 'Location services are disabled. Please enable location services in your device settings.';
+        error = LocationError.locationServiceDisabled();
         return;
       }
 
-      // Check and request location permissions
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          _errorMessage = 'Location permissions are denied. Please grant location permission to use this feature.';
-          _hasLocationPermission = false;
+          error = LocationError.permissionDenied();
+          hasLocationPermission = false;
           return;
         }
       }
 
-      if (permission == LocationPermission.deniedForever) {
-        _errorMessage = 'Location permissions are permanently denied. Please enable location permissions in your device settings.';
-        _hasLocationPermission = false;
+      if (permission == LocationPermission.deniedForever || permission == LocationPermission.denied) {
+        error = LocationError.permissionDenied();
+        hasLocationPermission = false;
         return;
       }
 
-      _hasLocationPermission = true;
-
-      // Try to get current position with multiple fallback strategies
+      hasLocationPermission = true;
       Position? position;
       
       try {
@@ -92,7 +131,6 @@ class UserMapViewModel extends ChangeNotifier {
               timeLimit: Duration(seconds: 10),
             );
           } catch (e) {
-            // Final fallback: Try to get last known position
             try {
               position = await Geolocator.getLastKnownPosition();
               if (position == null) {
@@ -105,48 +143,43 @@ class UserMapViewModel extends ChangeNotifier {
         }
       }
       
-      _currentLocation = LatLng(position.latitude, position.longitude);
-      
-      // Move map to current location
-      _mapController.move(_currentLocation, 15.0);
-      
-      // Clear any previous error messages
-      _errorMessage = null;
-      
+      currentLocation = LatLng(position.latitude, position.longitude);
+      mapController.move(currentLocation, 15.0);
+      error = null;
     } catch (e) {
       if (e.toString().contains('timeout')) {
-        _errorMessage = 'Location request timed out. This might be due to poor GPS signal or network issues. Please try again or check your location settings.';
+        error = LocationError.timeout();
       } else if (e.toString().contains('permission')) {
-        _errorMessage = 'Location permission is required to show your current location.';
+        error = LocationError.permissionDenied();
       } else if (e.toString().contains('Unable to get current or last known location')) {
-        _errorMessage = 'Unable to determine your location. Please ensure GPS is enabled and try again.';
+        error = LocationError.unableToGetLocation();
       } else if (e.toString().contains('All location retrieval methods failed')) {
-        _errorMessage = 'Location services are not responding. Please check your GPS settings and try again.';
+        error = LocationError.serviceNotResponding();
       } else {
-        _errorMessage = 'Failed to get current location: ${e.toString()}';
+        error = LocationError.generic('Failed to get current location: ${e.toString()}');
       }
     } finally {
-      _isLoading = false;
+      isLoading = false;
       notifyListeners();
     }
   }
 
   void moveToLocation(LatLng location) {
-    _mapController.move(location, 16.0);
+    mapController.move(location, 16.0);
   }
 
-  void addDisasterReport(DisasterReport report) {
-    _disasterReports.add(report);
+  void addDisaster(Disaster disaster) {
+    disasters.add(disaster);
     notifyListeners();
   }
 
   void refreshData() {
     _getCurrentLocation();
-    // Refresh disaster reports and safety points from API
+    // Refresh disasters and safety points from API
   }
 
-  void clearErrorMessage() {
-    _errorMessage = null;
+  void clearError() {
+    error = null;
     notifyListeners();
   }
 
@@ -156,79 +189,35 @@ class UserMapViewModel extends ChangeNotifier {
 
   Future<void> getQuickLocation() async {
     try {
-      _isLoading = true;
-      _errorMessage = null;
+      isLoading = true;
+      error = null;
       notifyListeners();
 
-      // Try to get last known position first (faster)
       Position? lastKnownPosition = await Geolocator.getLastKnownPosition();
       if (lastKnownPosition != null) {
-        _currentLocation = LatLng(lastKnownPosition.latitude, lastKnownPosition.longitude);
-        _mapController.move(_currentLocation, 15.0);
-        _hasLocationPermission = true;
-        _errorMessage = null;
+        currentLocation = LatLng(lastKnownPosition.latitude, lastKnownPosition.longitude);
+        mapController.move(currentLocation, 15.0);
+        hasLocationPermission = true;
+        error = null;
         return;
       }
-
-      // If no last known position, fall back to current location
+      
       await _getCurrentLocation();
     } catch (e) {
-      _errorMessage = 'Quick location failed: ${e.toString()}';
+      error = LocationError.quickLocationFailed();
     } finally {
-      _isLoading = false;
+      isLoading = false;
       notifyListeners();
     }
   }
 
-  Color getDisasterColor(String type) {
-    switch (type.toLowerCase()) {
-      case 'flood':
-        return Colors.blue;
-      case 'fire':
-        return Colors.red;
-      case 'earthquake':
-        return Colors.orange;
-      default:
-        return Colors.grey;
-    }
+  void selectDisaster(Disaster disaster) {
+    selectedDisaster = disaster;
+    notifyListeners();
   }
 
-  IconData getDisasterIcon(String type) {
-    switch (type.toLowerCase()) {
-      case 'flood':
-        return Icons.water_damage;
-      case 'fire':
-        return Icons.local_fire_department;
-      case 'earthquake':
-        return Icons.vibration;
-      default:
-        return Icons.warning;
-    }
-  }
-
-  Color getSafetyPointColor(String type) {
-    switch (type.toLowerCase()) {
-      case 'hospital':
-        return Colors.green;
-      case 'police':
-        return Colors.blue;
-      case 'shelter':
-        return Colors.purple;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  IconData getSafetyPointIcon(String type) {
-    switch (type.toLowerCase()) {
-      case 'hospital':
-        return Icons.local_hospital;
-      case 'police':
-        return Icons.local_police;
-      case 'shelter':
-        return Icons.home;
-      default:
-        return Icons.place;
-    }
+  void clearSelectedDisaster() {
+    selectedDisaster = null;
+    notifyListeners();
   }
 }
