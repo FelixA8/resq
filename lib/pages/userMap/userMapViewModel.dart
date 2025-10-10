@@ -32,7 +32,7 @@ class UserMapViewModel extends ChangeNotifier {
     getQuickLocation();
   }
 
-  void _initializeData() {
+  void initializeData() {
 
   }
 

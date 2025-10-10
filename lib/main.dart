@@ -4,7 +4,6 @@ import 'pages/otp/otpView.dart';
 import 'package:provider/provider.dart';
 import 'pages/LoginPage/LoginPageViewModel.dart';
 import 'pages/LoginPage/LoginPageView.dart';
-import 'pages/otp/otpView.dart';
 import 'pages/ResponseLoginPage/ResponseLoginPageView.dart';
 import 'pages/ReportDisaster/ReportDisasterView.dart';
 

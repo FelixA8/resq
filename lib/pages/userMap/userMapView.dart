@@ -246,7 +246,7 @@ class UserMapView extends StatelessWidget {
     );
   }
 
-  void _showDisasterDetails(BuildContext context, DisasterReport report) {
+  void showDisasterDetails(BuildContext context, DisasterReport report) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -283,7 +283,7 @@ class UserMapView extends StatelessWidget {
     );
   }
 
-  void _showSafetyPointDetails(BuildContext context, SafetyPoint point) {
+  void showSafetyPointDetails(BuildContext context, SafetyPoint point) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
