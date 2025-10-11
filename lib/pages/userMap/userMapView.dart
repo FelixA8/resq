@@ -6,6 +6,7 @@ import 'package:resqapp/pages/userMap/models/safetyPoint.dart';
 import 'package:resqapp/pages/userMap/sections/bottomModalSheetSection/mapBottomModalView.dart';
 import 'package:resqapp/pages/userMap/userMapViewModel.dart';
 import 'package:resqapp/theme/theme_app.dart';
+
 class UserMapView extends StatelessWidget {
   const UserMapView({Key? key}) : super(key: key);
 
@@ -23,7 +24,7 @@ class UserMapView extends StatelessWidget {
             builder: (context, viewModel, child) {
               return IconButton(
                 onPressed: () {
-                  print("Icon tapped!");
+                  //TODO: Tap Icon
                 },
                 icon: Image.asset(
                   'assets/images/icons/menu-hamburger.png',
@@ -31,10 +32,7 @@ class UserMapView extends StatelessWidget {
                   height: 20,
                 ),
                 padding: EdgeInsets.all(8),
-                constraints: BoxConstraints(
-                  minWidth: 40,
-                  minHeight: 40,
-                ),
+                constraints: BoxConstraints(minWidth: 40, minHeight: 40),
               );
             },
           ),
@@ -95,18 +93,22 @@ class UserMapView extends StatelessWidget {
                     initialZoom: 13.0,
                     minZoom: 5.0,
                     maxZoom: 18.0,
-                    interactionOptions: InteractionOptions(flags: InteractiveFlag.all & ~InteractiveFlag.rotate),
+                    interactionOptions: InteractionOptions(
+                      flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                    ),
                   ),
                   children: [
                     TileLayer(
-                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      urlTemplate:
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                       userAgentPackageName: 'com.example.disaster_map',
                       maxZoom: 19,
                     ),
                     MarkerLayer(
                       markers: [
                         // User location marker
-                        if (viewModel.hasLocationPermission && !viewModel.isLoading)
+                        if (viewModel.hasLocationPermission &&
+                            !viewModel.isLoading)
                           Marker(
                             point: viewModel.currentLocation,
                             width: 40,
@@ -144,18 +146,20 @@ class UserMapView extends StatelessWidget {
                                 // Center the map on the disaster location first
                                 viewModel.moveToLocation(disaster.location);
                                 // Small delay to let the map center before showing sheet
-                                await Future.delayed(Duration(milliseconds: 300));
+                                await Future.delayed(
+                                  Duration(milliseconds: 300),
+                                );
                                 if (context.mounted) {
                                   showDisasterBottomSheet(context, disaster);
                                 }
                               },
                               child: Center(
-                                  child: Image.asset(
-                                   disaster.icon,
-                                    height: 48,
-                                    width: 48,
-                                  ),
+                                child: Image.asset(
+                                  disaster.icon,
+                                  height: 48,
+                                  width: 48,
                                 ),
+                              ),
                             ),
                           );
                         }),
@@ -163,82 +167,95 @@ class UserMapView extends StatelessWidget {
                     ),
                   ],
                 ),
-                
+
                 if (viewModel.isLoading)
                   Center(
                     child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.red.shade700),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Colors.red.shade700,
+                      ),
                     ),
                   ),
                 // Error message
                 if (viewModel.error != null)
                   Positioned(
-                    bottom: 100,
+                    top: 8,
                     left: 16,
                     right: 16,
-                    child: Container(
-                      padding: EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.red.shade100,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.red.shade300),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.error, color: Colors.red.shade700),
-                              SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  viewModel.error!.message,
-                                  style: TextStyle(color: Colors.red.shade700),
-                                ),
-                              ),
-                              IconButton(
-                                icon: Icon(Icons.close, color: Colors.red.shade700),
-                                onPressed: () {
-                                  viewModel.clearError();
-                                },
-                              ),
-                            ],
-                          ),
-                          if (viewModel.error!.requiresUserAction)
-                            Padding(
-                              padding: EdgeInsets.only(top: 8),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  ElevatedButton.icon(
-                                    onPressed: () {
-                                      viewModel.getQuickLocation();
-                                    },
-                                    icon: Icon(Icons.location_searching, size: 16),
-                                    label: Text('Quick Location'),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.blue.shade700,
-                                      foregroundColor: Colors.white,
-                                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    child: GestureDetector(
+                      onTap: () {
+                        viewModel.clearError();
+                      },
+                      child: Container(
+                        padding: EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Color(0xffF2D6D6),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.error, color: Colors.red.shade700),
+                                SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    viewModel.error!.message,
+                                    style: TextStyle(
+                                      color: Color(theme.colors.neutral.high),
+                                      fontSize: theme.size.ms,
                                     ),
                                   ),
-                                  if (viewModel.error!.isRetryable)
+                                ),
+                              ],
+                            ),
+                            if (viewModel.error!.requiresUserAction)
+                              Padding(
+                                padding: EdgeInsets.only(top: 8),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: [
                                     ElevatedButton.icon(
                                       onPressed: () {
-                                        viewModel.retryLocationRequest();
+                                        viewModel.getQuickLocation();
                                       },
-                                      icon: Icon(Icons.refresh, size: 16),
-                                      label: Text('Retry'),
+                                      icon: Icon(
+                                        Icons.location_searching,
+                                        size: 16,
+                                      ),
+                                      label: Text('Quick Location'),
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.red.shade700,
+                                        backgroundColor: Colors.blue.shade700,
                                         foregroundColor: Colors.white,
-                                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 8,
+                                        ),
                                       ),
                                     ),
-                                ],
+                                    if (viewModel.error!.isRetryable)
+                                      ElevatedButton.icon(
+                                        onPressed: () {
+                                          viewModel.retryLocationRequest();
+                                        },
+                                        icon: Icon(Icons.refresh, size: 16),
+                                        label: Text('Retry'),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.red.shade700,
+                                          foregroundColor: Colors.white,
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 8,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
                               ),
-                            ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -246,7 +263,7 @@ class UserMapView extends StatelessWidget {
             );
           },
         ),
-        
+
         floatingActionButton: Consumer<UserMapViewModel>(
           builder: (context, viewModel, child) {
             return Column(
@@ -255,12 +272,14 @@ class UserMapView extends StatelessWidget {
                 if (viewModel.hasLocationPermission)
                   FloatingActionButton(
                     heroTag: 'location',
-                    onPressed: () => viewModel.moveToLocation(viewModel.currentLocation),
+                    onPressed:
+                        () =>
+                            viewModel.moveToLocation(viewModel.currentLocation),
                     backgroundColor: Colors.white,
                     foregroundColor: Colors.blue,
                     child: Icon(Icons.my_location),
                   ),
-                SizedBox(height: 16)
+                SizedBox(height: 16),
               ],
             );
           },
@@ -274,88 +293,89 @@ class UserMapView extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => MapBottomModalView(
-        disaster: disaster,
-      ),
+      builder: (context) => MapBottomModalView(disaster: disaster),
     );
   }
 
   void showDisasterDetails(BuildContext context, Disaster disaster) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Image.asset(
-              disaster.icon,
-              color: disaster.color,
-              width: 24,
-              height: 24,
+      builder:
+          (context) => AlertDialog(
+            title: Row(
+              children: [
+                Image.asset(
+                  disaster.icon,
+                  color: disaster.color,
+                  width: 24,
+                  height: 24,
+                ),
+                SizedBox(width: 8),
+                Text('Detail Bencana'),
+              ],
             ),
-            SizedBox(width: 8),
-            Text('Detail Bencana'),
-          ],
-        ),
-        content: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Jenis: ${disaster.displayName}'),
-            SizedBox(height: 8),
-            Text('Deskripsi: ${disaster.description}'),
-            SizedBox(height: 8),
-            Text('Radius: ${disaster.impactedRadius} km'),
-            SizedBox(height: 8),
-            Text('Waktu: ${disaster.timestamp.toString().substring(0, 16)}'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Tutup'),
+            content: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Jenis: ${disaster.displayName}'),
+                SizedBox(height: 8),
+                Text('Deskripsi: ${disaster.description}'),
+                SizedBox(height: 8),
+                Text('Radius: ${disaster.impactedRadius} km'),
+                SizedBox(height: 8),
+                Text(
+                  'Waktu: ${disaster.timestamp.toString().substring(0, 16)}',
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Tutup'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
   void showSafetyPointDetails(BuildContext context, SafetyPoint point) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(
-              point.type.icon,
-              color: point.type.color,
+      builder:
+          (context) => AlertDialog(
+            title: Row(
+              children: [
+                Icon(point.type.icon, color: point.type.color),
+                SizedBox(width: 8),
+                Text('Titik Aman'),
+              ],
             ),
-            SizedBox(width: 8),
-            Text('Titik Aman'),
-          ],
-        ),
-        content: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Nama: ${point.name}'),
-            SizedBox(height: 8),
-            Text('Jenis: ${point.type.displayName}'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Tutup'),
+            content: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Nama: ${point.name}'),
+                SizedBox(height: 8),
+                Text('Jenis: ${point.type.displayName}'),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Tutup'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  context.read<UserMapViewModel>().moveToLocation(
+                    point.location,
+                  );
+                },
+                child: Text('Lihat di Peta'),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              context.read<UserMapViewModel>().moveToLocation(point.location);
-            },
-            child: Text('Lihat di Peta'),
-          ),
-        ],
-      ),
     );
   }
 }

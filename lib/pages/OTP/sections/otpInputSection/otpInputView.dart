@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../components/otp_input_box.dart';
+import 'package:resqapp/pages/OTP/components/otp_input_box.dart';
 import '../../models/otp_model.dart';
 import 'otpInputViewModel.dart';
 

@@ -6,8 +6,16 @@ import 'pages/LoginPage/LoginPageViewModel.dart';
 import 'pages/LoginPage/LoginPageView.dart';
 import 'pages/ResponseLoginPage/ResponseLoginPageView.dart';
 import 'pages/ReportDisaster/ReportDisasterView.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() {
+void main() async {
+  
+  //supabase initialization.
+  await Supabase.initialize(
+    url: "https://mirisslaptcomtnuuzeh.supabase.co",
+    anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pcmlzc2xhcHRjb210bnV1emVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwOTk1ODMsImV4cCI6MjA3NTY3NTU4M30.rkeON8pzcUCwxk4dxio36oAIUxp7oNxS7xQtR1p0pOc",
+  );
+
   runApp(const MyApp());
 }
 

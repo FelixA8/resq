@@ -25,8 +25,8 @@ class LocationError {
       type: LocationErrorType.permissionDenied,
       message:
           'Izin lokasi ditolak. Harap berikan izin lokasi untuk menggunakan fitur ini.',
-      isRetryable: true,
-      requiresUserAction: true,
+      isRetryable: false,
+      requiresUserAction: false,
     );
   }
 
@@ -34,9 +34,9 @@ class LocationError {
     return const LocationError(
       type: LocationErrorType.locationServiceDisabled,
       message:
-          'Location services are disabled. Please enable location services in your device settings.',
-      isRetryable: true,
-      requiresUserAction: true,
+          'Gagal mendeteksi lokasi, periksa pengaturan anda!',
+      isRetryable: false,
+      requiresUserAction: false,
     );
   }
 
@@ -44,9 +44,9 @@ class LocationError {
     return const LocationError(
       type: LocationErrorType.timeout,
       message:
-          'Location request timed out. This might be due to poor GPS signal or network issues. Please try again or check your location settings.',
-      isRetryable: true,
-      requiresUserAction: true,
+          'Gagal mendeteksi lokasi, periksa pengaturan anda!',
+      isRetryable: false,
+      requiresUserAction: false,
     );
   }
 
@@ -54,9 +54,9 @@ class LocationError {
     return const LocationError(
       type: LocationErrorType.unableToGetLocation,
       message:
-          'Unable to determine your location. Please ensure GPS is enabled and try again.',
-      isRetryable: true,
-      requiresUserAction: true,
+          'Gagal mendeteksi lokasi, periksa pengaturan anda!',
+      isRetryable: false,
+      requiresUserAction: false,
     );
   }
 
@@ -64,9 +64,9 @@ class LocationError {
     return const LocationError(
       type: LocationErrorType.serviceNotResponding,
       message:
-          'Location services are not responding. Please check your GPS settings and try again.',
-      isRetryable: true,
-      requiresUserAction: true,
+          'Gagal mendeteksi lokasi, periksa pengaturan anda!',
+      isRetryable: false,
+      requiresUserAction: false,
     );
   }
 
@@ -74,8 +74,8 @@ class LocationError {
     return const LocationError(
       type: LocationErrorType.generic,
       message: 'Gagal mendeteksi lokasi, periksa pengaturan anda!',
-      isRetryable: true,
-      requiresUserAction: true,
+      isRetryable: false,
+      requiresUserAction: false,
     );
   }
 
@@ -83,7 +83,7 @@ class LocationError {
     return LocationError(
       type: LocationErrorType.generic,
       message: message,
-      isRetryable: true,
+      isRetryable: false,
       requiresUserAction: false,
     );
   }
@@ -91,4 +91,5 @@ class LocationError {
   @override
   String toString() => message;
 }
+
 

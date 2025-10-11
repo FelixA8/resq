@@ -156,7 +156,7 @@ class MapBottomModalView extends StatelessWidget {
         SizedBox(height: 13),
         // Ketinggian Air
         buildDetailRow(
-          iconPath: 'assets/images/icons/water-depth.png',
+          iconPath: 'assets/images/icons/water-height.png',
           label: 'Ketinggian Air',
           value: '${flood.waterHeight.toStringAsFixed(1)} M',
         ),
@@ -165,7 +165,7 @@ class MapBottomModalView extends StatelessWidget {
         SizedBox(height: 13),
         // Kecepatan Aliran Air
         buildDetailRow(
-          iconPath: 'assets/images/icons/navbar-disaster-red.png',
+          iconPath: 'assets/images/icons/water-speed.png',
           label: 'Kecepatan Aliran Air',
           value: '${flood.waterFlowSpeed.toStringAsFixed(0)} ms',
         ),
@@ -184,7 +184,7 @@ class MapBottomModalView extends StatelessWidget {
         SizedBox(height: 13),
         // Kekuatan Gempa Pemicu
         buildDetailRow(
-          iconPath: 'assets/images/icons/earthquake-strength.png',
+          iconPath: 'assets/images/icons/earthquake-scale.png',
           label: 'Kekuatan Gempa Pemicu',
           value: '${tsunami.waveHeight.toStringAsFixed(1)} SR',
         ),

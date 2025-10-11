@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 enum DisasterType {
   flood,
-  fire,
+  landslide,
   earthquake,
   volcano,
   unknown;
@@ -12,8 +12,8 @@ enum DisasterType {
     switch (this) {
       case DisasterType.flood:
         return 'Banjir';
-      case DisasterType.fire:
-        return 'Kebakaran';
+      case DisasterType.landslide:
+        return 'Longsor';
       case DisasterType.earthquake:
         return 'Gempa Bumi';
       case DisasterType.volcano:
@@ -28,7 +28,7 @@ enum DisasterType {
     switch (this) {
       case DisasterType.flood:
         return Colors.blue;
-      case DisasterType.fire:
+      case DisasterType.landslide:
         return Colors.red;
       case DisasterType.earthquake:
         return Colors.orange;
@@ -44,7 +44,7 @@ enum DisasterType {
     switch (this) {
       case DisasterType.flood:
         return Icons.water_damage;
-      case DisasterType.fire:
+      case DisasterType.landslide:
         return Icons.local_fire_department;
       case DisasterType.earthquake:
         return Icons.vibration;
@@ -61,9 +61,9 @@ enum DisasterType {
       case 'flood':
       case 'banjir':
         return DisasterType.flood;
-      case 'fire':
-      case 'kebakaran':
-        return DisasterType.fire;
+      case 'landslide':
+      case 'longsor':
+        return DisasterType.landslide;
       case 'earthquake':
       case 'gempa':
       case 'gempa bumi':
@@ -83,8 +83,8 @@ enum DisasterType {
     switch (this) {
       case DisasterType.flood:
         return 'flood';
-      case DisasterType.fire:
-        return 'fire';
+      case DisasterType.landslide:
+        return 'longsor';
       case DisasterType.earthquake:
         return 'earthquake';
       case DisasterType.volcano:

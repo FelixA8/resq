@@ -79,7 +79,7 @@ class UserMapViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> _getCurrentLocation() async {
+  Future<void> getCurrentLocation() async {
     try {
       isLoading = true;
       error = null;
@@ -174,7 +174,7 @@ class UserMapViewModel extends ChangeNotifier {
   }
 
   void refreshData() {
-    _getCurrentLocation();
+    getCurrentLocation();
     // Refresh disasters and safety points from API
   }
 
@@ -184,7 +184,7 @@ class UserMapViewModel extends ChangeNotifier {
   }
 
   Future<void> retryLocationRequest() async {
-    await _getCurrentLocation();
+    await getCurrentLocation();
   }
 
   Future<void> getQuickLocation() async {
@@ -202,7 +202,7 @@ class UserMapViewModel extends ChangeNotifier {
         return;
       }
       
-      await _getCurrentLocation();
+      await getCurrentLocation();
     } catch (e) {
       error = LocationError.quickLocationFailed();
     } finally {
