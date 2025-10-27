@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'LoginPageViewModel.dart';
+import 'package:resqapp/pages/LoginPage/lower_case_view_model.dart';
 import 'sections/login_header_section.dart';
 import 'sections/login_form_section.dart';
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:resqapp/pages/LoginPage/lower_case_view_model.dart';
+import 'package:resqapp/pages/OTP/otp_view.dart';
 import 'package:resqapp/pages/userMap/userMapView.dart';
-import 'pages/otp/otpView.dart';
 import 'package:provider/provider.dart';
 import 'pages/LoginPage/login_page_view.dart';
 import 'pages/ResponseLoginPage/ResponseLoginPageView.dart';
