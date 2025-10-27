@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:resqapp/pages/LoginPage/lower_case_view_model.dart';
 import 'package:resqapp/pages/userMap/userMapView.dart';
 import 'pages/otp/otpView.dart';
 import 'package:provider/provider.dart';
-import 'pages/LoginPage/LoginPageViewModel.dart';
-import 'pages/LoginPage/LoginPageView.dart';
+import 'pages/LoginPage/login_page_view.dart';
 import 'pages/ResponseLoginPage/ResponseLoginPageView.dart';
-import 'pages/ReportDisaster/ReportDisasterView.dart';
 
 void main() {
   runApp(const MyApp());
@@ -29,7 +28,6 @@ class MyApp extends StatelessWidget {
       ),
       routes: {
         '/otpView': (context) {
-          // Get arguments from Navigator
           final args = ModalRoute.of(context)!.settings.arguments as Map?;
           final phone = args?['phone'] ?? '';
           return OTPView(phoneNumber: phone);
@@ -38,7 +36,6 @@ class MyApp extends StatelessWidget {
           return UserMapView();
         },
         '/responseLogin': (context) => const ResponseLoginPageView(),
-        '/reportDisaster': (context) => const ReportDisasterView(),
       },
     );
   }
