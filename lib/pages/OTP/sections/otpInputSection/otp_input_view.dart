@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../components/otp_input_box.dart';
 import '../../models/otp_model.dart';
-import 'otpInputViewModel.dart';
+import 'otp_input_view_model.dart';
 
 class OTPInputView extends StatelessWidget {
   final String phoneNumber;

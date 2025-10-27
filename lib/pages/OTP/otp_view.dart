@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'otpViewModel.dart';
-import 'sections/progressBarSection/progressBarView.dart';
-import 'sections/progressBarSection/progressBarViewModel.dart';
-import 'sections/otpInputSection/otpInputView.dart';
-import 'sections/resendOtpSection/resendOtpView.dart';
+import 'otp_view_model.dart';
+import 'sections/progressBarSection/progress_bar_view.dart';
+import 'sections/progressBarSection/progress_bar_view_model.dart';
+import 'sections/otpInputSection/otp_input_view.dart';
+import 'sections/resendOtpSection/resend_otp_view.dart';
 import '../Username/usernameView.dart';
 
 class OTPView extends StatelessWidget {

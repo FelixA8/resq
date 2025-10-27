@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:provider/provider.dart';
-import 'package:resqapp/pages/userMap/models/disaster.dart';
-import 'package:resqapp/pages/userMap/models/safetyPoint.dart';
-import 'package:resqapp/pages/userMap/sections/bottomModalSheetSection/mapBottomModalView.dart';
 import 'package:resqapp/pages/userMap/userMapViewModel.dart';
 import 'package:resqapp/theme/theme_app.dart';
 class UserMapView extends StatelessWidget {
@@ -134,31 +131,6 @@ class UserMapView extends StatelessWidget {
                               ),
                             ),
                           ),
-                        ...viewModel.disasters.map((disaster) {
-                          return Marker(
-                            point: disaster.location,
-                            width: 46,
-                            height: 46,
-                            child: GestureDetector(
-                              onTap: () async {
-                                // Center the map on the disaster location first
-                                viewModel.moveToLocation(disaster.location);
-                                // Small delay to let the map center before showing sheet
-                                await Future.delayed(Duration(milliseconds: 300));
-                                if (context.mounted) {
-                                  showDisasterBottomSheet(context, disaster);
-                                }
-                              },
-                              child: Center(
-                                  child: Image.asset(
-                                   disaster.icon,
-                                    height: 48,
-                                    width: 48,
-                                  ),
-                                ),
-                            ),
-                          );
-                        }),
                       ],
                     ),
                   ],
@@ -265,96 +237,6 @@ class UserMapView extends StatelessWidget {
             );
           },
         ),
-      ),
-    );
-  }
-
-  void showDisasterBottomSheet(BuildContext context, Disaster disaster) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => MapBottomModalView(
-        disaster: disaster,
-      ),
-    );
-  }
-
-  void showDisasterDetails(BuildContext context, Disaster disaster) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Image.asset(
-              disaster.icon,
-              color: disaster.color,
-              width: 24,
-              height: 24,
-            ),
-            SizedBox(width: 8),
-            Text('Detail Bencana'),
-          ],
-        ),
-        content: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Jenis: ${disaster.displayName}'),
-            SizedBox(height: 8),
-            Text('Deskripsi: ${disaster.description}'),
-            SizedBox(height: 8),
-            Text('Radius: ${disaster.impactedRadius} km'),
-            SizedBox(height: 8),
-            Text('Waktu: ${disaster.timestamp.toString().substring(0, 16)}'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Tutup'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void showSafetyPointDetails(BuildContext context, SafetyPoint point) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(
-              point.type.icon,
-              color: point.type.color,
-            ),
-            SizedBox(width: 8),
-            Text('Titik Aman'),
-          ],
-        ),
-        content: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Nama: ${point.name}'),
-            SizedBox(height: 8),
-            Text('Jenis: ${point.type.displayName}'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Tutup'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              context.read<UserMapViewModel>().moveToLocation(point.location);
-            },
-            child: Text('Lihat di Peta'),
-          ),
-        ],
       ),
     );
   }
