@@ -111,6 +111,13 @@ flutter:
     - assets/images/icons/warning.png
     - assets/images/icons/water-height.png
     - assets/images/icons/water-speed.png
+    - assets/images/icons/sos-small.png
+    - assets/images/icons/settings.png
+    - assets/images/icons/annotation-app-bar.png
+    - assets/images/icons/phone-one.png
+    - assets/images/icons/phone-two.png
+    - assets/images/icons/phone-three.png
+    
 
     
 
