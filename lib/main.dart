@@ -5,6 +5,7 @@ import 'package:resqapp/pages/userMap/userMapView.dart';
 import 'package:provider/provider.dart';
 import 'pages/LoginPage/login_page_view.dart';
 import 'pages/ResponseLoginPage/ResponseLoginPageView.dart';
+import 'package:resqapp/pages/Settings/SettingsView.dart';
 
 void main() {
   runApp(const MyApp());
@@ -27,6 +28,7 @@ class MyApp extends StatelessWidget {
         child: const LoginPageView(),
       ),
       routes: {
+        '/login': (context) => const LoginPageView(),
         '/otpView': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as Map?;
           final phone = args?['phone'] ?? '';
@@ -36,6 +38,7 @@ class MyApp extends StatelessWidget {
           return UserMapView();
         },
         '/responseLogin': (context) => const ResponseLoginPageView(),
+        '/settings': (context) => const SettingsView(),
       },
     );
   }

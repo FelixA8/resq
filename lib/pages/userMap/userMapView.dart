@@ -16,68 +16,108 @@ class UserMapView extends StatelessWidget {
         appBar: AppBar(
           backgroundColor: Colors.white,
           elevation: 0,
-          leading: Consumer<UserMapViewModel>(
-            builder: (context, viewModel, child) {
-              return IconButton(
-                onPressed: () {
-                  print("Icon tapped!");
-                },
-                icon: Image.asset(
-                  'assets/images/icons/menu-hamburger.png',
-                  width: 20,
-                  height: 20,
+          // Remove leading hamburger menu
+          leading: null,
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'John Doe',
+                style: TextStyle(
+                  fontFamily: 'SF Pro',
+                  fontWeight: FontWeight.w500,
+                  fontSize: 18,
+                  color: Colors.black,
                 ),
-                padding: EdgeInsets.all(8),
-                constraints: BoxConstraints(
-                  minWidth: 40,
-                  minHeight: 40,
-                ),
-              );
-            },
-          ),
-          actions: [
-            Consumer<UserMapViewModel>(
-              builder: (context, viewModel, child) {
-                return Container(
-                  margin: EdgeInsets.only(right: 16),
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      elevation: 2,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      minimumSize: Size(0, 32),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Image.asset(
-                          'assets/images/icons/report.png',
-                          width: 16,
-                          height: 16,
-                        ),
-                        SizedBox(width: 6),
-                        Text(
-                          "Laporkan Bencana",
-                          style: TextStyle(
-                            color: Color(theme.colors.primary),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/reportDisaster');
-                    },
+              ),
+              const SizedBox(height: 4),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    'assets/images/icons/annotation-app-bar.png',
+                    width: 14,
+                    height: 14,
                   ),
-                );
-              },
+                  const SizedBox(width: 2),
+                  Text(
+                    'Tangerang Selatan',
+                    style: TextStyle(
+                      fontFamily: 'SF Pro',
+                      fontWeight: FontWeight.w400,
+                      fontSize: 13,
+                      color: Color(theme.colors.primary),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          centerTitle: false,
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Settings button (white rounded square)
+                  SizedBox(
+                    height: 35,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size(35, 35),
+                        maximumSize: Size(35, 35),
+                      ),
+                      onPressed: () {
+                        // TODO: Navigate to settings page
+                        Navigator.pushNamed(context, '/settings');
+                      },
+                      child: Image.asset(
+                        'assets/images/icons/settings.png',
+                        width: 22,
+                        height: 22,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 7),
+                  // SOS pill (text only, same height as settings)
+                  SizedBox(
+                    height: 35,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(theme.colors.primary),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        minimumSize: Size(35, 35),
+                        maximumSize: Size(double.infinity, 35),
+                      ),
+                      onPressed: () {
+                        // TODO: Navigate to SOS page
+                        Navigator.pushNamed(context, '/sos');
+                      },
+                      child: Text(
+                        'SOS',
+                        style: TextStyle(
+                          fontFamily: 'SF Pro',
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
