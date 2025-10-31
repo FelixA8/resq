@@ -3,6 +3,9 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:provider/provider.dart';
 import 'package:resqapp/pages/userMap/userMapViewModel.dart';
 import 'package:resqapp/theme/theme_app.dart';
+
+import 'package:resqapp/pages/SOS/SOSView.dart';
+
 class UserMapView extends StatelessWidget {
   const UserMapView({Key? key}) : super(key: key);
 
@@ -102,8 +105,18 @@ class UserMapView extends StatelessWidget {
                         maximumSize: Size(double.infinity, 35),
                       ),
                       onPressed: () {
-                        // TODO: Navigate to SOS page
-                        Navigator.pushNamed(context, '/sos');
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (context) => FractionallySizedBox(
+                            heightFactor: 0.45,
+                            child: SOSView(),
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                          ),
+                        );
                       },
                       child: Text(
                         'SOS',
