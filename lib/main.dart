@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:resqapp/pages/Settings/SettingsView.dart';
 import 'package:resqapp/pages/loginPage/lower_case_view_model.dart';
 import 'package:resqapp/pages/otpPage/otp_view.dart';
 import 'package:resqapp/pages/userMap/userMapView.dart';
@@ -60,6 +61,7 @@ class MyApp extends StatelessWidget {
       ],
       // Keep MaterialApp routes for backward compatibility with other pages
       routes: {
+        '/login': (context) => const LoginPageView(),
         '/otpView': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as Map?;
           final phone = args?['phone'] ?? '';
@@ -69,6 +71,7 @@ class MyApp extends StatelessWidget {
           return UserMapView();
         },
         '/responseLogin': (context) => const ResponseLoginPageView(),
+        '/settings': (context) => const SettingsView(),
       },
     );
   }
