@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:resqapp/pages/userMap/userMapView.dart';
-import '../../usernameViewModel.dart';
+import '../../otp_view_model.dart';
 
 class ConfirmationButtonViewModel extends ChangeNotifier {
   bool _isEnabled = false;
-  UsernameViewModel? _usernameViewModel;
+  OTPViewModel? _otpViewModel;
 
   bool get isEnabled => _isEnabled;
-  UsernameViewModel? get usernameViewModel => _usernameViewModel;
+  OTPViewModel? get otpViewModel => _otpViewModel;
 
   void setEnabled(bool enabled) {
     _isEnabled = enabled;
     notifyListeners();
   }
 
-  void setUsernameViewModel(UsernameViewModel? viewModel) {
+  void setOTPViewModel(OTPViewModel? viewModel) {
     // Remove listener from previous view model
-    _usernameViewModel?.removeListener(_updateEnabledState);
+    _otpViewModel?.removeListener(_updateEnabledState);
 
-    _usernameViewModel = viewModel;
+    _otpViewModel = viewModel;
 
     // Add listener to new view model
     if (viewModel != null) {
@@ -30,9 +30,9 @@ class ConfirmationButtonViewModel extends ChangeNotifier {
   }
 
   void _updateEnabledState() {
-    if (_usernameViewModel != null) {
+    if (_otpViewModel != null) {
       final newEnabled =
-          _usernameViewModel!.isValid && !_usernameViewModel!.isLoading;
+          _otpViewModel!.isUsernameValid && !_otpViewModel!.isLoading;
       if (_isEnabled != newEnabled) {
         _isEnabled = newEnabled;
         notifyListeners();
@@ -42,13 +42,13 @@ class ConfirmationButtonViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
-    _usernameViewModel?.removeListener(_updateEnabledState);
+    _otpViewModel?.removeListener(_updateEnabledState);
     super.dispose();
   }
 
   void handleConfirm(BuildContext context) {
-    if (_isEnabled && _usernameViewModel != null) {
-      _usernameViewModel!.saveUsername().then((success) {
+    if (_isEnabled && _otpViewModel != null) {
+      _otpViewModel!.saveUsername().then((success) {
         if (success && context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Username saved successfully!')),
@@ -56,9 +56,7 @@ class ConfirmationButtonViewModel extends ChangeNotifier {
 
           Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(
-              builder: (context) => const UserMapView(),
-            ),
+            MaterialPageRoute(builder: (context) => const UserMapView()),
             (Route<dynamic> route) => false,
           );
         }

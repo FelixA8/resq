@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'models/otp_model.dart';
 
+enum ViewState { otpInput, usernameInput }
+
 class OTPViewModel extends ChangeNotifier {
   OTPModel? _otpModel;
   bool _isLoading = false;
@@ -9,6 +11,7 @@ class OTPViewModel extends ChangeNotifier {
   Timer? _resendTimer;
   int _resendTimeLeft = 0;
   Timer? _expiryTimer;
+  ViewState _currentState = ViewState.otpInput;
 
   // Getters
   OTPModel? get otpModel => _otpModel;
@@ -17,13 +20,15 @@ class OTPViewModel extends ChangeNotifier {
   int get resendTimeLeft => _resendTimeLeft;
   bool get canResendOTP => _resendTimeLeft == 0;
   bool get isOTPExpired => _otpModel?.isExpired ?? false;
+  ViewState get currentState => _currentState;
+
+  // Username-related getters
+  String get username => _otpModel?.username ?? '';
+  bool get isUsernameValid => _otpModel?.isUsernameValid ?? false;
 
   // Initialize with phone number
   void initialize(String phoneNumber) {
-    _otpModel = OTPModel(
-      phoneNumber: phoneNumber,
-      sentTime: DateTime.now(),
-    );
+    _otpModel = OTPModel(phoneNumber: phoneNumber, sentTime: DateTime.now());
     _startResendTimer();
     _startExpiryTimer();
     notifyListeners();
@@ -44,11 +49,14 @@ class OTPViewModel extends ChangeNotifier {
     try {
       // TODO: Implement actual SMS verification logic
       await Future.delayed(const Duration(seconds: 2)); // Simulate API call
-      
-      bool isValid = code.length == OTPModel.otpLength; // Replace with actual validation
-      
+
+      bool isValid =
+          code.length == OTPModel.otpLength; // Replace with actual validation
+
       if (isValid) {
         _otpModel = _otpModel?.copyWith(otpCode: code);
+        // Transition to username input state after successful OTP verification
+        _currentState = ViewState.usernameInput;
       } else {
         _errorMessage = 'Invalid OTP code';
       }
@@ -75,12 +83,12 @@ class OTPViewModel extends ChangeNotifier {
     try {
       // TODO: Implement actual SMS resend logic
       await Future.delayed(const Duration(seconds: 1)); // Simulate API call
-      
+
       _otpModel = _otpModel?.copyWith(
         resendAttempts: (_otpModel?.resendAttempts ?? 0) + 1,
         sentTime: DateTime.now(),
       );
-      
+
       _startResendTimer();
       _startExpiryTimer();
       _isLoading = false;
@@ -114,6 +122,42 @@ class OTPViewModel extends ChangeNotifier {
         timer.cancel();
       }
     });
+  }
+
+  // Username-related methods
+  void setUsername(String value) {
+    _otpModel = _otpModel?.copyWith(username: value);
+    notifyListeners();
+  }
+
+  Future<bool> saveUsername() async {
+    if (!isUsernameValid) return false;
+
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      // TODO: Replace with actual Firebase implementation
+      await Future.delayed(
+        const Duration(seconds: 1),
+      ); // Simulate network delay
+
+      // Placeholder for Firebase implementation
+      // final databaseReference = FirebaseDatabase.instance.reference();
+      // await databaseReference.child('users').child(userId).set({
+      //   'username': _otpModel?.username,
+      //   'timestamp': ServerValue.timestamp,
+      // });
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = 'Failed to save username';
+      notifyListeners();
+      return false;
+    }
   }
 
   @override

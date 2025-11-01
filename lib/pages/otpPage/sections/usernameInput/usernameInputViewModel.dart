@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import '../../usernameViewModel.dart';
+import '../../otp_view_model.dart';
 
 class UsernameInputViewModel extends ChangeNotifier {
   String _username = '';
   bool _isValid = false;
-  UsernameViewModel? _mainViewModel;
+  OTPViewModel? _mainViewModel;
 
   String get username => _username;
   bool get isValid => _isValid;
-  UsernameViewModel? get mainViewModel => _mainViewModel;
+  OTPViewModel? get mainViewModel => _mainViewModel;
 
   void setUsername(String username) {
     _username = username;
@@ -21,11 +21,11 @@ class UsernameInputViewModel extends ChangeNotifier {
     }
   }
 
-  void setMainViewModel(UsernameViewModel? viewModel) {
+  void setMainViewModel(OTPViewModel? viewModel) {
     _mainViewModel = viewModel;
     if (viewModel != null) {
       _username = viewModel.username;
-      _isValid = viewModel.isValid;
+      _isValid = viewModel.isUsernameValid;
     }
     notifyListeners();
   }
