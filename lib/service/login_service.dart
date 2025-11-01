@@ -1,5 +1,5 @@
 
-import 'package:resqapp/services/supabase_service.dart';
+import 'package:resqapp/service/supabase_service.dart';
 import 'package:resqapp/models/supabase_models.dart';
 
 class LoginService {

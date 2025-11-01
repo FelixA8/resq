@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:resqapp/service/login_service.dart';
-import 'package:resqapp/services/supabase_service.dart';
+import 'package:resqapp/service/supabase_service.dart';
 
 class ResponseLoginPageViewModel extends GetxController {
   // Controllers
