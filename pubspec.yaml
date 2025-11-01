@@ -41,6 +41,7 @@ dependencies:
   image_picker: ^1.0.0
   supabase_flutter: ^2.10.3
   flutter_dotenv: ^6.0.0
+  get: ^4.7.2
 
 dev_dependencies:
   flutter_test:

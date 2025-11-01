@@ -283,12 +283,12 @@ class SupabaseService {
   // ==================== Response Teams ====================
   
   /// Get response team by ID
-  static Future<ResponseTeam?> getResponseTeamById(String responseTeamId) async {
+  static Future<ResponseTeam?> getResponseTeamByInstanceCode(String instanceCode) async {
     try {
       final response = await _client
           .from('response_teams')
           .select()
-          .eq('response_team_id', responseTeamId)
+          .eq('instance_code', instanceCode)
           .maybeSingle();
       
       return response != null ? ResponseTeam.fromJson(response) : null;
@@ -298,20 +298,19 @@ class SupabaseService {
     }
   }
 
-  /// Authenticate response team (basic - should use proper hashing)
-  static Future<bool> authenticateResponseTeam({
-    required String responseTeamId,
-    required String password,
-  }) async {
+  static Future<ResponseTeam?> loginResponseTeam(String instanceCode, String password) async {
     try {
-      final team = await getResponseTeamById(responseTeamId);
-      if (team == null) return false;
+      final response = await _client
+          .from('response_teams')
+          .select()
+          .eq('instance_code', instanceCode)
+          .eq('password', password)
+          .maybeSingle();
       
-      // TODO: Implement proper password hashing/verification
-      return team.password == password;
+      return response != null ? ResponseTeam.fromJson(response) : null;
     } catch (e) {
-      print('Error authenticating response team: $e');
-      return false;
+      print('Error getting response team: $e');
+      return null;
     }
   }
 }

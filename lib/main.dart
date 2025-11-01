@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:resqapp/pages/LoginPage/lower_case_view_model.dart';
-import 'package:resqapp/pages/OTP/otp_view.dart';
+import 'package:get/get.dart';
+import 'package:resqapp/pages/loginPage/lower_case_view_model.dart';
+import 'package:resqapp/pages/otpPage/otp_view.dart';
 import 'package:resqapp/pages/userMap/userMapView.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'pages/LoginPage/login_page_view.dart';
-import 'pages/ResponseLoginPage/ResponseLoginPageView.dart';
+import 'pages/loginPage/login_page_view.dart';
+import 'pages/responseLoginPage/response_login_page_view.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,7 +29,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'ResQ',
       theme: ThemeData(
@@ -39,6 +40,25 @@ class MyApp extends StatelessWidget {
         create: (_) => LoginPageViewModel(),
         child: const LoginPageView(),
       ),
+      getPages: [
+        GetPage(
+          name: '/otpView',
+          page: () {
+            final args = Get.arguments as Map?;
+            final phone = args?['phone'] ?? '';
+            return OTPView(phoneNumber: phone);
+          },
+        ),
+        GetPage(
+          name: '/usermapview',
+          page: () => UserMapView(),
+        ),
+        GetPage(
+          name: '/responseLogin',
+          page: () => const ResponseLoginPageView(),
+        ),
+      ],
+      // Keep MaterialApp routes for backward compatibility with other pages
       routes: {
         '/otpView': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as Map?;

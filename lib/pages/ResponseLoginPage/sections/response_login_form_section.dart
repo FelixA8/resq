@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
+import 'package:resqapp/pages/responseLoginPage/response_login_page_view_model.dart';
 import 'package:resqapp/theme/theme_app.dart';
 import '../../../components/confirmation_button.dart';
-import '../ResponseLoginPageViewModel.dart';
 
 class ResponseLoginFormSection extends StatelessWidget {
   const ResponseLoginFormSection({super.key});
 
   @override
   Widget build(BuildContext context) {
-
+    final viewModel = Get.find<ResponseLoginPageViewModel>();
     var theme = ResQTheme();
 
-    final viewModel = Provider.of<ResponseLoginPageViewModel>(context);
     return Container(
       margin: EdgeInsets.symmetric(horizontal: theme.padding.m),
       padding: EdgeInsets.all(theme.padding.l),
@@ -96,11 +95,16 @@ class ResponseLoginFormSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 60),
-          ConfirmationButton(
-            onPressed: () => viewModel.handleLogin(context),
-            isEnabled: true, // You can add logic to enable/disable
-            text: 'Masuk',
-          ),
+
+          Obx(() => ConfirmationButton(
+                onPressed: () {
+                  if (viewModel.isLoading.value) return;
+                  FocusScope.of(context).unfocus();
+                  viewModel.handleLogin();
+                },
+                isEnabled: !viewModel.isLoading.value,
+                text: viewModel.isLoading.value ? 'Memproses...' : 'Masuk',
+              )),
         ],
       ),
     );
