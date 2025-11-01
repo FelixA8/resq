@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:resqapp/models/location_error.dart';
+import 'package:resqapp/pages/SOSWaiting/sos_waiting_view_model.dart';
 
 class UserMapViewModel extends ChangeNotifier {
   final MapController mapController = MapController();
@@ -11,6 +12,13 @@ class UserMapViewModel extends ChangeNotifier {
   LocationError? error;
   bool hasLocationPermission = false;
   bool _locationServiceEnabled = false;
+  
+  // SOS State Management
+  SOSWaitingViewModel? _sosWaitingViewModel;
+  bool _isSOSActive = false;
+  
+  bool get isSOSActive => _isSOSActive;
+  SOSWaitingViewModel? get sosWaitingViewModel => _sosWaitingViewModel;
 
   UserMapViewModel() {
     getQuickLocation();
@@ -143,5 +151,22 @@ class UserMapViewModel extends ChangeNotifier {
       isLoading = false;
       notifyListeners();
     }
+  }
+  
+  // SOS Management Methods
+  void startSOS() {
+    _isSOSActive = true;
+    // Create SOSWaitingViewModel if it doesn't exist, or reuse existing one
+    if (_sosWaitingViewModel == null) {
+      _sosWaitingViewModel = SOSWaitingViewModel();
+    }
+    notifyListeners();
+  }
+  
+  void stopSOS() {
+    _isSOSActive = false;
+    _sosWaitingViewModel?.dispose();
+    _sosWaitingViewModel = null;
+    notifyListeners();
   }
 }

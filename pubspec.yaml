@@ -78,6 +78,7 @@ flutter:
 
     # Illustrations
     - assets/images/illustrations/login-illustration.png
+    - assets/images/illustrations/sos-running.png
     
     # Icons
     - assets/images/icons/annotation.png
@@ -119,6 +120,7 @@ flutter:
     - assets/images/icons/phone-one.png
     - assets/images/icons/phone-two.png
     - assets/images/icons/phone-three.png
+    
     
 
     

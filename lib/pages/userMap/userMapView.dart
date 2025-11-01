@@ -4,7 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:resqapp/pages/userMap/userMapViewModel.dart';
 import 'package:resqapp/theme/theme_app.dart';
 
-import 'package:resqapp/pages/SOS/SOSView.dart';
+import 'package:resqapp/pages/SOS/sos_view.dart';
+import 'package:resqapp/pages/userMap/components/sos_active_banner.dart';
 
 class UserMapView extends StatelessWidget {
   const UserMapView({Key? key}) : super(key: key);
@@ -91,43 +92,63 @@ class UserMapView extends StatelessWidget {
                   ),
                   const SizedBox(width: 7),
                   // SOS pill (text only, same height as settings)
-                  SizedBox(
-                    height: 35,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(theme.colors.primary),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        minimumSize: Size(35, 35),
-                        maximumSize: Size(double.infinity, 35),
-                      ),
-                      onPressed: () {
-                        showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (context) => FractionallySizedBox(
-                            heightFactor: 0.45,
-                            child: SOSView(),
+                  Consumer<UserMapViewModel>(
+                    builder: (context, mapViewModel, child) {
+                      final isSOSActive = mapViewModel.isSOSActive;
+                      return SizedBox(
+                        height: 35,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: isSOSActive 
+                                ? Colors.grey.shade400 
+                                : Color(theme.colors.primary),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            minimumSize: Size(35, 35),
+                            maximumSize: Size(double.infinity, 35),
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                          onPressed: isSOSActive 
+                              ? null 
+                              : () {
+                                  // Get the viewModel before showing modal
+                                  final mapViewModel = Provider.of<UserMapViewModel>(context, listen: false);
+                                  showModalBottomSheet(
+                                    context: context,
+                                    isScrollControlled: true,
+                                    backgroundColor: Colors.transparent,
+                                    builder: (modalContext) {
+                                      final screenHeight = MediaQuery.of(context).size.height;
+                                      // Responsive height: adjust based on screen size, but ensure minimum space
+                                      final heightFactor = screenHeight < 700 ? 0.5 : 0.45;
+                                      
+                                      return ChangeNotifierProvider<UserMapViewModel>.value(
+                                        value: mapViewModel,
+                                        child: FractionallySizedBox(
+                                          heightFactor: heightFactor,
+                                          child: SOSView(),
+                                        ),
+                                      );
+                                    },
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                                    ),
+                                  );
+                                },
+                          child: Text(
+                            'SOS',
+                            style: TextStyle(
+                              fontFamily: 'SF Pro',
+                              fontWeight: FontWeight.w900,
+                              fontSize: 16,
+                              color: Colors.white,
+                            ),
                           ),
-                        );
-                      },
-                      child: Text(
-                        'SOS',
-                        style: TextStyle(
-                          fontFamily: 'SF Pro',
-                          fontWeight: FontWeight.w900,
-                          fontSize: 16,
-                          color: Colors.white,
                         ),
-                      ),
-                    ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -136,8 +157,14 @@ class UserMapView extends StatelessWidget {
         ),
         body: Consumer<UserMapViewModel>(
           builder: (context, viewModel, child) {
-            return Stack(
+            return Column(
               children: [
+                // Red SOS Banner
+                SOSActiveBanner(),
+                // Map and other content
+                Expanded(
+                  child: Stack(
+                    children: [
                 FlutterMap(
                   mapController: viewModel.mapController,
                   options: MapOptions(
@@ -267,6 +294,9 @@ class UserMapView extends StatelessWidget {
                       ),
                     ),
                   ),
+                    ],
+                  ),
+                ),
               ],
             );
           },
