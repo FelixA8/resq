@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:resqapp/pages/userMap/userMapViewModel.dart';
 import 'package:resqapp/theme/theme_app.dart';
 
-import 'package:resqapp/pages/SOS/SOSView.dart';
+import 'package:resqapp/pages/sos/SOSView.dart';
 
 class UserMapView extends StatelessWidget {
   const UserMapView({Key? key}) : super(key: key);

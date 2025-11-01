@@ -42,6 +42,8 @@ dependencies:
   supabase_flutter: ^2.10.3
   flutter_dotenv: ^6.0.0
   get: ^4.7.2
+  geocoding: ^4.0.0
+  shared_preferences: ^2.3.3
 
 dev_dependencies:
   flutter_test:
@@ -119,6 +121,7 @@ flutter:
     - assets/images/icons/phone-one.png
     - assets/images/icons/phone-two.png
     - assets/images/icons/phone-three.png
+    - assets/images/icons/sos-gray.png
     
 
     

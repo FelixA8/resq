@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:resqapp/pages/responseTeam/response_team_dashboard_view.dart';
+import 'package:resqapp/pages/responseTeam/responseTeamMap/response_team_map_view.dart';
 import 'package:resqapp/service/login_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class ResponseLoginPageViewModel extends GetxController {
   // Controllers
@@ -41,13 +40,9 @@ class ResponseLoginPageViewModel extends GetxController {
         isLoading.value = false;
         return;
       }
-      
-      // Save instanceCode to shared preferences
-      await _saveInstanceCode(code);
-      
       _showSuccessSnackbar('Berhasil masuk sebagai response team');
       
-      Get.off(() => ResponseTeamDashboardView(instanceCode: code));
+      Get.to(ResponseTeamMapView(instanceCode: code));
     } catch (e) {
       _showErrorSnackbar('Terjadi kesalahan saat masuk. Silakan coba lagi.');
       errorMessage.value = e.toString();
@@ -78,24 +73,6 @@ class ResponseLoginPageViewModel extends GetxController {
       snackPosition: SnackPosition.BOTTOM,
       duration: const Duration(seconds: 2),
     );
-  }
-
-  /// Save instanceCode to shared preferences
-  Future<void> _saveInstanceCode(String code) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('instanceCode', code);
-  }
-
-  /// Clear instanceCode from shared preferences (for logout)
-  static Future<void> clearInstanceCode() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('instanceCode');
-  }
-
-  /// Get saved instanceCode from shared preferences
-  static Future<String?> getSavedInstanceCode() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('instanceCode');
   }
 
   @override

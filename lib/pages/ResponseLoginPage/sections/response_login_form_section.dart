@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:resqapp/components/confirmation_button.dart';
 import 'package:resqapp/pages/responseLoginPage/response_login_page_view_model.dart';
 import 'package:resqapp/theme/theme_app.dart';
-import '../../../components/confirmation_button.dart';
 
 class ResponseLoginFormSection extends StatelessWidget {
   const ResponseLoginFormSection({super.key});
