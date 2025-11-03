@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
+import 'dart:ui';
+
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:resqapp/models/location_error.dart';
 
 class ResponseTeamMapViewModel extends GetxController {
   final String instanceCode;
@@ -12,7 +12,6 @@ class ResponseTeamMapViewModel extends GetxController {
   // Reactive state
   final Rx<LatLng> currentLocation = LatLng(-6.2088, 106.8456).obs; // Jakarta default
   final RxBool isLoading = false.obs;
-  final Rx<LocationError?> error = Rx<LocationError?>(null);
   final RxBool hasLocationPermission = false.obs;
   bool _locationServiceEnabled = false;
 
@@ -28,14 +27,17 @@ class ResponseTeamMapViewModel extends GetxController {
   Future<void> _initializeLocation() async {
     try {
       isLoading.value = true;
-      error.value = null;
 
       // Step 1: Check if location services are enabled
       _locationServiceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!_locationServiceEnabled) {
-        error.value = LocationError.locationServiceDisabled();
         hasLocationPermission.value = false;
         isLoading.value = false;
+        Get.snackbar(
+          'Location Service Disabled',
+          'Please enable location services to use this feature',
+          snackPosition: SnackPosition.BOTTOM,
+        );
         return;
       }
 
@@ -47,18 +49,26 @@ class ResponseTeamMapViewModel extends GetxController {
         permission = await Geolocator.requestPermission();
         
         if (permission == LocationPermission.denied) {
-          error.value = LocationError.permissionDenied();
           hasLocationPermission.value = false;
           isLoading.value = false;
+          Get.snackbar(
+            'Permission Denied',
+            'Location permission is required to show your position on the map',
+            snackPosition: SnackPosition.BOTTOM,
+          );
           return;
         }
       }
 
       // Step 4: Handle permanently denied permission
       if (permission == LocationPermission.deniedForever) {
-        error.value = LocationError.permissionDenied();
         hasLocationPermission.value = false;
         isLoading.value = false;
+        Get.snackbar(
+          'Permission Denied Permanently',
+          'Please enable location permission in your device settings',
+          snackPosition: SnackPosition.BOTTOM,
+        );
         return;
       }
 
@@ -67,8 +77,12 @@ class ResponseTeamMapViewModel extends GetxController {
       await _getLocationAfterPermission();
       
     } catch (e) {
-      error.value = LocationError.generic('Failed to initialize location: ${e.toString()}');
       hasLocationPermission.value = false;
+      Get.snackbar(
+        'Location Error',
+        'Failed to initialize location: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } finally {
       isLoading.value = false;
     }
@@ -82,7 +96,6 @@ class ResponseTeamMapViewModel extends GetxController {
       if (lastKnownPosition != null) {
         currentLocation.value = LatLng(lastKnownPosition.latitude, lastKnownPosition.longitude);
         mapController.move(currentLocation.value, 15.0);
-        error.value = null;
         return;
       }
       
@@ -97,20 +110,27 @@ class ResponseTeamMapViewModel extends GetxController {
   Future<void> _getCurrentLocation() async {
     try {
       isLoading.value = true;
-      error.value = null;
 
       // Verify location service is still enabled
       _locationServiceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!_locationServiceEnabled) {
-        error.value = LocationError.locationServiceDisabled();
+        Get.snackbar(
+          'Location Service Disabled',
+          'Please enable location services to use this feature',
+          snackPosition: SnackPosition.BOTTOM,
+        );
         return;
       }
 
       // Verify permission is still granted
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
-        error.value = LocationError.permissionDenied();
         hasLocationPermission.value = false;
+        Get.snackbar(
+          'Permission Denied',
+          'Location permission is required to show your position on the map',
+          snackPosition: SnackPosition.BOTTOM,
+        );
         return;
       }
 
@@ -127,18 +147,39 @@ class ResponseTeamMapViewModel extends GetxController {
       
       currentLocation.value = LatLng(position.latitude, position.longitude);
       mapController.move(currentLocation.value, 15.0);
-      error.value = null;
     } catch (e) {
       if (e.toString().contains('timeout')) {
-        error.value = LocationError.timeout();
+        Get.snackbar(
+          'Location Timeout',
+          'Unable to get location. Please try again.',
+          backgroundColor: const Color(0xFFB71C1C),
+          colorText: Color(0xFFFFFFFF),
+          snackPosition: SnackPosition.BOTTOM,
+        );
       } else if (e.toString().contains('permission')) {
-        error.value = LocationError.permissionDenied();
+        Get.snackbar(
+          'Permission Denied',
+          'Location permission is required to show your position on the map',
+          backgroundColor: const Color(0xFFB71C1C),
+          colorText: Color(0xFFFFFFFF),
+          snackPosition: SnackPosition.BOTTOM,
+        );
       } else if (e.toString().contains('Unable to get current or last known location')) {
-        error.value = LocationError.unableToGetLocation();
-      } else if (e.toString().contains('All location retrieval methods failed')) {
-        error.value = LocationError.serviceNotResponding();
+        Get.snackbar(
+          'Location Unavailable',
+          'Unable to get your current location. Please try again.',
+          backgroundColor: const Color(0xFFB71C1C),
+          colorText: Color(0xFFFFFFFF),
+          snackPosition: SnackPosition.BOTTOM,
+        );
       } else {
-        error.value = LocationError.generic('Failed to get current location: ${e.toString()}');
+        Get.snackbar(
+          'Location Service Not Responding',
+          'The location service is not responding. Please try again later.',
+          backgroundColor: const Color(0xFFB71C1C),
+          colorText: Color(0xFFFFFFFF),
+          snackPosition: SnackPosition.BOTTOM,
+        );
       }
     } finally {
       isLoading.value = false;
@@ -151,10 +192,6 @@ class ResponseTeamMapViewModel extends GetxController {
 
   void refreshData() {
     _getCurrentLocation();
-  }
-
-  void clearError() {
-    error.value = null;
   }
 
   Future<void> retryLocationRequest() async {

@@ -68,8 +68,6 @@ class ResponseLoginPageViewModel extends GetxController {
     Get.snackbar(
       'Berhasil',
       message,
-      backgroundColor: const Color(0xFF2E7D32),
-      colorText: Colors.white,
       snackPosition: SnackPosition.BOTTOM,
       duration: const Duration(seconds: 2),
     );
