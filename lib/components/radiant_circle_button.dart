@@ -37,6 +37,18 @@ class _RadiantCircleButtonState extends State<RadiantCircleButton> with SingleTi
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    
+    // Responsive sizing based on screen width (use smaller dimension to ensure it fits)
+    final minDimension = screenWidth < screenHeight ? screenWidth : screenHeight;
+    
+    // Responsive sizes - scale with screen but maintain aspect ratios
+    final outerSize = (minDimension * 0.6).clamp(200.0, 240.0);
+    final middleSize = (minDimension * 0.525).clamp(175.0, 210.0);
+    final innerSize = (minDimension * 0.45).clamp(150.0, 180.0);
+    final borderWidth = (minDimension * 0.04).clamp(12.0, 16.0);
+    
     return Center(
       child: GestureDetector(
         onTap: widget.onPressed,
@@ -48,8 +60,8 @@ class _RadiantCircleButtonState extends State<RadiantCircleButton> with SingleTi
               children: [
                 // Outermost radiating circle (animated)
                 Container(
-                  width: 240,
-                  height: 240,
+                  width: outerSize,
+                  height: outerSize,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: Colors.transparent,
@@ -64,8 +76,8 @@ class _RadiantCircleButtonState extends State<RadiantCircleButton> with SingleTi
                 ),
                 // Middle pink circle (static)
                 Container(
-                  width: 210,
-                  height: 210,
+                  width: middleSize,
+                  height: middleSize,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: Color(0xFFF1C8C8), // Pink
@@ -73,8 +85,8 @@ class _RadiantCircleButtonState extends State<RadiantCircleButton> with SingleTi
                 ),
                 // Innermost main button
                 Container(
-                  width: 180,
-                  height: 180,
+                  width: innerSize,
+                  height: innerSize,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: widget.mainColor,
@@ -87,7 +99,7 @@ class _RadiantCircleButtonState extends State<RadiantCircleButton> with SingleTi
                     ],
                     border: Border.all(
                       color: widget.mainColor.withOpacity(0.15),
-                      width: 16,
+                      width: borderWidth,
                     ),
                   ),
                   child: Center(child: widget.child),
