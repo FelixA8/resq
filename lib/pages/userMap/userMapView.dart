@@ -3,7 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:provider/provider.dart';
 import 'package:resqapp/pages/userMap/userMapViewModel.dart';
 import 'package:resqapp/theme/theme_app.dart';
-
+import 'package:resqapp/components/radiant_marker.dart';
 import 'package:resqapp/pages/SOS/sos_view.dart';
 import 'package:resqapp/pages/userMap/components/sos_active_banner.dart';
 
@@ -99,9 +99,10 @@ class UserMapView extends StatelessWidget {
                         height: 35,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: isSOSActive 
-                                ? Colors.grey.shade400 
-                                : Color(theme.colors.primary),
+                            backgroundColor:
+                                isSOSActive
+                                    ? Colors.grey.shade400
+                                    : Color(theme.colors.primary),
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -110,33 +111,44 @@ class UserMapView extends StatelessWidget {
                             minimumSize: Size(35, 35),
                             maximumSize: Size(double.infinity, 35),
                           ),
-                          onPressed: isSOSActive 
-                              ? null 
-                              : () {
-                                  // Get the viewModel before showing modal
-                                  final mapViewModel = Provider.of<UserMapViewModel>(context, listen: false);
-                                  showModalBottomSheet(
-                                    context: context,
-                                    isScrollControlled: true,
-                                    backgroundColor: Colors.transparent,
-                                    builder: (modalContext) {
-                                      final screenHeight = MediaQuery.of(context).size.height;
-                                      // Responsive height: adjust based on screen size, but ensure minimum space
-                                      final heightFactor = screenHeight < 700 ? 0.5 : 0.45;
-                                      
-                                      return ChangeNotifierProvider<UserMapViewModel>.value(
-                                        value: mapViewModel,
-                                        child: FractionallySizedBox(
-                                          heightFactor: heightFactor,
-                                          child: SOSView(),
+                          onPressed:
+                              isSOSActive
+                                  ? null
+                                  : () {
+                                    // Get the viewModel before showing modal
+                                    final mapViewModel =
+                                        Provider.of<UserMapViewModel>(
+                                          context,
+                                          listen: false,
+                                        );
+                                    showModalBottomSheet(
+                                      context: context,
+                                      isScrollControlled: true,
+                                      backgroundColor: Colors.transparent,
+                                      builder: (modalContext) {
+                                        final screenHeight =
+                                            MediaQuery.of(context).size.height;
+                                        // Responsive height: adjust based on screen size, but ensure minimum space
+                                        final heightFactor =
+                                            screenHeight < 700 ? 0.5 : 0.45;
+
+                                        return ChangeNotifierProvider<
+                                          UserMapViewModel
+                                        >.value(
+                                          value: mapViewModel,
+                                          child: FractionallySizedBox(
+                                            heightFactor: heightFactor,
+                                            child: SOSView(),
+                                          ),
+                                        );
+                                      },
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.vertical(
+                                          top: Radius.circular(24),
                                         ),
-                                      );
-                                    },
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                                    ),
-                                  );
-                                },
+                                      ),
+                                    );
+                                  },
                           child: Text(
                             'SOS',
                             style: TextStyle(
@@ -165,135 +177,203 @@ class UserMapView extends StatelessWidget {
                 Expanded(
                   child: Stack(
                     children: [
-                FlutterMap(
-                  mapController: viewModel.mapController,
-                  options: MapOptions(
-                    initialCenter: viewModel.currentLocation,
-                    initialZoom: 13.0,
-                    minZoom: 5.0,
-                    maxZoom: 18.0,
-                    interactionOptions: InteractionOptions(flags: InteractiveFlag.all & ~InteractiveFlag.rotate),
-                  ),
-                  children: [
-                    TileLayer(
-                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: 'com.example.disaster_map',
-                      maxZoom: 19,
-                    ),
-                    MarkerLayer(
-                      markers: [
-                        // User location marker
-                        if (viewModel.hasLocationPermission && !viewModel.isLoading)
-                          Marker(
-                            point: viewModel.currentLocation,
-                            width: 40,
-                            height: 40,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.blue,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.white,
-                                  width: 3,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.blue.withOpacity(0.3),
-                                    blurRadius: 8,
-                                    spreadRadius: 2,
-                                  ),
-                                ],
-                              ),
-                              child: Icon(
-                                Icons.my_location,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                            ),
+                      FlutterMap(
+                        mapController: viewModel.mapController,
+                        options: MapOptions(
+                          initialCenter: viewModel.currentLocation,
+                          initialZoom: 13.0,
+                          minZoom: 5.0,
+                          maxZoom: 18.0,
+                          interactionOptions: InteractionOptions(
+                            flags:
+                                InteractiveFlag.all & ~InteractiveFlag.rotate,
                           ),
-                      ],
-                    ),
-                  ],
-                ),
-                
-                if (viewModel.isLoading)
-                  Center(
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.red.shade700),
-                    ),
-                  ),
-                // Error message
-                if (viewModel.error != null)
-                  Positioned(
-                    bottom: 100,
-                    left: 16,
-                    right: 16,
-                    child: Container(
-                      padding: EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.red.shade100,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.red.shade300),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
+                        ),
                         children: [
-                          Row(
-                            children: [
-                              Icon(Icons.error, color: Colors.red.shade700),
-                              SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  viewModel.error!.message,
-                                  style: TextStyle(color: Colors.red.shade700),
+
+                          TileLayer(
+                            urlTemplate:
+                                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                            userAgentPackageName: 'com.example.disaster_map',
+                            maxZoom: 19,
+                          ),
+                          // User marker layer
+                          MarkerLayer(
+                            markers: [
+                              // User location marker
+                              if (viewModel.hasLocationPermission &&
+                                  !viewModel.isLoading)
+                                Marker(
+                                  point: viewModel.currentLocation,
+                                  width: 42,
+                                  height: 42,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Colors.white,
+                                        width: 3,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.blue.withOpacity(0.3),
+                                          blurRadius: 8,
+                                          spreadRadius: 2,
+                                        ),
+                                      ],
+                                    ),
+                                    child: Icon(
+                                      Icons.my_location,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                              IconButton(
-                                icon: Icon(Icons.close, color: Colors.red.shade700),
-                                onPressed: () {
-                                  viewModel.clearError();
-                                },
-                              ),
                             ],
                           ),
-                          if (viewModel.error!.requiresUserAction)
-                            Padding(
-                              padding: EdgeInsets.only(top: 8),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  ElevatedButton.icon(
-                                    onPressed: () {
-                                      viewModel.getQuickLocation();
-                                    },
-                                    icon: Icon(Icons.location_searching, size: 16),
-                                    label: Text('Quick Location'),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.blue.shade700,
-                                      foregroundColor: Colors.white,
-                                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                    ),
-                                  ),
-                                  if (viewModel.error!.isRetryable)
-                                    ElevatedButton.icon(
-                                      onPressed: () {
-                                        viewModel.retryLocationRequest();
-                                      },
-                                      icon: Icon(Icons.refresh, size: 16),
-                                      label: Text('Retry'),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.red.shade700,
-                                        foregroundColor: Colors.white,
-                                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          // Evacuation points layer
+                          MarkerLayer(
+                            markers:
+                                viewModel.evacuationPoints
+                                    .map(
+                                      (point) => Marker(
+                                        point: point,
+                                        width: 42,
+                                        height: 42,
+                                        child: Image.asset(
+                                          'assets/images/icons/map-evacuation-point.png',
+                                          width: 42,
+                                          height: 42,
+                                        ),
                                       ),
-                                    ),
-                                ],
-                              ),
-                            ),
+                                    )
+                                    .toList(),
+                          ),
+                          // Disaster (earthquake) points layer
+                          MarkerLayer(
+                            markers:
+                                viewModel.disasterPoints
+                                    .map(
+                                      (point) => Marker(
+                                        point: point,
+                                        width: 42,
+                                        height: 42,
+                                        child: RadiantMarker(
+                                          color: Colors.redAccent,
+                                          child: Image.asset(
+                                            'assets/images/icons/map-disaster-earthquake.png',
+                                            width: 42,
+                                            height: 42,
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
+                          ),
                         ],
                       ),
-                    ),
-                  ),
+
+                      if (viewModel.isLoading)
+                        Center(
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.red.shade700,
+                            ),
+                          ),
+                        ),
+                      // Error message
+                      if (viewModel.error != null)
+                        Positioned(
+                          bottom: 100,
+                          left: 16,
+                          right: 16,
+                          child: Container(
+                            padding: EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade100,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.red.shade300),
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.error,
+                                      color: Colors.red.shade700,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        viewModel.error!.message,
+                                        style: TextStyle(
+                                          color: Colors.red.shade700,
+                                        ),
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: Icon(
+                                        Icons.close,
+                                        color: Colors.red.shade700,
+                                      ),
+                                      onPressed: () {
+                                        viewModel.clearError();
+                                      },
+                                    ),
+                                  ],
+                                ),
+                                if (viewModel.error!.requiresUserAction)
+                                  Padding(
+                                    padding: EdgeInsets.only(top: 8),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        ElevatedButton.icon(
+                                          onPressed: () {
+                                            viewModel.getQuickLocation();
+                                          },
+                                          icon: Icon(
+                                            Icons.location_searching,
+                                            size: 16,
+                                          ),
+                                          label: Text('Quick Location'),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor:
+                                                Colors.blue.shade700,
+                                            foregroundColor: Colors.white,
+                                            padding: EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 8,
+                                            ),
+                                          ),
+                                        ),
+                                        if (viewModel.error!.isRetryable)
+                                          ElevatedButton.icon(
+                                            onPressed: () {
+                                              viewModel.retryLocationRequest();
+                                            },
+                                            icon: Icon(Icons.refresh, size: 16),
+                                            label: Text('Retry'),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor:
+                                                  Colors.red.shade700,
+                                              foregroundColor: Colors.white,
+                                              padding: EdgeInsets.symmetric(
+                                                horizontal: 12,
+                                                vertical: 8,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -301,7 +381,7 @@ class UserMapView extends StatelessWidget {
             );
           },
         ),
-        
+
         floatingActionButton: Consumer<UserMapViewModel>(
           builder: (context, viewModel, child) {
             return Column(
@@ -310,12 +390,14 @@ class UserMapView extends StatelessWidget {
                 if (viewModel.hasLocationPermission)
                   FloatingActionButton(
                     heroTag: 'location',
-                    onPressed: () => viewModel.moveToLocation(viewModel.currentLocation),
+                    onPressed:
+                        () =>
+                            viewModel.moveToLocation(viewModel.currentLocation),
                     backgroundColor: Colors.white,
                     foregroundColor: Colors.blue,
                     child: Icon(Icons.my_location),
                   ),
-                SizedBox(height: 16)
+                SizedBox(height: 16),
               ],
             );
           },

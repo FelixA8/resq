@@ -13,6 +13,10 @@ class UserMapViewModel extends ChangeNotifier {
   bool hasLocationPermission = false;
   bool _locationServiceEnabled = false;
   
+  // Map annotations (frontend-only for now; replace with backend data later)
+  final List<LatLng> _evacuationPoints = [];
+  final List<LatLng> _disasterPoints = [];
+  
   // SOS State Management
   SOSWaitingViewModel? _sosWaitingViewModel;
   bool _isSOSActive = false;
@@ -26,7 +30,23 @@ class UserMapViewModel extends ChangeNotifier {
   }
 
   void _initializeData() {
-  
+    // TODO: Replace with backend-driven data loading
+    // Dummy evacuation points
+    _evacuationPoints
+      ..clear()
+      ..addAll([
+        LatLng(-6.2075, 106.8450),
+        LatLng(-6.2130, 106.8500),
+      ]);
+
+    // Dummy disaster (earthquake) points
+    _disasterPoints
+      ..clear()
+      ..addAll([
+        LatLng(-6.2200, 106.8400),
+        LatLng(-6.2000, 106.8600),
+      ]);
+
     notifyListeners();
   }
 
@@ -167,6 +187,38 @@ class UserMapViewModel extends ChangeNotifier {
     _isSOSActive = false;
     _sosWaitingViewModel?.dispose();
     _sosWaitingViewModel = null;
+    notifyListeners();
+  }
+
+  // ---------- Annotations API (for future backend integration) ----------
+  List<LatLng> get evacuationPoints => List.unmodifiable(_evacuationPoints);
+  List<LatLng> get disasterPoints => List.unmodifiable(_disasterPoints);
+
+  /// Replace all evacuation points (e.g., after fetching from backend)
+  void setEvacuationPoints(List<LatLng> points) {
+    _evacuationPoints
+      ..clear()
+      ..addAll(points);
+    notifyListeners();
+  }
+
+  /// Replace all disaster points (e.g., after fetching from backend)
+  void setDisasterPoints(List<LatLng> points) {
+    _disasterPoints
+      ..clear()
+      ..addAll(points);
+    notifyListeners();
+  }
+
+  /// Add a single evacuation point (used when response team creates one)
+  void addEvacuationPoint(LatLng point) {
+    _evacuationPoints.add(point);
+    notifyListeners();
+  }
+
+  /// Add a single disaster point (used when a new event is received)
+  void addDisasterPoint(LatLng point) {
+    _disasterPoints.add(point);
     notifyListeners();
   }
 }
