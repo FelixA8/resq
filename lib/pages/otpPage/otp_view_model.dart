@@ -20,6 +20,7 @@ class OTPViewModel extends ChangeNotifier {
 
   String? _verificationId;
   String? _generatedOtpCode;
+  String userId = ""; // Store userId after saving username
 
   // Getters
   OTPModel? get otpModel => _otpModel;
@@ -278,8 +279,9 @@ class OTPViewModel extends ChangeNotifier {
       final result = await SupabaseService.createUser(newUser);
 
       if (result != null) {
+        this.userId = userId; // Store userId for later use
         print(
-          '✅ User created successfully: ${result.username} (${result.userId})',
+          '✅ User created successfully: ${result.username} (${this.userId})',
         );
         _errorMessage = '';
         _isLoading = false;
