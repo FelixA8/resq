@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:resqapp/models/supabase_models.dart';
 import 'package:resqapp/pages/responseTeam/addEvacuationPointPage/add_evacuation_point_view.dart';
-import 'package:resqapp/services/supabase_service.dart';
+import 'package:resqapp/service/supabase_service.dart';
 
 class ResponseTeamEvacuationPointViewModel extends GetxController {
   final String instanceCode;
