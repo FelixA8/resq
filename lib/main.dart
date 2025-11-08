@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:resqapp/pages/Settings/SettingsView.dart';
+import 'package:resqapp/pages/responseLoginPage/response_login_page_view.dart';
+import 'package:resqapp/pages/settings/SettingsView.dart';
 import 'package:resqapp/pages/loginPage/lower_case_view_model.dart';
 import 'package:resqapp/pages/otpPage/otp_view.dart';
 import 'package:resqapp/pages/userMap/userMapView.dart';
+import 'package:resqapp/pages/splash/splash_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'pages/loginPage/login_page_view.dart';
-import 'pages/responseLoginPage/response_login_page_view.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,10 +38,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFB71C1C)),
         fontFamily: 'SF Pro',
       ),
-      home: ChangeNotifierProvider(
-        create: (_) => LoginPageViewModel(),
-        child: const LoginPageView(),
-      ),
+      home: const SplashScreen(),
       getPages: [
         GetPage(
           name: '/otpView',
