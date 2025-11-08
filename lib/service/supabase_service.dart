@@ -2,6 +2,8 @@
 // File: lib/services/supabase_service.dart
 
 import 'dart:convert';
+import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,6 +12,56 @@ import '../models/supabase_models.dart';
 
 class SupabaseService {
   static final SupabaseClient _client = Supabase.instance.client;
+
+  /// Test Supabase connection
+  /// Returns true if connection is successful, false otherwise
+  static Future<bool> testConnection() async {
+    try {
+      print('🔍 Testing Supabase connection...');
+      // Note: Supabase URL is configured at initialization, not accessible via client
+
+      // Try a simple query to test connectivity
+      final response = await _client
+          .from('users')
+          .select('count')
+          .limit(1)
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              throw TimeoutException('Connection timeout after 10 seconds');
+            },
+          );
+
+      print('✅ Supabase connection successful');
+      print('📊 Response: $response');
+      return true;
+    } on SocketException catch (e) {
+      print('❌ Network/DNS Error: ${e.message}');
+      print('🔍 Possible causes:');
+      print('   1. Device/Simulator not connected to internet');
+      print('   2. Incorrect Supabase URL in .env file');
+      print('   3. DNS resolution issue');
+      print('   4. Firewall/Network blocking the connection');
+      return false;
+    } on TimeoutException catch (e) {
+      print('❌ Connection Timeout: ${e.message}');
+      print('🔍 The server might be slow or unreachable');
+      return false;
+    } catch (e) {
+      print('❌ Supabase connection failed: $e');
+      print('📊 Error type: ${e.runtimeType}');
+
+      // Check if it's a URL/configuration issue
+      if (e.toString().contains('hostname') ||
+          e.toString().contains('Failed host lookup')) {
+        print('🚨 DNS Resolution Failed');
+        print('   Check your SUPABASE_URL in .env file');
+        print('   Expected format: https://your-project-id.supabase.co');
+      }
+
+      return false;
+    }
+  }
 
   // ==================== Users ====================
 
@@ -60,10 +112,21 @@ class SupabaseService {
   /// Create OTP code
   static Future<OtpCode?> createOtpCode(OtpCode otpCode) async {
     try {
-      await _client.from('otp_code').insert(otpCode.toJson());
+      print('🔍 Attempting to create OTP code...($otpCode)');
+      print('📋 OTP Data: ${otpCode.toJson()}');
+
+      final response =
+          await _client.from('otp_code').insert(otpCode.toJson()).select();
+
+      print('✅ Supabase response: $response');
       return otpCode;
     } catch (e) {
-      print('Error creating OTP code: $e');
+      print('❌ Error creating OTP code: $e');
+      print('📊 Error type: ${e.runtimeType}');
+      if (e.toString().contains('relation') &&
+          e.toString().contains('does not exist')) {
+        print('🚨 Table "otp_code" does not exist in Supabase database');
+      }
       return null;
     }
   }
@@ -81,7 +144,9 @@ class SupabaseService {
       if (response == null) return false;
 
       final otpCode = OtpCode.fromJson(response);
-      return otpCode.otpCode == code && otpCode.isActive;
+      bool value = (otpCode.otpCode == code && otpCode.isValid);
+      print("using verificationId: $verificationId and code: $code, result is $value, because otpCode is ${otpCode.otpCode} and isActive is ${otpCode.isValid}");
+      return value;
     } catch (e) {
       print('Error verifying OTP: $e');
       return false;
