@@ -82,6 +82,24 @@ class SupabaseService {
     }
   }
 
+  static Future<ResqUser?> getUserByPhone(String phoneNumber) async {
+  try {
+    final response = 
+      await _client
+        .from('users')
+        .select()
+        .eq('phone_number', phoneNumber)
+        .single();
+    if (response.isNotEmpty) {
+      return ResqUser.fromJson(response); // Assuming ResqUser has a fromJson constructor
+    }
+    return null;
+  } catch (e) {
+    print('Error fetching user by phone: $e');
+    return null;
+  }
+}
+
   /// Create a new user
   static Future<ResqUser?> createUser(ResqUser user) async {
     try {
