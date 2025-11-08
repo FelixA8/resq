@@ -1,22 +1,20 @@
-import 'dart:ui';
-
 import 'package:flutter_map/flutter_map.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:resqapp/services/location_helper.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class ResponseTeamMapViewModel extends GetxController {
+class AddEvacuationPointViewModel extends GetxController {
   final String instanceCode;
   final MapController mapController = MapController();
   
   // Reactive state
   final Rx<LatLng> currentLocation = LatLng(-6.2088, 106.8456).obs; // Jakarta default
+  final Rx<LatLng> selectedLocation = LatLng(-6.2088, 106.8456).obs; // Selected evacuation point location
   final RxBool isLoading = false.obs;
   final RxBool hasLocationPermission = false.obs;
-  bool _locationServiceEnabled = false;
 
-  ResponseTeamMapViewModel({required this.instanceCode});
+  AddEvacuationPointViewModel({required this.instanceCode});
 
   @override
   void onInit() {
@@ -32,6 +30,7 @@ class ResponseTeamMapViewModel extends GetxController {
       LocationResult result = await LocationHelper.initializeLocation();
       
       currentLocation.value = result.location;
+      selectedLocation.value = result.location; // Initially set selected location to current location
       hasLocationPermission.value = result.hasPermission;
       
       // Move map to the location
@@ -45,26 +44,26 @@ class ResponseTeamMapViewModel extends GetxController {
     }
   }
 
-  /// Get location after permission has been granted
-  Future<void> _getLocationAfterPermission() async {
-    try {
-      // Try to get last known position first (quick)
-      Position? lastKnownPosition = await Geolocator.getLastKnownPosition();
-      if (lastKnownPosition != null) {
-        currentLocation.value = LatLng(lastKnownPosition.latitude, lastKnownPosition.longitude);
-        mapController.move(currentLocation.value, 15.0);
-        return;
-      }
-      
-      // If no last known position, get current location
-      await _getCurrentLocation();
-    } catch (e) {
-      // If quick location fails, try full location
-      await _getCurrentLocation();
+  /// Update selected location when map is moved
+  void onMapPositionChanged(MapCamera camera) {
+    selectedLocation.value = camera.center;
+  }
+
+  /// Move map to a specific location
+  void moveToLocation(LatLng location) {
+    mapController.move(location, 16.0);
+  }
+
+  /// Move to current user location
+  void moveToCurrentLocation() {
+    if (hasLocationPermission.value) {
+      mapController.move(currentLocation.value, 16.0);
+      selectedLocation.value = currentLocation.value;
     }
   }
 
-  Future<void> _getCurrentLocation() async {
+  /// Refresh current location
+  Future<void> refreshCurrentLocation() async {
     if (!hasLocationPermission.value) return;
     
     try {
@@ -73,28 +72,26 @@ class ResponseTeamMapViewModel extends GetxController {
       
       if (result.hasPermission) {
         currentLocation.value = result.location;
-        mapController.move(currentLocation.value, 15.0);
       }
     } catch (e) {
-      // LocationHelper handles error messages
+      // Silent refresh, no error messages
     } finally {
       isLoading.value = false;
     }
   }
 
-  void moveToLocation(LatLng location) {
-    mapController.move(location, 16.0);
-  }
-
-  void refreshData() {
-    _getCurrentLocation();
-  }
-
+  /// Retry location initialization
   Future<void> retryLocationRequest() async {
     await _initializeLocation();
   }
 
-  Future<void> getQuickLocation() async {
-    await _initializeLocation();
+  /// Handle confirmation button press
+  void onConfirmPressed() {
+    
+  }
+
+  /// Navigate back
+  void onBackPressed() {
+    Get.back();
   }
 }

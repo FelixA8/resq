@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:resqapp/pages/responseTeam/response_team_dashboard_view_model.dart';
-import 'package:resqapp/pages/responseTeam/responseTeamEvacuationPoint/response_team_evacuation_point_view.dart';
+import 'package:resqapp/pages/responseTeam/responseTeamEvacuationPointPage/response_team_evacuation_point_view.dart';
 import 'package:resqapp/pages/responseTeam/responseTeamMap/response_team_map_view.dart';
 import 'package:resqapp/pages/responseTeam/responseTeamSOSReport/response_team_sos_report_view.dart';
 import 'package:resqapp/pages/responseLoginPage/response_login_page_view_model.dart';
