@@ -52,33 +52,48 @@ class EvacuationListView extends StatelessWidget {
               }
 
               if (controller.evacuationPoints.isEmpty) {
-                return Center(
-                  child: Text(
-                    "Tidak ada poin evakuasi",
-                    style: TextStyle(
-                      color: Color(theme.colors.neutral.med),
-                      fontSize: 14,
-                      fontFamily: 'SF Pro',
-                    ),
+                return RefreshIndicator(
+                  onRefresh: controller.refreshData,
+                  color: Color(theme.colors.primary),
+                  child: ListView(
+                    children: [
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.3,
+                        child: Center(
+                          child: Text(
+                            "Tidak ada poin evakuasi",
+                            style: TextStyle(
+                              color: Color(theme.colors.neutral.med),
+                              fontSize: 14,
+                              fontFamily: 'SF Pro',
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 );
               }
 
-              return ListView.separated(
-                padding: EdgeInsets.symmetric(horizontal: theme.padding.s),
-                itemCount: controller.evacuationPoints.length,
-                separatorBuilder:
-                    (context, index) => SizedBox(height: theme.size.s),
-                itemBuilder: (context, index) {
-                  final evacuationPoint = controller.evacuationPoints[index];
-                  return EvacuationPointCard(
-                    evacuationPoint: evacuationPoint,
-                    onEdit:
-                        () => controller.editEvacuationPoint(evacuationPoint),
-                    onDelete:
-                        () => controller.deleteEvacuationPoint(evacuationPoint),
-                  );
-                },
+              return RefreshIndicator(
+                onRefresh: controller.refreshData,
+                color: Color(theme.colors.primary),
+                child: ListView.separated(
+                  padding: EdgeInsets.symmetric(horizontal: theme.padding.s),
+                  itemCount: controller.evacuationPoints.length,
+                  separatorBuilder:
+                      (context, index) => SizedBox(height: theme.size.s),
+                  itemBuilder: (context, index) {
+                    final evacuationPoint = controller.evacuationPoints[index];
+                    return EvacuationPointCard(
+                      evacuationPoint: evacuationPoint,
+                      onEdit:
+                          () => controller.editEvacuationPoint(evacuationPoint),
+                      onDelete:
+                          () => controller.deleteEvacuationPoint(evacuationPoint),
+                    );
+                  },
+                ),
               );
             }),
           ),

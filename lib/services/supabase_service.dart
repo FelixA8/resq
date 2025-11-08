@@ -1,8 +1,10 @@
 // Supabase Database Service
 // File: lib/services/supabase_service.dart
 
+import 'dart:convert';
 import 'dart:math';
 
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/supabase_models.dart';
 
@@ -269,17 +271,21 @@ class SupabaseService {
   static Future<EvacuationPoint?> addEvacuationPoint({
     required double locationLat,
     required double locationLng,
+    required String responseTeamId,
     String? city,
     String? locationDetail,
   }) async {
     try {
-      // Prepare data for insertion - both evacuation_id and response_team_id are auto-generated
       final insertData = <String, dynamic>{
+        'response_team_id': responseTeamId,
         'location_lat': locationLat,
         'location_lng': locationLng,
         'city': city,
+        'created_at': DateTime.now().millisecondsSinceEpoch,
         'location_detail': locationDetail,
       };
+      
+      print('SupabaseService: Attempting to insert evacuation point with data: $insertData');
 
       final response = await _client
           .from('evacuation_points')
@@ -287,9 +293,18 @@ class SupabaseService {
           .select()
           .single();
 
-      return EvacuationPoint.fromJson(response);
+      print('SupabaseService: Successfully inserted evacuation point. Response: $response');
+      
+      final evacuationPoint = EvacuationPoint.fromJson(response);
+      print('SupabaseService: Created EvacuationPoint object: ${evacuationPoint.evacuationId}');
+      
+      return evacuationPoint;
     } catch (e) {
-      print('Error adding evacuation point: $e');
+      print('SupabaseService: Error adding evacuation point: $e');
+      print('SupabaseService: Error type: ${e.runtimeType}');
+      if (e is PostgrestException) {
+        print('SupabaseService: PostgrestException details - Code: ${e.code}, Message: ${e.message}');
+      }
       return null;
     }
   }
@@ -301,10 +316,12 @@ class SupabaseService {
         print('Error: evacuation_id is required for updating');
         return false;
       }
-
-      // Prepare update data - exclude evacuation_id and response_team_id (both auto-generated)
+      
       final updateData = <String, dynamic>{};
       
+      if (evacuationPoint.responseTeamId != null) {
+        updateData['response_team_id'] = evacuationPoint.responseTeamId;
+      }
       if (evacuationPoint.locationLat != null) {
         updateData['location_lat'] = evacuationPoint.locationLat;
       }
@@ -409,10 +426,56 @@ class SupabaseService {
               .eq('password', password)
               .maybeSingle();
 
-      return response != null ? ResponseTeam.fromJson(response) : null;
-    } catch (e) {
-      print('Error getting response team: $e');
+      if (response != null) {
+        final responseTeam = ResponseTeam.fromJson(response);
+        // Store in shared preferences after successful login
+        await _storeResponseTeamData(responseTeam);
+        return responseTeam;
+      }
       return null;
+    } catch (e) {
+      print('Error logging in response team: $e');
+      return null;
+    }
+  }
+
+  // ==================== Shared Preferences ====================
+
+  /// Store response team data in shared preferences
+  static Future<void> _storeResponseTeamData(ResponseTeam responseTeam) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonString = jsonEncode(responseTeam.toSharedPrefsJson());
+      await prefs.setString('response_team_data', jsonString);
+    } catch (e) {
+      print('Error storing response team data: $e');
+    }
+  }
+
+  /// Get stored response team data from shared preferences
+  static Future<ResponseTeam?> getStoredResponseTeam() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonString = prefs.getString('response_team_data');
+      
+      if (jsonString != null) {
+        final jsonData = jsonDecode(jsonString) as Map<String, dynamic>;
+        return ResponseTeam.fromSharedPrefsJson(jsonData);
+      }
+      return null;
+    } catch (e) {
+      print('Error getting stored response team data: $e');
+      return null;
+    }
+  }
+
+  /// Clear stored response team data (logout)
+  static Future<void> clearStoredResponseTeam() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('response_team_data');
+    } catch (e) {
+      print('Error clearing response team data: $e');
     }
   }
 }

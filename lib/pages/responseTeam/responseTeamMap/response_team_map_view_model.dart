@@ -131,6 +131,23 @@ class ResponseTeamMapViewModel extends GetxController {
     }
   }
 
+  /// Get location after permission has been granted
+  Future<void> _getLocationAfterPermission() async {
+    try {
+      // Try to get last known position first (quick)
+      Position? lastKnownPosition = await Geolocator.getLastKnownPosition();
+      if (lastKnownPosition != null) {
+        currentLocation.value = LatLng(lastKnownPosition.latitude, lastKnownPosition.longitude);
+        mapController.move(currentLocation.value, 15.0);
+        return;
+      }
+      
+      await _getCurrentLocation();
+    } catch (e) {
+      await _getCurrentLocation();
+    }
+  }
+
   Future<void> _getCurrentLocation() async {
     if (!hasLocationPermission.value) return;
     
@@ -143,7 +160,6 @@ class ResponseTeamMapViewModel extends GetxController {
         mapController.move(currentLocation.value, 15.0);
       }
     } catch (e) {
-      // LocationHelper handles error messages
     } finally {
       isLoading.value = false;
     }
