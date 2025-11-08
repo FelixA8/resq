@@ -18,7 +18,13 @@ class OTPView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => OTPViewModel()..initialize(phoneNumber),
+      create: (_) {
+        final viewModel = OTPViewModel();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          viewModel.initialize(phoneNumber);
+        });
+        return viewModel;
+      },
       child: const OTPScreen(),
     );
   }

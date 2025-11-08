@@ -60,7 +60,7 @@ class OtpCode {
   final String verificationId;
   final String? userId;
   final String? otpCode;
-  final bool? isValid;
+  final bool isValid;
   final DateTime? createdAt;
   final DateTime? expiresAt;
 
@@ -68,7 +68,7 @@ class OtpCode {
     required this.verificationId,
     this.userId,
     this.otpCode,
-    this.isValid,
+    required this.isValid,
     this.createdAt,
     this.expiresAt,
   });
@@ -78,7 +78,7 @@ class OtpCode {
       verificationId: json['verification_id'] as String,
       userId: json['user_id'] as String?,
       otpCode: json['otp_code'] as String?,
-      isValid: json['is_valid'] as bool?,
+      isValid: json['is_valid'] as bool,
       createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
       expiresAt: json['expires_at'] != null ? DateTime.parse(json['expires_at']) : null,
     );
@@ -99,6 +99,7 @@ class OtpCode {
     if (expiresAt == null) return false;
     return DateTime.now().isAfter(expiresAt!);
   }
+  
 
   bool get isActive => isValid == true && !isExpired;
 }

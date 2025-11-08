@@ -1,6 +1,8 @@
 // Supabase Database Service
 // File: lib/services/supabase_service.dart
 
+import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -9,17 +11,68 @@ import '../models/supabase_models.dart';
 class SupabaseService {
   static final SupabaseClient _client = Supabase.instance.client;
 
+  /// Test Supabase connection
+  /// Returns true if connection is successful, false otherwise
+  static Future<bool> testConnection() async {
+    try {
+      print('🔍 Testing Supabase connection...');
+      // Note: Supabase URL is configured at initialization, not accessible via client
+
+      // Try a simple query to test connectivity
+      final response = await _client
+          .from('users')
+          .select('count')
+          .limit(1)
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              throw TimeoutException('Connection timeout after 10 seconds');
+            },
+          );
+
+      print('✅ Supabase connection successful');
+      print('📊 Response: $response');
+      return true;
+    } on SocketException catch (e) {
+      print('❌ Network/DNS Error: ${e.message}');
+      print('🔍 Possible causes:');
+      print('   1. Device/Simulator not connected to internet');
+      print('   2. Incorrect Supabase URL in .env file');
+      print('   3. DNS resolution issue');
+      print('   4. Firewall/Network blocking the connection');
+      return false;
+    } on TimeoutException catch (e) {
+      print('❌ Connection Timeout: ${e.message}');
+      print('🔍 The server might be slow or unreachable');
+      return false;
+    } catch (e) {
+      print('❌ Supabase connection failed: $e');
+      print('📊 Error type: ${e.runtimeType}');
+
+      // Check if it's a URL/configuration issue
+      if (e.toString().contains('hostname') ||
+          e.toString().contains('Failed host lookup')) {
+        print('🚨 DNS Resolution Failed');
+        print('   Check your SUPABASE_URL in .env file');
+        print('   Expected format: https://your-project-id.supabase.co');
+      }
+
+      return false;
+    }
+  }
+
   // ==================== Users ====================
-  
+
   /// Get a user by ID
   static Future<ResqUser?> getUserById(String userId) async {
     try {
-      final response = await _client
-          .from('users')
-          .select()
-          .eq('user_id', userId)
-          .maybeSingle();
-      
+      final response =
+          await _client
+              .from('users')
+              .select()
+              .eq('user_id', userId)
+              .maybeSingle();
+
       return response != null ? ResqUser.fromJson(response) : null;
     } catch (e) {
       print('Error getting user: $e');
@@ -53,14 +106,25 @@ class SupabaseService {
   }
 
   // ==================== OTP Code ====================
-  
+
   /// Create OTP code
   static Future<OtpCode?> createOtpCode(OtpCode otpCode) async {
     try {
-      await _client.from('otp_code').insert(otpCode.toJson());
+      print('🔍 Attempting to create OTP code...($otpCode)');
+      print('📋 OTP Data: ${otpCode.toJson()}');
+
+      final response =
+          await _client.from('otp_code').insert(otpCode.toJson()).select();
+
+      print('✅ Supabase response: $response');
       return otpCode;
     } catch (e) {
-      print('Error creating OTP code: $e');
+      print('❌ Error creating OTP code: $e');
+      print('📊 Error type: ${e.runtimeType}');
+      if (e.toString().contains('relation') &&
+          e.toString().contains('does not exist')) {
+        print('🚨 Table "otp_code" does not exist in Supabase database');
+      }
       return null;
     }
   }
@@ -68,16 +132,19 @@ class SupabaseService {
   /// Verify OTP code
   static Future<bool> verifyOtpCode(String verificationId, String code) async {
     try {
-      final response = await _client
-          .from('otp_code')
-          .select()
-          .eq('verification_id', verificationId)
-          .maybeSingle();
-      
+      final response =
+          await _client
+              .from('otp_code')
+              .select()
+              .eq('verification_id', verificationId)
+              .maybeSingle();
+
       if (response == null) return false;
-      
+
       final otpCode = OtpCode.fromJson(response);
-      return otpCode.otpCode == code && otpCode.isActive;
+      bool value = (otpCode.otpCode == code && otpCode.isValid);
+      print("using verificationId: $verificationId and code: $code, result is $value, because otpCode is ${otpCode.otpCode} and isActive is ${otpCode.isValid}");
+      return value;
     } catch (e) {
       print('Error verifying OTP: $e');
       return false;
@@ -99,7 +166,7 @@ class SupabaseService {
   }
 
   // ==================== Contacts ====================
-  
+
   /// Get user's emergency contacts
   static Future<List<Contact>> getUserContacts(String userId) async {
     try {
@@ -107,10 +174,8 @@ class SupabaseService {
           .from('contacts')
           .select()
           .eq('user_id', userId);
-      
-      return (response as List)
-          .map((json) => Contact.fromJson(json))
-          .toList();
+
+      return (response as List).map((json) => Contact.fromJson(json)).toList();
     } catch (e) {
       print('Error getting contacts: $e');
       return [];
@@ -129,7 +194,7 @@ class SupabaseService {
   }
 
   // ==================== Disasters ====================
-  
+
   /// Get all disasters
   static Future<List<Disaster>> getDisasters() async {
     try {
@@ -137,10 +202,8 @@ class SupabaseService {
           .from('disasters')
           .select()
           .order('occurred_at', ascending: false);
-      
-      return (response as List)
-          .map((json) => Disaster.fromJson(json))
-          .toList();
+
+      return (response as List).map((json) => Disaster.fromJson(json)).toList();
     } catch (e) {
       print('Error getting disasters: $e');
       return [];
@@ -148,7 +211,7 @@ class SupabaseService {
   }
 
   // ==================== SOS Events ====================
-  
+
   /// Create SOS event
   static Future<SosEvent?> createSosEvent(SosEvent sosEvent) async {
     try {
@@ -164,14 +227,12 @@ class SupabaseService {
   static Future<List<SosEvent>> getSoSEvents() async {
     try {
       final response = await _client
-        .from('sos_events')
-        .select()
-        .order('pressed_at', ascending: true);
+          .from('sos_events')
+          .select()
+          .order('pressed_at', ascending: true);
 
-      return (response as List)
-        .map((json) => SosEvent.fromJson(json))
-        .toList();
-    } catch(e) {
+      return (response as List).map((json) => SosEvent.fromJson(json)).toList();
+    } catch (e) {
       print('Error getting SOS events: $e');
       return [];
     }
@@ -185,7 +246,7 @@ class SupabaseService {
           .select()
           .eq('user_id', userId)
           .order('sos_id', ascending: false);
-      
+
       return (response as SosEvent);
     } catch (e) {
       print('Error getting SOS events: $e');
@@ -231,18 +292,18 @@ class SupabaseService {
   }
 
   // ==================== Evacuation Points ====================
-  
+
   /// Get evacuation points
   static Future<List<EvacuationPoint>> getEvacuationPoints({
     String? city,
   }) async {
     try {
       var query = _client.from('evacuation_points').select();
-      
+
       if (city != null) {
         query = query.eq('city', city);
       }
-      
+
       final response = await query;
       return (response as List)
           .map((json) => EvacuationPoint.fromJson(json))
@@ -262,7 +323,7 @@ class SupabaseService {
     try {
       final latOffset = radiusKm / 111.0;
       final lngOffset = radiusKm / (111.0 * cos(lat * 3.14159 / 180));
-      
+
       final response = await _client
           .from('evacuation_points')
           .select()
@@ -270,7 +331,7 @@ class SupabaseService {
           .lte('location_lat', lat + latOffset)
           .gte('location_lng', lng - lngOffset)
           .lte('location_lng', lng + lngOffset);
-      
+
       return (response as List)
           .map((json) => EvacuationPoint.fromJson(json))
           .toList();
@@ -281,16 +342,19 @@ class SupabaseService {
   }
 
   // ==================== Response Teams ====================
-  
+
   /// Get response team by ID
-  static Future<ResponseTeam?> getResponseTeamByInstanceCode(String instanceCode) async {
+  static Future<ResponseTeam?> getResponseTeamByInstanceCode(
+    String instanceCode,
+  ) async {
     try {
-      final response = await _client
-          .from('response_teams')
-          .select()
-          .eq('instance_code', instanceCode)
-          .maybeSingle();
-      
+      final response =
+          await _client
+              .from('response_teams')
+              .select()
+              .eq('instance_code', instanceCode)
+              .maybeSingle();
+
       return response != null ? ResponseTeam.fromJson(response) : null;
     } catch (e) {
       print('Error getting response team: $e');
@@ -298,15 +362,19 @@ class SupabaseService {
     }
   }
 
-  static Future<ResponseTeam?> loginResponseTeam(String instanceCode, String password) async {
+  static Future<ResponseTeam?> loginResponseTeam(
+    String instanceCode,
+    String password,
+  ) async {
     try {
-      final response = await _client
-          .from('response_teams')
-          .select()
-          .eq('instance_code', instanceCode)
-          .eq('password', password)
-          .maybeSingle();
-      
+      final response =
+          await _client
+              .from('response_teams')
+              .select()
+              .eq('instance_code', instanceCode)
+              .eq('password', password)
+              .maybeSingle();
+
       return response != null ? ResponseTeam.fromJson(response) : null;
     } catch (e) {
       print('Error getting response team: $e');
@@ -314,4 +382,3 @@ class SupabaseService {
     }
   }
 }
-
