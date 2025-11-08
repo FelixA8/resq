@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:resqapp/models/supabase_models.dart';
 import 'package:resqapp/pages/responseTeam/addEvacuationPointPage/add_evacuation_point_view.dart';
+import 'package:resqapp/pages/responseTeam/responseTeamEvacuationPointPage/components/evacuation_delete_dialog.dart';
 import 'package:resqapp/service/supabase_service.dart';
 
 class ResponseTeamEvacuationPointViewModel extends GetxController {
@@ -27,7 +28,6 @@ class ResponseTeamEvacuationPointViewModel extends GetxController {
       isLoading.value = true;
       errorMessage.value = '';
       
-      print('Loading evacuation points from database...');
       final response = await SupabaseService.getEvacuationPoints();
       evacuationPoints.value = response;
       totalEvacuationPoints.value = response.length;
@@ -94,32 +94,69 @@ class ResponseTeamEvacuationPointViewModel extends GetxController {
   }
 
   /// Edit evacuation point
-  void editEvacuationPoint(EvacuationPoint point) {
-    // TODO: Navigate to edit evacuation point screen
-    Get.snackbar(
-      'Edit Evacuation Point',
-      'Edit ${point.evacuationId}',
-      snackPosition: SnackPosition.BOTTOM,
+  void editEvacuationPoint(EvacuationPoint point) async {
+    final result = await Get.to(() => AddEvacuationPointView(
+      instanceCode: instanceCode,
+      existingEvacuationPoint: point,
+    ));
+    
+    // If result is true, it means the evacuation point was updated successfully
+    if (result == true) {
+      print('Refreshing evacuation points after successful edit');
+      await refreshData();
+    }
+  }
+
+  /// Delete evacuation point with confirmation dialog
+  void deleteEvacuationPoint(EvacuationPoint point) {
+    EvacuationDeleteDialog.show(
+      evacuationPoint: point,
+      onConfirmDelete: () => _performDelete(point),
     );
   }
 
-  /// Delete evacuation point
-  void deleteEvacuationPoint(EvacuationPoint point) {
+  /// Perform the actual deletion
+  Future<void> _performDelete(EvacuationPoint point) async {
     try {
-      evacuationPoints.removeWhere((p) => p.evacuationId == point.evacuationId);
-      totalEvacuationPoints.value = evacuationPoints.length;
+      isLoading.value = true;
       
-      Get.snackbar(
-        'Success',
-        'Evacuation point ${point.evacuationId} deleted',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      final success = await SupabaseService.deleteEvacuationPoint(point.evacuationId!);
+      
+      if (success) {
+        // Remove from local list
+        evacuationPoints.removeWhere((p) => p.evacuationId == point.evacuationId);
+        totalEvacuationPoints.value = evacuationPoints.length;
+        
+        Get.snackbar(
+          'Berhasil',
+          'Poin evakuasi berhasil dihapus',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 2),
+        );
+        
+        print('Successfully deleted evacuation point: ${point.evacuationId}');
+      } else {
+        Get.snackbar(
+          'Error',
+          'Gagal menghapus poin evakuasi',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
     } catch (e) {
+      print('Error deleting evacuation point: $e');
       Get.snackbar(
         'Error',
-        'Failed to delete evacuation point',
+        'Terjadi kesalahan: ${e.toString()}',
         snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
       );
+    } finally {
+      isLoading.value = false;
     }
   }
 
