@@ -100,7 +100,7 @@ class SOSReportCard extends StatelessWidget {
                 style: TextStyle(
                   fontFamily: 'SF Pro',
                   fontWeight: FontWeight.w500,
-                  fontSize: 32,
+                  fontSize: 28,
                   color: Color(theme.colors.primary),
                 ),
               ),

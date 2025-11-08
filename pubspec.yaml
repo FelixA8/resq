@@ -89,6 +89,7 @@ flutter:
     # Illustrations
     - assets/images/illustrations/login-illustration.png
     - assets/images/illustrations/sos-running.png
+    - assets/images/illustrations/response-team.png
     
     # Icons
     - assets/images/icons/annotation.png

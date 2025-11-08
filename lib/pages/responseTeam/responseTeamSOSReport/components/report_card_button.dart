@@ -26,7 +26,7 @@ class ReportCardButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.grey.shade400,
           foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
