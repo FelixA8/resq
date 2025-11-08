@@ -42,6 +42,8 @@ dependencies:
   supabase_flutter: ^2.10.3
   flutter_dotenv: ^6.0.0
   get: ^4.7.2
+  geocoding: ^4.0.0
+  shared_preferences: ^2.3.3
 
 dev_dependencies:
   flutter_test:
@@ -100,6 +102,7 @@ flutter:
     - assets/images/icons/map-evacuation-point.png
     - assets/images/icons/menu-back.png
     - assets/images/icons/menu-hamburger.png
+    - assets/images/icons/modify.png
     - assets/images/icons/navbar-disaster-grey.png
     - assets/images/icons/navbar-disaster-red.png
     - assets/images/icons/navbar-evacuation-point-grey.png
@@ -110,6 +113,7 @@ flutter:
     - assets/images/icons/profile.png
     - assets/images/icons/radius.png
     - assets/images/icons/report.png
+    - assets/images/icons/remove.png
     - assets/images/icons/tsunami.png
     - assets/images/icons/warning.png
     - assets/images/icons/water-height.png
@@ -120,6 +124,7 @@ flutter:
     - assets/images/icons/phone-one.png
     - assets/images/icons/phone-two.png
     - assets/images/icons/phone-three.png
+    - assets/images/icons/sos-gray.png
     
     
 

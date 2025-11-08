@@ -10,16 +10,17 @@ class SupabaseService {
   static final SupabaseClient _client = Supabase.instance.client;
 
   // ==================== Users ====================
-  
+
   /// Get a user by ID
   static Future<ResqUser?> getUserById(String userId) async {
     try {
-      final response = await _client
-          .from('users')
-          .select()
-          .eq('user_id', userId)
-          .maybeSingle();
-      
+      final response =
+          await _client
+              .from('users')
+              .select()
+              .eq('user_id', userId)
+              .maybeSingle();
+
       return response != null ? ResqUser.fromJson(response) : null;
     } catch (e) {
       print('Error getting user: $e');
@@ -53,7 +54,7 @@ class SupabaseService {
   }
 
   // ==================== OTP Code ====================
-  
+
   /// Create OTP code
   static Future<OtpCode?> createOtpCode(OtpCode otpCode) async {
     try {
@@ -68,14 +69,15 @@ class SupabaseService {
   /// Verify OTP code
   static Future<bool> verifyOtpCode(String verificationId, String code) async {
     try {
-      final response = await _client
-          .from('otp_code')
-          .select()
-          .eq('verification_id', verificationId)
-          .maybeSingle();
-      
+      final response =
+          await _client
+              .from('otp_code')
+              .select()
+              .eq('verification_id', verificationId)
+              .maybeSingle();
+
       if (response == null) return false;
-      
+
       final otpCode = OtpCode.fromJson(response);
       return otpCode.otpCode == code && otpCode.isActive;
     } catch (e) {
@@ -99,7 +101,7 @@ class SupabaseService {
   }
 
   // ==================== Contacts ====================
-  
+
   /// Get user's emergency contacts
   static Future<List<Contact>> getUserContacts(String userId) async {
     try {
@@ -107,10 +109,8 @@ class SupabaseService {
           .from('contacts')
           .select()
           .eq('user_id', userId);
-      
-      return (response as List)
-          .map((json) => Contact.fromJson(json))
-          .toList();
+
+      return (response as List).map((json) => Contact.fromJson(json)).toList();
     } catch (e) {
       print('Error getting contacts: $e');
       return [];
@@ -129,7 +129,7 @@ class SupabaseService {
   }
 
   // ==================== Disasters ====================
-  
+
   /// Get all disasters
   static Future<List<Disaster>> getDisasters() async {
     try {
@@ -137,10 +137,8 @@ class SupabaseService {
           .from('disasters')
           .select()
           .order('occurred_at', ascending: false);
-      
-      return (response as List)
-          .map((json) => Disaster.fromJson(json))
-          .toList();
+
+      return (response as List).map((json) => Disaster.fromJson(json)).toList();
     } catch (e) {
       print('Error getting disasters: $e');
       return [];
@@ -148,7 +146,7 @@ class SupabaseService {
   }
 
   // ==================== SOS Events ====================
-  
+
   /// Create SOS event
   static Future<SosEvent?> createSosEvent(SosEvent sosEvent) async {
     try {
@@ -164,14 +162,12 @@ class SupabaseService {
   static Future<List<SosEvent>> getSoSEvents() async {
     try {
       final response = await _client
-        .from('sos_events')
-        .select()
-        .order('pressed_at', ascending: true);
+          .from('sos_events')
+          .select()
+          .order('pressed_at', ascending: true);
 
-      return (response as List)
-        .map((json) => SosEvent.fromJson(json))
-        .toList();
-    } catch(e) {
+      return (response as List).map((json) => SosEvent.fromJson(json)).toList();
+    } catch (e) {
       print('Error getting SOS events: $e');
       return [];
     }
@@ -185,7 +181,7 @@ class SupabaseService {
           .select()
           .eq('user_id', userId)
           .order('sos_id', ascending: false);
-      
+
       return (response as SosEvent);
     } catch (e) {
       print('Error getting SOS events: $e');
@@ -231,18 +227,18 @@ class SupabaseService {
   }
 
   // ==================== Evacuation Points ====================
-  
+
   /// Get evacuation points
   static Future<List<EvacuationPoint>> getEvacuationPoints({
     String? city,
   }) async {
     try {
       var query = _client.from('evacuation_points').select();
-      
+
       if (city != null) {
         query = query.eq('city', city);
       }
-      
+
       final response = await query;
       return (response as List)
           .map((json) => EvacuationPoint.fromJson(json))
@@ -250,6 +246,105 @@ class SupabaseService {
     } catch (e) {
       print('Error getting evacuation points: $e');
       return [];
+    }
+  }
+
+  /// Get evacuation point by ID
+  static Future<EvacuationPoint?> getEvacuationPointById(String evacuationId) async {
+    try {
+      final response = await _client
+          .from('evacuation_points')
+          .select()
+          .eq('evacuation_id', evacuationId)
+          .maybeSingle();
+
+      return response != null ? EvacuationPoint.fromJson(response) : null;
+    } catch (e) {
+      print('Error getting evacuation point: $e');
+      return null;
+    }
+  }
+
+  /// Add evacuation point
+  static Future<EvacuationPoint?> addEvacuationPoint({
+    required double locationLat,
+    required double locationLng,
+    String? city,
+    String? locationDetail,
+  }) async {
+    try {
+      // Prepare data for insertion - both evacuation_id and response_team_id are auto-generated
+      final insertData = <String, dynamic>{
+        'location_lat': locationLat,
+        'location_lng': locationLng,
+        'city': city,
+        'location_detail': locationDetail,
+      };
+
+      final response = await _client
+          .from('evacuation_points')
+          .insert(insertData)
+          .select()
+          .single();
+
+      return EvacuationPoint.fromJson(response);
+    } catch (e) {
+      print('Error adding evacuation point: $e');
+      return null;
+    }
+  }
+
+  /// Update evacuation point
+  static Future<bool> modifyEvacuationPoint(EvacuationPoint evacuationPoint) async {
+    try {
+      if (evacuationPoint.evacuationId == null) {
+        print('Error: evacuation_id is required for updating');
+        return false;
+      }
+
+      // Prepare update data - exclude evacuation_id and response_team_id (both auto-generated)
+      final updateData = <String, dynamic>{};
+      
+      if (evacuationPoint.locationLat != null) {
+        updateData['location_lat'] = evacuationPoint.locationLat;
+      }
+      if (evacuationPoint.locationLng != null) {
+        updateData['location_lng'] = evacuationPoint.locationLng;
+      }
+      if (evacuationPoint.city != null) {
+        updateData['city'] = evacuationPoint.city;
+      }
+      if (evacuationPoint.locationDetail != null) {
+        updateData['location_detail'] = evacuationPoint.locationDetail;
+      }
+
+      if (updateData.isEmpty) {
+        print('Warning: No fields to update');
+        return true;
+      }
+
+      await _client
+          .from('evacuation_points')
+          .update(updateData)
+          .eq('evacuation_id', evacuationPoint.evacuationId!);
+      return true;
+    } catch (e) {
+      print('Error updating evacuation point: $e');
+      return false;
+    }
+  }
+
+  /// Delete evacuation point
+  static Future<bool> deleteEvacuationPoint(String evacuationId) async {
+    try {
+      await _client
+          .from('evacuation_points')
+          .delete()
+          .eq('evacuation_id', evacuationId);
+      return true;
+    } catch (e) {
+      print('Error deleting evacuation point: $e');
+      return false;
     }
   }
 
@@ -262,7 +357,7 @@ class SupabaseService {
     try {
       final latOffset = radiusKm / 111.0;
       final lngOffset = radiusKm / (111.0 * cos(lat * 3.14159 / 180));
-      
+
       final response = await _client
           .from('evacuation_points')
           .select()
@@ -270,7 +365,7 @@ class SupabaseService {
           .lte('location_lat', lat + latOffset)
           .gte('location_lng', lng - lngOffset)
           .lte('location_lng', lng + lngOffset);
-      
+
       return (response as List)
           .map((json) => EvacuationPoint.fromJson(json))
           .toList();
@@ -281,16 +376,19 @@ class SupabaseService {
   }
 
   // ==================== Response Teams ====================
-  
+
   /// Get response team by ID
-  static Future<ResponseTeam?> getResponseTeamByInstanceCode(String instanceCode) async {
+  static Future<ResponseTeam?> getResponseTeamByInstanceCode(
+    String instanceCode,
+  ) async {
     try {
-      final response = await _client
-          .from('response_teams')
-          .select()
-          .eq('instance_code', instanceCode)
-          .maybeSingle();
-      
+      final response =
+          await _client
+              .from('response_teams')
+              .select()
+              .eq('instance_code', instanceCode)
+              .maybeSingle();
+
       return response != null ? ResponseTeam.fromJson(response) : null;
     } catch (e) {
       print('Error getting response team: $e');
@@ -298,15 +396,19 @@ class SupabaseService {
     }
   }
 
-  static Future<ResponseTeam?> loginResponseTeam(String instanceCode, String password) async {
+  static Future<ResponseTeam?> loginResponseTeam(
+    String instanceCode,
+    String password,
+  ) async {
     try {
-      final response = await _client
-          .from('response_teams')
-          .select()
-          .eq('instance_code', instanceCode)
-          .eq('password', password)
-          .maybeSingle();
-      
+      final response =
+          await _client
+              .from('response_teams')
+              .select()
+              .eq('instance_code', instanceCode)
+              .eq('password', password)
+              .maybeSingle();
+
       return response != null ? ResponseTeam.fromJson(response) : null;
     } catch (e) {
       print('Error getting response team: $e');
@@ -314,4 +416,3 @@ class SupabaseService {
     }
   }
 }
-

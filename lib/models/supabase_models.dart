@@ -79,8 +79,14 @@ class OtpCode {
       userId: json['user_id'] as String?,
       otpCode: json['otp_code'] as String?,
       isValid: json['is_valid'] as bool?,
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
-      expiresAt: json['expires_at'] != null ? DateTime.parse(json['expires_at']) : null,
+      createdAt:
+          json['created_at'] != null
+              ? DateTime.parse(json['created_at'])
+              : null,
+      expiresAt:
+          json['expires_at'] != null
+              ? DateTime.parse(json['expires_at'])
+              : null,
     );
   }
 
@@ -109,11 +115,7 @@ class Contact {
   final String contactName;
   final String? phoneNumber;
 
-  Contact({
-    required this.userId,
-    required this.contactName,
-    this.phoneNumber,
-  });
+  Contact({required this.userId, required this.contactName, this.phoneNumber});
 
   factory Contact.fromJson(Map<String, dynamic> json) {
     return Contact(
@@ -155,10 +157,22 @@ class Disaster {
   factory Disaster.fromJson(Map<String, dynamic> json) {
     return Disaster(
       disasterId: json['disaster_id'] as String,
-      occurredAt: json['occurred_at'] != null ? DateTime.parse(json['occurred_at']) : null,
-      centerLat: json['center_lat'] != null ? (json['center_lat'] as num).toDouble() : null,
-      centerLng: json['center_lng'] != null ? (json['center_lng'] as num).toDouble() : null,
-      magnitude: json['magnitude'] != null ? (json['magnitude'] as num).toDouble() : null,
+      occurredAt:
+          json['occurred_at'] != null
+              ? DateTime.parse(json['occurred_at'])
+              : null,
+      centerLat:
+          json['center_lat'] != null
+              ? (json['center_lat'] as num).toDouble()
+              : null,
+      centerLng:
+          json['center_lng'] != null
+              ? (json['center_lng'] as num).toDouble()
+              : null,
+      magnitude:
+          json['magnitude'] != null
+              ? (json['magnitude'] as num).toDouble()
+              : null,
       depth: json['depth'] as String?,
       shakemap: json['shakemap'] as String?,
     );
@@ -183,11 +197,7 @@ class ResponseTeam {
   final String? role;
   final String? password; // Should be hashed
 
-  ResponseTeam({
-    required this.responseTeamId,
-    this.role,
-    this.password,
-  });
+  ResponseTeam({required this.responseTeamId, this.role, this.password});
 
   factory ResponseTeam.fromJson(Map<String, dynamic> json) {
     return ResponseTeam(
@@ -208,11 +218,12 @@ class ResponseTeam {
 
 /// Evacuation point
 class EvacuationPoint {
-  final String evacuationId;
+  final String? evacuationId;
   final String? responseTeamId;
   final double? locationLat;
   final double? locationLng;
   final String? city;
+  final String? locationDetail;
 
   EvacuationPoint({
     required this.evacuationId,
@@ -220,15 +231,23 @@ class EvacuationPoint {
     this.locationLat,
     this.locationLng,
     this.city,
+    this.locationDetail,
   });
 
   factory EvacuationPoint.fromJson(Map<String, dynamic> json) {
     return EvacuationPoint(
       evacuationId: json['evacuation_id'] as String,
       responseTeamId: json['response_team_id'] as String?,
-      locationLat: json['location_lat'] != null ? (json['location_lat'] as num).toDouble() : null,
-      locationLng: json['location_lng'] != null ? (json['location_lng'] as num).toDouble() : null,
+      locationLat:
+          json['location_lat'] != null
+              ? (json['location_lat'] as num).toDouble()
+              : null,
+      locationLng:
+          json['location_lng'] != null
+              ? (json['location_lng'] as num).toDouble()
+              : null,
       city: json['city'] as String?,
+      locationDetail: json['location_detail'] as String?,
     );
   }
 
@@ -239,6 +258,7 @@ class EvacuationPoint {
       'location_lat': locationLat,
       'location_lng': locationLng,
       'city': city,
+      'location_detail': locationDetail,
     };
   }
 
@@ -268,9 +288,18 @@ class SosEvent {
       sosId: json['sos_id'] as String,
       userId: json['user_id'] as String?,
       sosPressed: json['sos_pressed'] as bool?,
-      pressedAt: json['pressed_at'] != null ? DateTime.parse(json['pressed_at']) : null,
-      locationLat: json['location_lat'] != null ? (json['location_lat'] as num).toDouble() : null,
-      locationLng: json['location_lng'] != null ? (json['location_lng'] as num).toDouble() : null,
+      pressedAt:
+          json['pressed_at'] != null
+              ? DateTime.parse(json['pressed_at'])
+              : null,
+      locationLat:
+          json['location_lat'] != null
+              ? (json['location_lat'] as num).toDouble()
+              : null,
+      locationLng:
+          json['location_lng'] != null
+              ? (json['location_lng'] as num).toDouble()
+              : null,
     );
   }
 
@@ -308,8 +337,14 @@ class SosAssignment {
     return SosAssignment(
       sosId: json['sos_id'] as String,
       responseTeamId: json['response_team_id'] as String?,
-      assignedAt: json['assigned_at'] != null ? DateTime.parse(json['assigned_at']) : null,
-      resolvedAt: json['resolved_at'] != null ? DateTime.parse(json['resolved_at']) : null,
+      assignedAt:
+          json['assigned_at'] != null
+              ? DateTime.parse(json['assigned_at'])
+              : null,
+      resolvedAt:
+          json['resolved_at'] != null
+              ? DateTime.parse(json['resolved_at'])
+              : null,
       isCurrent: json['is_current'] as bool?,
     );
   }
@@ -346,10 +381,6 @@ class DisasterResponseTeam {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'disaster_id': disasterId,
-      'response_team_id': responseTeamId,
-    };
+    return {'disaster_id': disasterId, 'response_team_id': responseTeamId};
   }
 }
-
