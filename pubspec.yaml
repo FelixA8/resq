@@ -44,6 +44,8 @@ dependencies:
   get: ^4.7.2
   url_launcher: ^6.3.1
   uuid: ^4.5.2
+  geocoding: ^4.0.0
+  shared_preferences: ^2.3.3
 
 dev_dependencies:
   flutter_test:
@@ -80,6 +82,7 @@ flutter:
 
     # Illustrations
     - assets/images/illustrations/login-illustration.png
+    - assets/images/illustrations/sos-running.png
     
     # Icons
     - assets/images/icons/annotation.png
@@ -101,6 +104,7 @@ flutter:
     - assets/images/icons/map-evacuation-point.png
     - assets/images/icons/menu-back.png
     - assets/images/icons/menu-hamburger.png
+    - assets/images/icons/modify.png
     - assets/images/icons/navbar-disaster-grey.png
     - assets/images/icons/navbar-disaster-red.png
     - assets/images/icons/navbar-evacuation-point-grey.png
@@ -111,6 +115,7 @@ flutter:
     - assets/images/icons/profile.png
     - assets/images/icons/radius.png
     - assets/images/icons/report.png
+    - assets/images/icons/remove.png
     - assets/images/icons/tsunami.png
     - assets/images/icons/warning.png
     - assets/images/icons/water-height.png
@@ -121,6 +126,8 @@ flutter:
     - assets/images/icons/phone-one.png
     - assets/images/icons/phone-two.png
     - assets/images/icons/phone-three.png
+    - assets/images/icons/sos-gray.png
+    
     
 
     

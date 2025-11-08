@@ -314,6 +314,105 @@ class SupabaseService {
     }
   }
 
+  /// Get evacuation point by ID
+  static Future<EvacuationPoint?> getEvacuationPointById(String evacuationId) async {
+    try {
+      final response = await _client
+          .from('evacuation_points')
+          .select()
+          .eq('evacuation_id', evacuationId)
+          .maybeSingle();
+
+      return response != null ? EvacuationPoint.fromJson(response) : null;
+    } catch (e) {
+      print('Error getting evacuation point: $e');
+      return null;
+    }
+  }
+
+  /// Add evacuation point
+  static Future<EvacuationPoint?> addEvacuationPoint({
+    required double locationLat,
+    required double locationLng,
+    String? city,
+    String? locationDetail,
+  }) async {
+    try {
+      // Prepare data for insertion - both evacuation_id and response_team_id are auto-generated
+      final insertData = <String, dynamic>{
+        'location_lat': locationLat,
+        'location_lng': locationLng,
+        'city': city,
+        'location_detail': locationDetail,
+      };
+
+      final response = await _client
+          .from('evacuation_points')
+          .insert(insertData)
+          .select()
+          .single();
+
+      return EvacuationPoint.fromJson(response);
+    } catch (e) {
+      print('Error adding evacuation point: $e');
+      return null;
+    }
+  }
+
+  /// Update evacuation point
+  static Future<bool> modifyEvacuationPoint(EvacuationPoint evacuationPoint) async {
+    try {
+      if (evacuationPoint.evacuationId == null) {
+        print('Error: evacuation_id is required for updating');
+        return false;
+      }
+
+      // Prepare update data - exclude evacuation_id and response_team_id (both auto-generated)
+      final updateData = <String, dynamic>{};
+      
+      if (evacuationPoint.locationLat != null) {
+        updateData['location_lat'] = evacuationPoint.locationLat;
+      }
+      if (evacuationPoint.locationLng != null) {
+        updateData['location_lng'] = evacuationPoint.locationLng;
+      }
+      if (evacuationPoint.city != null) {
+        updateData['city'] = evacuationPoint.city;
+      }
+      if (evacuationPoint.locationDetail != null) {
+        updateData['location_detail'] = evacuationPoint.locationDetail;
+      }
+
+      if (updateData.isEmpty) {
+        print('Warning: No fields to update');
+        return true;
+      }
+
+      await _client
+          .from('evacuation_points')
+          .update(updateData)
+          .eq('evacuation_id', evacuationPoint.evacuationId!);
+      return true;
+    } catch (e) {
+      print('Error updating evacuation point: $e');
+      return false;
+    }
+  }
+
+  /// Delete evacuation point
+  static Future<bool> deleteEvacuationPoint(String evacuationId) async {
+    try {
+      await _client
+          .from('evacuation_points')
+          .delete()
+          .eq('evacuation_id', evacuationId);
+      return true;
+    } catch (e) {
+      print('Error deleting evacuation point: $e');
+      return false;
+    }
+  }
+
   /// Get nearby evacuation points
   static Future<List<EvacuationPoint>> getNearbyEvacuationPoints({
     required double lat,
