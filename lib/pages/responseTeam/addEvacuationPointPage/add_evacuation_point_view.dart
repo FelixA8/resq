@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:resqapp/models/supabase_models.dart';
 import 'package:resqapp/pages/responseTeam/addEvacuationPointPage/add_evacuation_point_view_model.dart';
 import 'package:resqapp/pages/responseTeam/addEvacuationPointPage/sections/add_evac_point_form_section.dart';
 import 'package:resqapp/theme/theme_app.dart';
 
 class AddEvacuationPointView extends GetView<AddEvacuationPointViewModel> {
   final String? instanceCode;
+  final EvacuationPoint? existingEvacuationPoint; // For editing mode
   
   const AddEvacuationPointView({
     super.key,
     this.instanceCode,
+    this.existingEvacuationPoint,
   });
 
   @override
@@ -19,7 +22,8 @@ class AddEvacuationPointView extends GetView<AddEvacuationPointViewModel> {
     // Initialize the ViewModel
     if (!Get.isRegistered<AddEvacuationPointViewModel>()) {
       Get.put(AddEvacuationPointViewModel(
-        instanceCode: instanceCode ?? 'Unit305'
+        instanceCode: instanceCode ?? 'Unit305',
+        existingEvacuationPoint: existingEvacuationPoint,
       ));
     }
 
@@ -43,7 +47,7 @@ class AddEvacuationPointView extends GetView<AddEvacuationPointViewModel> {
           ),
         ),
         title: Text(
-          'Registrasi Poin Evakuasi',
+          existingEvacuationPoint != null ? 'Edit Poin Evakuasi' : 'Registrasi Poin Evakuasi',
           style: TextStyle(
             fontFamily: 'SF Pro',
             fontSize: 20,

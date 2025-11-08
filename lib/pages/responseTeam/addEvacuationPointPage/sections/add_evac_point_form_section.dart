@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
+import 'package:resqapp/components/confirmation_button.dart';
 import 'package:resqapp/pages/responseTeam/addEvacuationPointPage/add_evacuation_point_view_model.dart';
+import 'package:resqapp/pages/responseTeam/addEvacuationPointPage/components/evac_point_alert_banner.dart';
 import 'package:resqapp/theme/theme_app.dart';
 
 class AddEvacPointFormSection extends GetView<AddEvacuationPointViewModel> {
@@ -10,7 +12,7 @@ class AddEvacPointFormSection extends GetView<AddEvacuationPointViewModel> {
   @override
   Widget build(BuildContext context) {
     const theme = ResQTheme();
-    
+
     return Expanded(
       child: Column(
         children: [
@@ -40,14 +42,15 @@ class AddEvacPointFormSection extends GetView<AddEvacuationPointViewModel> {
                       ),
                       children: [
                         TileLayer(
-                          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          urlTemplate:
+                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                           userAgentPackageName: 'com.example.resqapp',
                           maxZoom: 19,
                         ),
                         MarkerLayer(
                           markers: [
-                            // User location marker (if permission granted)
-                            if (controller.hasLocationPermission.value && !controller.isLoading.value)
+                            if (controller.hasLocationPermission.value &&
+                                !controller.isLoading.value)
                               Marker(
                                 point: controller.currentLocation.value,
                                 width: 40,
@@ -79,26 +82,9 @@ class AddEvacPointFormSection extends GetView<AddEvacuationPointViewModel> {
                         ),
                       ],
                     ),
-                    
-                    // Center annotation marker (fixed at center of screen)
-                    Positioned.fill(
-                      child: IgnorePointer(
-                        child: Center(
-                          child: Container(
-                            width: 50,
-                            height: 50,
-                            child: 
-                            // TODO: Replace with Image.asset("assets/images/icons/annotation.png") when asset is available
-                            Icon(
-                              Icons.location_on,
-                              color: Color(theme.colors.primary),
-                              size: 50,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    
+
+                    EvacPointAlertBanner(viewModel: controller),
+
                     // Floating action button for current location
                     if (controller.hasLocationPermission.value)
                       Positioned(
@@ -113,22 +99,40 @@ class AddEvacPointFormSection extends GetView<AddEvacuationPointViewModel> {
                           child: Icon(Icons.my_location),
                         ),
                       ),
-                    
+
                     // Loading indicator
-                    if (controller.isLoading.value)
-                      Center(
-                        child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Color(theme.colors.primary),
+                    controller.isLoading.value
+                        ? Center(
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Color(theme.colors.primary),
+                            ),
+                          ),
+                        )
+                        : // Center annotation marker (fixed at center of screen)
+                        Positioned.fill(
+                          child: IgnorePointer(
+                            child: Center(
+                              child: Container(
+                                width: 50,
+                                height: 50,
+                                child:
+                                // TODO: Replace with Image.asset("assets/images/icons/annotation.png") when asset is available
+                                Image.asset(
+                                  "assets/images/icons/annotation.png",
+                                  width: 30,
+                                  height: 30,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
                   ],
                 );
               }),
             ),
           ),
-          
+
           // Bottom section with confirmation button
           Container(
             height: 87,
@@ -147,28 +151,10 @@ class AddEvacPointFormSection extends GetView<AddEvacuationPointViewModel> {
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: theme.padding.lm),
               child: Center(
-                child: Container(
-                  width: 350,
-                  height: 51,
-                  child: ElevatedButton(
-                    onPressed: controller.onConfirmPressed,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(theme.colors.primary),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: Text(
-                      'Konfirmasi',
-                      style: TextStyle(
-                        fontFamily: 'SF Pro',
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
+                child: ConfirmationButton(
+                  onPressed: controller.onConfirmPressed,
+                  isEnabled: true,
+                  text: 'Konfirmasi',
                 ),
               ),
             ),
