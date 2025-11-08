@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:resqapp/models/supabase_models.dart';
 import 'package:resqapp/pages/responseTeam/responseTeamEvacuationPointPage/components/evacuation_list_button.dart';
 import 'package:resqapp/theme/theme_app.dart';
@@ -19,6 +20,13 @@ class EvacuationPointCard extends StatelessWidget {
   Widget build(BuildContext context) {
     const theme = ResQTheme();
 
+    double timestampInSecondsDouble = evacuationPoint.createdAt ?? 0.0;
+
+    int millisecondsSinceEpoch = (timestampInSecondsDouble).toInt();
+    DateTime date = DateTime.fromMillisecondsSinceEpoch(millisecondsSinceEpoch);
+    DateFormat formatter = DateFormat('dd/MM/yyyy HH:mm:ss');
+    String formattedDate = formatter.format(date);
+
     return Container(
       margin: EdgeInsets.symmetric(
         horizontal: theme.padding.xs,
@@ -38,68 +46,70 @@ class EvacuationPointCard extends StatelessWidget {
             ),
           ],
         ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "Poin Evakuasi (${evacuationPoint.evacuationId})",
-                style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 12,
-                  fontFamily: 'SF Pro',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Poin Evakuasi (${evacuationPoint.evacuationId?.substring(0, 5)})",
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 12,
+                    fontFamily: 'SF Pro',
+                  ),
                 ),
-              ),
-              Text(
-                evacuationPoint.city ?? "Unknown Location",
-                style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12,
-                  fontFamily: 'SF Pro',
+                Text(
+                  evacuationPoint.city ?? "Unknown Location",
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                    fontFamily: 'SF Pro',
+                  ),
                 ),
-              ),
-            ],
-          ),
-          Text(
-            "Ditetapkan Mulai 12/08/2003", // Mock date as shown in Figma
-            style: TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.w400,
-              fontSize: 12,
-              fontFamily: 'SF Pro',
+              ],
             ),
-          ),
-
-          SizedBox(height: theme.size.ms),
-
-          // Action buttons row
-          Row(
-            children: [
-              EvacuationActionButton(
-                iconPath: 'assets/images/icons/modify.png',
-                text: "Modifikasi Data",
-                backgroundColor: Color(0x8F2880CE).withValues(alpha: 0.5),
-                textColor: Colors.black,
-                onTap: onEdit,
+            Text(
+              "Ditetapkan Mulai: $formattedDate", // Mock date as shown in Figma
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.w400,
+                fontSize: 12,
+                fontFamily: 'SF Pro',
               ),
+            ),
 
-              SizedBox(width: theme.size.ms),
+            SizedBox(height: theme.size.ms),
 
-              EvacuationActionButton(
-                iconPath: 'assets/images/icons/remove.png',
-                text: "Hapus Data",
-                backgroundColor: Color(0x78F2D6D6), // rgba(242, 214, 214, 0.47)
-                textColor: Color(theme.colors.primary),
-                onTap: onDelete,
-              ),
-            ],
-          ),
-        ],
-      ),
+            // Action buttons row
+            Row(
+              children: [
+                EvacuationActionButton(
+                  iconPath: 'assets/images/icons/modify.png',
+                  text: "Modifikasi Data",
+                  backgroundColor: Color(0x8F2880CE).withValues(alpha: 0.5),
+                  textColor: Colors.black,
+                  onTap: onEdit,
+                ),
+
+                SizedBox(width: theme.size.ms),
+
+                EvacuationActionButton(
+                  iconPath: 'assets/images/icons/remove.png',
+                  text: "Hapus Data",
+                  backgroundColor: Color(
+                    0x78F2D6D6,
+                  ), // rgba(242, 214, 214, 0.47)
+                  textColor: Color(theme.colors.primary),
+                  onTap: onDelete,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

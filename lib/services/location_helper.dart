@@ -4,7 +4,10 @@ import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 
 class LocationHelper {
-  static const LatLng defaultLocation = LatLng(-6.2088, 106.8456); // Jakarta default
+  static const LatLng defaultLocation = LatLng(
+    -6.2088,
+    106.8456,
+  ); // Jakarta default
 
   /// Initialize location by checking permissions first, then getting location
   static Future<LocationResult> initializeLocation() async {
@@ -16,6 +19,8 @@ class LocationHelper {
           'Location Service Disabled',
           'Please enable location services to use this feature',
           snackPosition: SnackPosition.BOTTOM,
+          duration: Duration(seconds: 1),
+          isDismissible: true,
         );
         return LocationResult(
           location: defaultLocation,
@@ -26,16 +31,18 @@ class LocationHelper {
 
       // Step 2: Check current permission status
       LocationPermission permission = await Geolocator.checkPermission();
-      
+
       // Step 3: Request permission if denied
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
-        
+
         if (permission == LocationPermission.denied) {
           Get.snackbar(
             'Permission Denied',
             'Location permission is required to show your position on the map',
             snackPosition: SnackPosition.BOTTOM,
+            duration: Duration(seconds: 1),
+            isDismissible: true,
           );
           return LocationResult(
             location: defaultLocation,
@@ -51,6 +58,8 @@ class LocationHelper {
           'Permission Denied Permanently',
           'Please enable location permission in your device settings',
           snackPosition: SnackPosition.BOTTOM,
+          duration: Duration(seconds: 1),
+          isDismissible: true,
         );
         return LocationResult(
           location: defaultLocation,
@@ -61,7 +70,6 @@ class LocationHelper {
 
       // Step 5: Permission granted! Now get location
       return await _getLocationAfterPermission();
-      
     } catch (e) {
       Get.snackbar(
         'Location Error',
@@ -83,11 +91,14 @@ class LocationHelper {
       Position? lastKnownPosition = await Geolocator.getLastKnownPosition();
       if (lastKnownPosition != null) {
         return LocationResult(
-          location: LatLng(lastKnownPosition.latitude, lastKnownPosition.longitude),
+          location: LatLng(
+            lastKnownPosition.latitude,
+            lastKnownPosition.longitude,
+          ),
           hasPermission: true,
         );
       }
-      
+
       // If no last known position, get current location
       return await _getCurrentLocation();
     } catch (e) {
@@ -105,6 +116,8 @@ class LocationHelper {
           'Location Service Disabled',
           'Please enable location services to use this feature',
           snackPosition: SnackPosition.BOTTOM,
+          duration: Duration(seconds: 1),
+          isDismissible: true,
         );
         return LocationResult(
           location: defaultLocation,
@@ -115,11 +128,14 @@ class LocationHelper {
 
       // Verify permission is still granted
       LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
         Get.snackbar(
           'Permission Denied',
           'Location permission is required to show your position on the map',
           snackPosition: SnackPosition.BOTTOM,
+          duration: Duration(seconds: 1),
+          isDismissible: true,
         );
         return LocationResult(
           location: defaultLocation,
@@ -129,7 +145,7 @@ class LocationHelper {
       }
 
       Position? position;
-      
+
       try {
         position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high,
@@ -138,7 +154,7 @@ class LocationHelper {
       } catch (e) {
         throw Exception('Location retrieval methods failed: ${e.toString()}');
       }
-      
+
       return LocationResult(
         location: LatLng(position.latitude, position.longitude),
         hasPermission: true,
@@ -146,23 +162,28 @@ class LocationHelper {
     } catch (e) {
       String errorMessage = 'Location Service Not Responding';
       Color backgroundColor = const Color(0xFFB71C1C);
-      
+
       if (e.toString().contains('timeout')) {
         errorMessage = 'Unable to get location. Please try again.';
       } else if (e.toString().contains('permission')) {
-        errorMessage = 'Location permission is required to show your position on the map';
-      } else if (e.toString().contains('Unable to get current or last known location')) {
+        errorMessage =
+            'Location permission is required to show your position on the map';
+      } else if (e.toString().contains(
+        'Unable to get current or last known location',
+      )) {
         errorMessage = 'Unable to get your current location. Please try again.';
       }
-      
+
       Get.snackbar(
         'Location Error',
         errorMessage,
         backgroundColor: backgroundColor,
         colorText: Color(0xFFFFFFFF),
         snackPosition: SnackPosition.BOTTOM,
+        duration: Duration(seconds: 1),
+        isDismissible: true,
       );
-      
+
       return LocationResult(
         location: defaultLocation,
         hasPermission: false,
@@ -178,7 +199,7 @@ class LocationHelper {
         desiredAccuracy: LocationAccuracy.high,
         timeLimit: Duration(seconds: 5),
       );
-      
+
       return LocationResult(
         location: LatLng(position.latitude, position.longitude),
         hasPermission: true,

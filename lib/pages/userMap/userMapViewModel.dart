@@ -13,9 +13,11 @@ class UserMapViewModel extends ChangeNotifier {
   bool hasLocationPermission = false;
   bool _locationServiceEnabled = false;
   
-  // Map annotations (frontend-only for now; replace with backend data later)
-  final List<LatLng> _evacuationPoints = [];
+  // Map annotations
+  // Disaster points: Retrieved via API, appear in both maps
   final List<LatLng> _disasterPoints = [];
+  // Evacuation points: Created by response team, appear in both maps
+  final List<LatLng> _evacuationPoints = [];
   
   // SOS State Management
   SOSWaitingViewModel? _sosWaitingViewModel;
@@ -30,24 +32,70 @@ class UserMapViewModel extends ChangeNotifier {
   }
 
   void _initializeData() {
-    // TODO: Replace with backend-driven data loading
-    // Dummy evacuation points
-    _evacuationPoints
-      ..clear()
-      ..addAll([
-        LatLng(-6.2075, 106.8450),
-        LatLng(-6.2130, 106.8500),
-      ]);
+    // Load disaster points from API (using dummy data for now)
+    _loadDisasterPoints();
+    // Load evacuation points (these come from response team, using dummy data for now)
+    _loadEvacuationPoints();
+  }
 
-    // Dummy disaster (earthquake) points
-    _disasterPoints
-      ..clear()
-      ..addAll([
-        LatLng(-6.2200, 106.8400),
-        LatLng(-6.2000, 106.8600),
-      ]);
+  /// Load disaster points from API
+  /// TODO: Replace with actual API call
+  Future<void> _loadDisasterPoints() async {
+    try {
+      // TODO: Replace with actual API call
+      // Example: final response = await disasterService.getDisasterPoints();
+      // _disasterPoints.clear();
+      // _disasterPoints.addAll(response.map((point) => LatLng(point.lat, point.lng)));
+      
+      // Dummy data for now
+      _disasterPoints
+        ..clear()
+        ..addAll([
+          LatLng(-6.2200, 106.8400),
+          LatLng(-6.2000, 106.8600),
+        ]);
+      
+      notifyListeners();
+    } catch (e) {
+      // Handle error - for now, just use empty list
+      _disasterPoints.clear();
+      notifyListeners();
+    }
+  }
 
-    notifyListeners();
+  /// Load evacuation points (created by response team)
+  /// TODO: Replace with actual API call or real-time listener
+  Future<void> _loadEvacuationPoints() async {
+    try {
+      // TODO: Replace with actual API call or real-time listener
+      // Example: final response = await evacuationService.getEvacuationPoints();
+      // _evacuationPoints.clear();
+      // _evacuationPoints.addAll(response.map((point) => LatLng(point.lat, point.lng)));
+      
+      // Dummy data for now
+      _evacuationPoints
+        ..clear()
+        ..addAll([
+          LatLng(-6.2075, 106.8450),
+          LatLng(-6.2130, 106.8500),
+        ]);
+      
+      notifyListeners();
+    } catch (e) {
+      // Handle error - for now, just use empty list
+      _evacuationPoints.clear();
+      notifyListeners();
+    }
+  }
+
+  /// Refresh disaster points from API
+  Future<void> refreshDisasterPoints() async {
+    await _loadDisasterPoints();
+  }
+
+  /// Refresh evacuation points
+  Future<void> refreshEvacuationPoints() async {
+    await _loadEvacuationPoints();
   }
 
   Future<void> _getCurrentLocation() async {
@@ -190,19 +238,12 @@ class UserMapViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ---------- Annotations API (for future backend integration) ----------
+  // ---------- Annotations API ----------
   List<LatLng> get evacuationPoints => List.unmodifiable(_evacuationPoints);
   List<LatLng> get disasterPoints => List.unmodifiable(_disasterPoints);
 
-  /// Replace all evacuation points (e.g., after fetching from backend)
-  void setEvacuationPoints(List<LatLng> points) {
-    _evacuationPoints
-      ..clear()
-      ..addAll(points);
-    notifyListeners();
-  }
-
-  /// Replace all disaster points (e.g., after fetching from backend)
+  /// Replace all disaster points (called after fetching from API)
+  /// This should be called when disaster data is retrieved from API
   void setDisasterPoints(List<LatLng> points) {
     _disasterPoints
       ..clear()
@@ -210,15 +251,64 @@ class UserMapViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Add a single evacuation point (used when response team creates one)
-  void addEvacuationPoint(LatLng point) {
-    _evacuationPoints.add(point);
+  /// Replace all evacuation points (called when evacuation points are updated)
+  /// This should be called when response team adds/removes evacuation points
+  void setEvacuationPoints(List<LatLng> points) {
+    _evacuationPoints
+      ..clear()
+      ..addAll(points);
     notifyListeners();
   }
 
-  /// Add a single disaster point (used when a new event is received)
-  void addDisasterPoint(LatLng point) {
-    _disasterPoints.add(point);
+  /// Add a single evacuation point (called when response team creates one)
+  /// This should be called via real-time listener or API callback
+  void addEvacuationPoint(LatLng point) {
+    if (!_evacuationPoints.contains(point)) {
+      _evacuationPoints.add(point);
+      notifyListeners();
+    }
+  }
+
+  /// Remove a single evacuation point (called when response team removes one)
+  void removeEvacuationPoint(LatLng point) {
+    _evacuationPoints.remove(point);
     notifyListeners();
+  }
+
+  /// Add a single disaster point (called when a new disaster event is received from API)
+  void addDisasterPoint(LatLng point) {
+    if (!_disasterPoints.contains(point)) {
+      _disasterPoints.add(point);
+      notifyListeners();
+    }
+  }
+
+  /// Remove a single disaster point (called when a disaster is resolved/removed)
+  void removeDisasterPoint(LatLng point) {
+    _disasterPoints.remove(point);
+    notifyListeners();
+  }
+
+  // ---------- SOS Functionality ----------
+  
+  /// Send SOS with current location to response team
+  /// This will send the user's current location to the backend,
+  /// which will then notify the response team
+  /// TODO: Replace with actual API call
+  Future<void> sendSOS() async {
+    try {
+      // TODO: Call API to send SOS with current location
+      // Example: await sosService.sendSOS(currentLocation);
+      // The backend will then notify response team via real-time listener or API
+      
+      // For now, this is a placeholder - in real implementation,
+      // the backend will receive this and notify response team
+      // Response team will receive it via their API listener and call addSOSPoint()
+      
+      // TODO: After API call succeeds, you might want to show success message
+    } catch (e) {
+      // Handle error - could show error message to user
+      rethrow;
+    }
   }
 }

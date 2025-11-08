@@ -1,6 +1,8 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:resqapp/models/supabase_models.dart';
 import 'package:resqapp/pages/responseTeam/addEvacuationPointPage/add_evacuation_point_view.dart';
+import 'package:resqapp/service/supabase_service.dart';
 
 class ResponseTeamEvacuationPointViewModel extends GetxController {
   final String instanceCode;
@@ -25,41 +27,70 @@ class ResponseTeamEvacuationPointViewModel extends GetxController {
       isLoading.value = true;
       errorMessage.value = '';
       
-      // TODO: Replace with actual API call to fetch evacuation points
-      // For now, using mock data based on Figma design
-      await Future.delayed(Duration(milliseconds: 500)); // Simulate API call
+      print('Loading evacuation points from database...');
+      final response = await SupabaseService.getEvacuationPoints();
+      evacuationPoints.value = response;
+      totalEvacuationPoints.value = response.length;
       
-      final mockData = _generateMockEvacuationPoints();
-      evacuationPoints.value = mockData;
-      totalEvacuationPoints.value = mockData.length;
+      print('Loaded ${response.length} evacuation points');
       
     } catch (e) {
+      print('Error loading evacuation points: $e');
       errorMessage.value = 'Failed to load evacuation points: ${e.toString()}';
-      Get.snackbar(
-        'Error',
-        'Failed to load evacuation points',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      
+      // Only show snackbar if this is not a silent refresh
+      if (isLoading.value) {
+        Get.snackbar(
+          'Error',
+          'Failed to load evacuation points',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Generate mock evacuation points based on Figma design
-  List<EvacuationPoint> _generateMockEvacuationPoints() {
-    return [
-      
-    ];
-  }
-
   /// Refresh evacuation points data
   Future<void> refreshData() async {
+    print('Refreshing evacuation points data...');
     await _loadEvacuationPoints();
   }
 
+  /// Manual refresh with user feedback
+  Future<void> manualRefresh() async {
+    try {
+      await refreshData();
+      Get.snackbar(
+        'Success',
+        'Evacuation points refreshed',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 1),
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to refresh data',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
   /// Add new evacuation point
-  void addEvacuationPoint() {
-    Get.to(AddEvacuationPointView());
+  void addEvacuationPoint() async {
+    final result = await Get.to(() => const AddEvacuationPointView());
+    
+    // If result is true, it means a new evacuation point was added successfully
+    if (result == true) {
+      print('Refreshing evacuation points after successful addition');
+      await refreshData();
+    }
   }
 
   /// Edit evacuation point

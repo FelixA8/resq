@@ -18,6 +18,9 @@ class AddEvacuationPointViewModel extends GetxController {
       LatLng(-6.2088, 106.8456).obs; // Selected evacuation point location
   final RxBool isLoading = false.obs;
   final RxBool hasLocationPermission = false.obs;
+  final RxString selectedCity = 'Jakarta'.obs; // Default city
+  final RxString selectedLocationDetail = ''.obs; // Location detail from geocoding
+  final RxBool isGeocodingLoading = false.obs;
 
   AddEvacuationPointViewModel({required this.instanceCode});
 
@@ -96,24 +99,41 @@ class AddEvacuationPointViewModel extends GetxController {
     try {
       isLoading.value = true;
 
-      // Add evacuation point using separate parameters
+      // Get stored response team data to get response_team_id
+      final storedResponseTeam = await SupabaseService.getStoredResponseTeam();
+      
+      if (storedResponseTeam == null) {
+        Get.snackbar(
+          'Error',
+          'Response team not logged in. Please login again.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      print('Adding evacuation point with data:');
+      print('Location: ${selectedLocation.value.latitude}, ${selectedLocation.value.longitude}');
+      print('City: ${selectedCity.value.isNotEmpty ? selectedCity.value : 'Jakarta'}');
+      print('Response Team ID: ${storedResponseTeam.responseTeamId}');
+
       final result = await SupabaseService.addEvacuationPoint(
         locationLat: selectedLocation.value.latitude,
         locationLng: selectedLocation.value.longitude,
-        city: null, // Could be populated from reverse geocoding if needed
-        locationDetail: null, // Could be populated from user input if needed
+        city: selectedCity.value.isNotEmpty ? selectedCity.value : 'Jakarta',
+        locationDetail: selectedLocationDetail.value.isNotEmpty 
+            ? selectedLocationDetail.value 
+            : 'Lat: ${selectedLocation.value.latitude.toStringAsFixed(6)}, Lng: ${selectedLocation.value.longitude.toStringAsFixed(6)}',
+        responseTeamId: storedResponseTeam.responseTeamId,
       );
-
       if (result != null) {
-        Get.snackbar(
-          'Success',
-          'Evacuation point added successfully',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
-        Get.back(); // Return to previous screen
+        print('Success: Evacuation point added successfully');
+    
+        // Navigate back with success result
+        Get.back(result: true);
       } else {
+        print('Error: Failed to add evacuation point - result is null');
         Get.snackbar(
           'Error',
           'Failed to add evacuation point',
@@ -123,6 +143,7 @@ class AddEvacuationPointViewModel extends GetxController {
         );
       }
     } catch (e) {
+      print('Exception in onConfirmPressed: $e');
       Get.snackbar(
         'Error',
         'An error occurred: ${e.toString()}',
@@ -137,6 +158,6 @@ class AddEvacuationPointViewModel extends GetxController {
 
   /// Navigate back
   void onBackPressed() {
-    Get.back();
+    Get.back(result: false);
   }
 }

@@ -2,6 +2,8 @@
 // Generated from database_schema.md
 // File: lib/models/supabase_models.dart
 
+import 'dart:ffi';
+
 /// User account information
 class ResqUser {
   final String userId;
@@ -196,14 +198,21 @@ class ResponseTeam {
   final String responseTeamId;
   final String? role;
   final String? password; // Should be hashed
+  final String? instanceCode;
 
-  ResponseTeam({required this.responseTeamId, this.role, this.password});
+  ResponseTeam({
+    required this.responseTeamId,
+    this.role,
+    this.password,
+    this.instanceCode,
+  });
 
   factory ResponseTeam.fromJson(Map<String, dynamic> json) {
     return ResponseTeam(
       responseTeamId: json['response_team_id'] as String,
       role: json['role'] as String?,
       password: json['password'] as String?,
+      instanceCode: json['instance_code'] as String?,
     );
   }
 
@@ -212,7 +221,27 @@ class ResponseTeam {
       'response_team_id': responseTeamId,
       'role': role,
       'password': password,
+      'instance_code': instanceCode,
     };
+  }
+
+  /// Convert to JSON for shared preferences (exclude password for security)
+  Map<String, dynamic> toSharedPrefsJson() {
+    return {
+      'response_team_id': responseTeamId,
+      'role': role,
+      'instance_code': instanceCode,
+    };
+  }
+
+  /// Create from shared preferences JSON
+  factory ResponseTeam.fromSharedPrefsJson(Map<String, dynamic> json) {
+    return ResponseTeam(
+      responseTeamId: json['response_team_id'] as String,
+      role: json['role'] as String?,
+      password: null, // Don't store password in shared preferences
+      instanceCode: json['instance_code'] as String?,
+    );
   }
 }
 
@@ -223,6 +252,7 @@ class EvacuationPoint {
   final double? locationLat;
   final double? locationLng;
   final String? city;
+  final double? createdAt;
   final String? locationDetail;
 
   EvacuationPoint({
@@ -231,6 +261,7 @@ class EvacuationPoint {
     this.locationLat,
     this.locationLng,
     this.city,
+    this.createdAt,
     this.locationDetail,
   });
 
@@ -246,6 +277,10 @@ class EvacuationPoint {
           json['location_lng'] != null
               ? (json['location_lng'] as num).toDouble()
               : null,
+      createdAt:
+          json['created_at'] != null
+              ? (json['created_at'] as num).toDouble()
+              : null,
       city: json['city'] as String?,
       locationDetail: json['location_detail'] as String?,
     );
@@ -258,6 +293,7 @@ class EvacuationPoint {
       'location_lat': locationLat,
       'location_lng': locationLng,
       'city': city,
+      'created_at': createdAt,
       'location_detail': locationDetail,
     };
   }

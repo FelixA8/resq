@@ -46,8 +46,10 @@ dependencies:
   uuid: ^4.5.2
   geocoding: ^4.0.0
   shared_preferences: ^2.3.3
+  intl: ^0.20.2
 
 dev_dependencies:
+  flutter_launcher_icons: ^0.14.1
   flutter_test:
     sdk: flutter
 
@@ -62,6 +64,10 @@ dev_dependencies:
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/logos/app-logo.png"
 flutter:
 
   # The following line ensures that the Material Icons font is
@@ -127,6 +133,7 @@ flutter:
     - assets/images/icons/phone-two.png
     - assets/images/icons/phone-three.png
     - assets/images/icons/sos-gray.png
+    - assets/images/icons/sos-logo.png
     
     
 
