@@ -56,10 +56,8 @@ class ResponseTeamMapViewModel extends GetxController {
         return;
       }
       
-      // If no last known position, get current location
       await _getCurrentLocation();
     } catch (e) {
-      // If quick location fails, try full location
       await _getCurrentLocation();
     }
   }
@@ -76,7 +74,6 @@ class ResponseTeamMapViewModel extends GetxController {
         mapController.move(currentLocation.value, 15.0);
       }
     } catch (e) {
-      // LocationHelper handles error messages
     } finally {
       isLoading.value = false;
     }
