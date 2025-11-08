@@ -3,17 +3,19 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:resqapp/models/supabase_models.dart';
+import 'package:resqapp/service/supabase_service.dart';
 import 'package:resqapp/services/location_helper.dart';
-import 'package:resqapp/services/supabase_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AddEvacuationPointViewModel extends GetxController {
   final String instanceCode;
   final MapController mapController = MapController();
-  
+
   // Reactive state
-  final Rx<LatLng> currentLocation = LatLng(-6.2088, 106.8456).obs; // Jakarta default
-  final Rx<LatLng> selectedLocation = LatLng(-6.2088, 106.8456).obs; // Selected evacuation point location
+  final Rx<LatLng> currentLocation =
+      LatLng(-6.2088, 106.8456).obs; // Jakarta default
+  final Rx<LatLng> selectedLocation =
+      LatLng(-6.2088, 106.8456).obs; // Selected evacuation point location
   final RxBool isLoading = false.obs;
   final RxBool hasLocationPermission = false.obs;
 
@@ -29,16 +31,17 @@ class AddEvacuationPointViewModel extends GetxController {
   Future<void> _initializeLocation() async {
     try {
       isLoading.value = true;
-      
+
       LocationResult result = await LocationHelper.initializeLocation();
-      
+
       currentLocation.value = result.location;
-      selectedLocation.value = result.location; // Initially set selected location to current location
+      selectedLocation.value =
+          result
+              .location; // Initially set selected location to current location
       hasLocationPermission.value = result.hasPermission;
-      
+
       // Move map to the location
       mapController.move(currentLocation.value, 15.0);
-      
     } catch (e) {
       // LocationHelper already handles error messages
       hasLocationPermission.value = false;
@@ -68,11 +71,11 @@ class AddEvacuationPointViewModel extends GetxController {
   /// Refresh current location
   Future<void> refreshCurrentLocation() async {
     if (!hasLocationPermission.value) return;
-    
+
     try {
       isLoading.value = true;
       LocationResult result = await LocationHelper.getCurrentLocationSilent();
-      
+
       if (result.hasPermission) {
         currentLocation.value = result.location;
       }
@@ -100,7 +103,7 @@ class AddEvacuationPointViewModel extends GetxController {
         city: null, // Could be populated from reverse geocoding if needed
         locationDetail: null, // Could be populated from user input if needed
       );
-      
+
       if (result != null) {
         Get.snackbar(
           'Success',

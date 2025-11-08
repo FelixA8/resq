@@ -42,6 +42,8 @@ dependencies:
   supabase_flutter: ^2.10.3
   flutter_dotenv: ^6.0.0
   get: ^4.7.2
+  url_launcher: ^6.3.1
+  uuid: ^4.5.2
   geocoding: ^4.0.0
   shared_preferences: ^2.3.3
 
