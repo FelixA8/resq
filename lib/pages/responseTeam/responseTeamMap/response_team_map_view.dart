@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
 import 'package:resqapp/pages/responseTeam/responseTeamMap/response_team_map_view_model.dart';
 import 'package:resqapp/theme/theme_app.dart';
+import 'package:resqapp/pages/userMap/components/radiant_marker.dart';
 
 class ResponseTeamMapView extends GetView<ResponseTeamMapViewModel> {
   final String instanceCode;
@@ -36,14 +37,15 @@ class ResponseTeamMapView extends GetView<ResponseTeamMapViewModel> {
                     userAgentPackageName: 'com.example.disaster_map',
                     maxZoom: 19,
                   ),
+                  // User location marker layer
                   MarkerLayer(
                     markers: [
                       // User location marker
                       if (controller.hasLocationPermission.value && !controller.isLoading.value)
                         Marker(
                           point: controller.currentLocation.value,
-                          width: 40,
-                          height: 40,
+                          width: 42,
+                          height: 42,
                           child: Container(
                             decoration: BoxDecoration(
                               color: Colors.blue,
@@ -68,6 +70,63 @@ class ResponseTeamMapView extends GetView<ResponseTeamMapViewModel> {
                           ),
                         ),
                     ],
+                  ),
+                  // Evacuation points layer
+                  MarkerLayer(
+                    markers: controller.evacuationPoints
+                        .map(
+                          (point) => Marker(
+                            point: point,
+                            width: 42,
+                            height: 42,
+                            child: Image.asset(
+                              'assets/images/icons/map-evacuation-point.png',
+                              width: 42,
+                              height: 42,
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                  // Disaster (earthquake) points layer
+                  MarkerLayer(
+                    markers: controller.disasterPoints
+                        .map(
+                          (point) => Marker(
+                            point: point,
+                            width: 42,
+                            height: 42,
+                            child: RadiantMarker(
+                              color: Colors.redAccent,
+                              child: Image.asset(
+                                'assets/images/icons/map-disaster-earthquake.png',
+                                width: 42,
+                                height: 42,
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                  // SOS points layer (sent by users when they press SOS button)
+                  MarkerLayer(
+                    markers: controller.sosPoints
+                        .map(
+                          (point) => Marker(
+                            point: point,
+                            width: 42,
+                            height: 42,
+                            child: RadiantMarker(
+                              color: Colors.redAccent,
+                              child: Image.asset(
+                                'assets/images/icons/sos-logo.png',
+                                width: 42,
+                                height: 42,
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(),
                   ),
                 ],
               ),
