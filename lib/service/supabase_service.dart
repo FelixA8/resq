@@ -215,14 +215,28 @@ class SupabaseService {
 
   // ==================== Disasters ====================
 
-  /// Get all disasters
+  /// Get all disasters that occurred today
   static Future<List<Disaster>> getDisasters() async {
     try {
+      // Calculate start and end of today in milliseconds since epoch
+      final now = DateTime.now();
+      final startOfDay = DateTime(now.year, now.month, now.day);
+      final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59, 999);
+      
+      final startOfDayMs = startOfDay.millisecondsSinceEpoch.toDouble();
+      final endOfDayMs = endOfDay.millisecondsSinceEpoch.toDouble();
+      
+      print('🔍 Fetching disasters from ${startOfDay} to ${endOfDay}');
+      print('📊 Timestamp range: $startOfDayMs - $endOfDayMs');
+
       final response = await _client
           .from('disasters')
           .select()
+          .gte('occurred_at', startOfDayMs)
+          .lte('occurred_at', endOfDayMs)
           .order('occurred_at', ascending: false);
 
+      print('✅ Found ${(response as List).length} disasters today');
       return (response as List).map((json) => Disaster.fromJson(json)).toList();
     } catch (e) {
       print('Error getting disasters: $e');

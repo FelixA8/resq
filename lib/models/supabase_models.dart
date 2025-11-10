@@ -139,7 +139,7 @@ class Contact {
 /// Disaster event
 class Disaster {
   final String disasterId;
-  final DateTime? occurredAt;
+  final double? occurredAt;
   final double? centerLat;
   final double? centerLng;
   final double? magnitude;
@@ -161,7 +161,7 @@ class Disaster {
       disasterId: json['disaster_id'] as String,
       occurredAt:
           json['occurred_at'] != null
-              ? DateTime.parse(json['occurred_at'])
+              ? (json['occurred_at'] as num).toDouble()
               : null,
       centerLat:
           json['center_lat'] != null
@@ -183,7 +183,7 @@ class Disaster {
   Map<String, dynamic> toJson() {
     return {
       'disaster_id': disasterId,
-      'occurred_at': occurredAt?.toIso8601String(),
+      'occurred_at': occurredAt,
       'center_lat': centerLat,
       'center_lng': centerLng,
       'magnitude': magnitude,
@@ -191,6 +191,8 @@ class Disaster {
       'shakemap': shakemap,
     };
   }
+
+  bool hasLocation() => centerLat != null && centerLng != null;
 }
 
 /// Response team member

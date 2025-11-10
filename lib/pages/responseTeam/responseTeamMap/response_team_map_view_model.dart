@@ -1,8 +1,12 @@
+import 'dart:async';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:resqapp/models/supabase_models.dart';
+import 'package:resqapp/service/supabase_service.dart';
 import 'package:resqapp/services/location_helper.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ResponseTeamMapViewModel extends GetxController {
   final String instanceCode;
@@ -13,13 +17,15 @@ class ResponseTeamMapViewModel extends GetxController {
   final RxBool isLoading = false.obs;
   final RxBool hasLocationPermission = false.obs;
   
-  // Map annotations
-  // Disaster points: Retrieved via API, appear in both maps
+  final RxList<Disaster> _disasterPointsData = <Disaster>[].obs;
   final RxList<LatLng> disasterPoints = <LatLng>[].obs;
-  // Evacuation points: Created by response team, appear in both maps
+  final RxList<EvacuationPoint> _evacuationPointsData = <EvacuationPoint>[].obs;
   final RxList<LatLng> evacuationPoints = <LatLng>[].obs;
-  // SOS points: Sent by users when they press SOS button, only visible to response team
   final RxList<LatLng> sosPoints = <LatLng>[].obs;
+
+  // Realtime subscriptions
+  RealtimeChannel? _evacuationPointsSubscription;
+  RealtimeChannel? _disastersSubscription;
 
   ResponseTeamMapViewModel({required this.instanceCode});
 
@@ -27,7 +33,17 @@ class ResponseTeamMapViewModel extends GetxController {
   void onInit() {
     _initializeLocation();
     _initializeData();
+    _subscribeToEvacuationPoints();
+    _subscribeToDisasters();
     super.onInit();
+  }
+
+  @override
+  void onClose() {
+    // Clean up realtime subscriptions
+    _evacuationPointsSubscription?.unsubscribe();
+    _disastersSubscription?.unsubscribe();
+    super.onClose();
   }
 
   void _initializeData() {
@@ -39,50 +55,346 @@ class ResponseTeamMapViewModel extends GetxController {
     _loadSOSPoints();
   }
 
-  /// Load disaster points from API
-  /// TODO: Replace with actual API call
+  /// Update the display list from the disaster data list
+  void _updateDisasterPointsDisplay() {
+    disasterPoints.value = _disasterPointsData
+        .where((disaster) => disaster.centerLat != null && disaster.centerLng != null)
+        .map((disaster) => LatLng(disaster.centerLat!, disaster.centerLng!))
+        .toList();
+  }
+
+  /// Load disaster points from Supabase
+  /// This is called once on initialization, then realtime updates take over
   Future<void> _loadDisasterPoints() async {
     try {
-      // TODO: Replace with actual API call
-      // Example: final response = await disasterService.getDisasterPoints();
-      // disasterPoints.value = response.map((point) => LatLng(point.lat, point.lng)).toList();
+      print('🌋 Loading disaster points from Supabase...');
+      final disasters = await SupabaseService.getDisasters();
       
-      // Dummy data for now - same as user map
-      disasterPoints.value = [
-        LatLng(-6.2200, 106.8400),
-        LatLng(-6.2000, 106.8600),
-      ];
+      _disasterPointsData.value = disasters;
+      _updateDisasterPointsDisplay();
+      
+      print('✅ Loaded ${_disasterPointsData.length} disaster points');
     } catch (e) {
-      // Handle error - for now, just use empty list
-      disasterPoints.clear();
+      print('❌ Error loading disaster points: $e');
+      _disasterPointsData.clear();
+      _updateDisasterPointsDisplay();
     }
   }
 
-  /// Load evacuation points
-  /// TODO: Replace with actual API call or real-time listener
+  /// Update the display list from the data list
+  void _updateEvacuationPointsDisplay() {
+    evacuationPoints.value = _evacuationPointsData
+        .where((point) => point.hasLocation())
+        .map((point) => LatLng(point.locationLat!, point.locationLng!))
+        .toList();
+  }
+
+  /// Load evacuation points from Supabase
+  /// This is called once on initialization, then realtime updates take over
   Future<void> _loadEvacuationPoints() async {
     try {
-      // TODO: Replace with actual API call
-      // Example: final response = await evacuationService.getEvacuationPoints();
-      // evacuationPoints.value = response.map((point) => LatLng(point.lat, point.lng)).toList();
+      print('📍 Loading evacuation points from Supabase...');
+      final points = await SupabaseService.getEvacuationPoints();
       
-      // Dummy data for now - same as user map
-      evacuationPoints.value = [
-        LatLng(-6.2075, 106.8450),
-        LatLng(-6.2130, 106.8500),
-      ];
+      _evacuationPointsData.value = points;
+      _updateEvacuationPointsDisplay();
+      
+      print('✅ Loaded ${_evacuationPointsData.length} evacuation points');
     } catch (e) {
-      // Handle error - for now, just use empty list
-      evacuationPoints.clear();
+      print('❌ Error loading evacuation points: $e');
+      _evacuationPointsData.clear();
+      _updateEvacuationPointsDisplay();
     }
   }
 
-  /// Refresh disaster points from API
+  /// Subscribe to realtime changes on evacuation_points table
+  void _subscribeToEvacuationPoints() {
+    try {
+      print('🔔 Setting up realtime subscription for evacuation_points...');
+      
+      final supabaseClient = Supabase.instance.client;
+      
+      _evacuationPointsSubscription = supabaseClient
+          .channel('evacuation_points_changes')
+          .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'evacuation_points',
+            callback: (payload) {
+              print('🔔 Realtime event received: ${payload.eventType}');
+              _handleEvacuationPointChange(payload);
+            },
+          )
+          .subscribe();
+      
+      print('✅ Realtime subscription established');
+    } catch (e) {
+      print('❌ Error setting up realtime subscription: $e');
+    }
+  }
+
+  /// Subscribe to realtime changes on disasters table
+  void _subscribeToDisasters() {
+    try {
+      print('🔔 Setting up realtime subscription for disasters...');
+      
+      final supabaseClient = Supabase.instance.client;
+      
+      _disastersSubscription = supabaseClient
+          .channel('disasters_changes')
+          .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'disasters',
+            callback: (payload) {
+              print('🔔 Disaster realtime event received: ${payload.eventType}');
+              _handleDisasterChange(payload);
+            },
+          )
+          .subscribe();
+      
+      print('✅ Disaster realtime subscription established');
+    } catch (e) {
+      print('❌ Error setting up disaster realtime subscription: $e');
+    }
+  }
+
+  /// Handle realtime changes to evacuation points
+  void _handleEvacuationPointChange(PostgresChangePayload payload) {
+    try {
+      switch (payload.eventType) {
+        case PostgresChangeEvent.insert:
+          _handleEvacuationPointInsert(payload.newRecord);
+          break;
+        case PostgresChangeEvent.update:
+          _handleEvacuationPointUpdate(payload.oldRecord, payload.newRecord);
+          break;
+        case PostgresChangeEvent.delete:
+          _handleEvacuationPointDelete(payload.oldRecord);
+          break;
+        default:
+          print('⚠️ Unknown event type: ${payload.eventType}');
+      }
+    } catch (e) {
+      print('❌ Error handling evacuation point change: $e');
+    }
+  }
+
+  /// Handle INSERT event - add new evacuation point to map
+  void _handleEvacuationPointInsert(Map<String, dynamic> record) {
+    try {
+      final point = EvacuationPoint.fromJson(record);
+      
+      if (point.evacuationId != null) {
+        // Avoid duplicates by checking ID
+        final exists = _evacuationPointsData.any(
+          (p) => p.evacuationId == point.evacuationId,
+        );
+        
+        if (!exists) {
+          _evacuationPointsData.add(point);
+          _updateEvacuationPointsDisplay();
+          print('✅ Added new evacuation point: ${point.evacuationId}');
+        }
+      }
+    } catch (e) {
+      print('❌ Error handling INSERT: $e');
+    }
+  }
+
+  /// Handle UPDATE event - update existing evacuation point
+  void _handleEvacuationPointUpdate(
+    Map<String, dynamic> oldRecord,
+    Map<String, dynamic> newRecord,
+  ) {
+    try {
+      final newPoint = EvacuationPoint.fromJson(newRecord);
+      
+      if (newPoint.evacuationId != null) {
+        // Find and replace the existing point by ID
+        final index = _evacuationPointsData.indexWhere(
+          (p) => p.evacuationId == newPoint.evacuationId,
+        );
+        
+        if (index != -1) {
+          _evacuationPointsData[index] = newPoint;
+          _updateEvacuationPointsDisplay();
+          print('✅ Updated evacuation point: ${newPoint.evacuationId}');
+        } else {
+          // If not found, add it (shouldn't happen, but handle gracefully)
+          _evacuationPointsData.add(newPoint);
+          _updateEvacuationPointsDisplay();
+        }
+      }
+    } catch (e) {
+      print('❌ Error handling UPDATE: $e');
+    }
+  }
+
+  /// Handle DELETE event - remove evacuation point from map
+  void _handleEvacuationPointDelete(Map<String, dynamic> record) {
+    try {
+      final point = EvacuationPoint.fromJson(record);
+      
+      if (point.evacuationId != null) {
+        _evacuationPointsData.removeWhere(
+          (p) => p.evacuationId == point.evacuationId,
+        );
+        _updateEvacuationPointsDisplay();
+        print('✅ Removed evacuation point: ${point.evacuationId}');
+      }
+    } catch (e) {
+      print('❌ Error handling DELETE: $e');
+    }
+  }
+
+  /// Handle realtime changes to disasters
+  void _handleDisasterChange(PostgresChangePayload payload) {
+    try {
+      switch (payload.eventType) {
+        case PostgresChangeEvent.insert:
+          _handleDisasterInsert(payload.newRecord);
+          break;
+        case PostgresChangeEvent.update:
+          _handleDisasterUpdate(payload.oldRecord, payload.newRecord);
+          break;
+        case PostgresChangeEvent.delete:
+          _handleDisasterDelete(payload.oldRecord);
+          break;
+        default:
+          print('⚠️ Unknown disaster event type: ${payload.eventType}');
+      }
+    } catch (e) {
+      print('❌ Error handling disaster change: $e');
+    }
+  }
+
+  /// Check if a disaster occurred today
+  bool _isDisasterFromToday(Disaster disaster) {
+    if (disaster.occurredAt == null) {
+      print('⚠️ Disaster ${disaster.disasterId} has no occurredAt timestamp');
+      return false;
+    }
+    
+    try {
+      // Convert milliseconds timestamp to DateTime
+      final disasterDate = DateTime.fromMillisecondsSinceEpoch(disaster.occurredAt!.toInt());
+      final now = DateTime.now();
+      
+      // Check if disaster occurred today
+      final isToday = disasterDate.year == now.year &&
+                      disasterDate.month == now.month &&
+                      disasterDate.day == now.day;
+      
+      if (!isToday) {
+        print('🚫 Disaster ${disaster.disasterId} is not from today (occurred: ${disasterDate})');
+      }
+      
+      return isToday;
+    } catch (e) {
+      print('❌ Error checking disaster date: $e');
+      return false;
+    }
+  }
+
+  /// Handle INSERT event - add new disaster to map (only if from today)
+  void _handleDisasterInsert(Map<String, dynamic> record) {
+    try {
+      final disaster = Disaster.fromJson(record);
+      
+      if (disaster.disasterId != null) {
+        // Check if disaster is from today
+        if (!_isDisasterFromToday(disaster)) {
+          print('⏭️ Skipping disaster ${disaster.disasterId} - not from today');
+          return;
+        }
+        
+        // Avoid duplicates by checking ID
+        final exists = _disasterPointsData.any(
+          (d) => d.disasterId == disaster.disasterId,
+        );
+        
+        if (!exists) {
+          _disasterPointsData.add(disaster);
+          _updateDisasterPointsDisplay();
+          print('✅ Added new disaster: ${disaster.disasterId}');
+        }
+      }
+    } catch (e) {
+      print('❌ Error handling disaster INSERT: $e');
+    }
+  }
+
+  /// Handle UPDATE event - update existing disaster (only if from today)
+  void _handleDisasterUpdate(
+    Map<String, dynamic> oldRecord,
+    Map<String, dynamic> newRecord,
+  ) {
+    try {
+      final newDisaster = Disaster.fromJson(newRecord);
+      
+      if (newDisaster.disasterId != null) {
+        // Check if updated disaster is from today
+        if (!_isDisasterFromToday(newDisaster)) {
+          print('⏭️ Skipping disaster update ${newDisaster.disasterId} - not from today');
+          // If it was previously shown but now updated to a different date, remove it
+          final index = _disasterPointsData.indexWhere(
+            (d) => d.disasterId == newDisaster.disasterId,
+          );
+          if (index != -1) {
+            _disasterPointsData.removeAt(index);
+            _updateDisasterPointsDisplay();
+            print('🗑️ Removed disaster ${newDisaster.disasterId} - date changed to non-today');
+          }
+          return;
+        }
+        
+        // Find and replace the existing disaster by ID
+        final index = _disasterPointsData.indexWhere(
+          (d) => d.disasterId == newDisaster.disasterId,
+        );
+        
+        if (index != -1) {
+          _disasterPointsData[index] = newDisaster;
+          _updateDisasterPointsDisplay();
+          print('✅ Updated disaster: ${newDisaster.disasterId}');
+        } else {
+          // If not found, add it (could happen if date was updated to today)
+          _disasterPointsData.add(newDisaster);
+          _updateDisasterPointsDisplay();
+          print('✅ Added disaster ${newDisaster.disasterId} - date updated to today');
+        }
+      }
+    } catch (e) {
+      print('❌ Error handling disaster UPDATE: $e');
+    }
+  }
+
+  /// Handle DELETE event - remove disaster from map
+  void _handleDisasterDelete(Map<String, dynamic> record) {
+    try {
+      final disaster = Disaster.fromJson(record);
+      
+      if (disaster.disasterId != null) {
+        _disasterPointsData.removeWhere(
+          (d) => d.disasterId == disaster.disasterId,
+        );
+        _updateDisasterPointsDisplay();
+        print('✅ Removed disaster: ${disaster.disasterId}');
+      }
+    } catch (e) {
+      print('❌ Error handling disaster DELETE: $e');
+    }
+  }
+
+  /// Refresh disaster points (manual refresh if needed)
+  /// Note: Realtime subscription should handle updates automatically
   Future<void> refreshDisasterPoints() async {
     await _loadDisasterPoints();
   }
 
-  /// Refresh evacuation points
+  /// Refresh evacuation points (manual refresh if needed)
+  /// Note: Realtime subscription should handle updates automatically
   Future<void> refreshEvacuationPoints() async {
     await _loadEvacuationPoints();
   }
@@ -185,61 +497,60 @@ class ResponseTeamMapViewModel extends GetxController {
   // ---------- Annotations API ----------
   
   /// Replace all disaster points (called after fetching from API)
-  /// This should be called when disaster data is retrieved from API
+  /// Note: This is kept for backwards compatibility but realtime should handle updates
   void setDisasterPoints(List<LatLng> points) {
-    disasterPoints.value = points;
+    // This method is deprecated in favor of realtime updates
+    // If you need to manually set points, consider using _disasterPointsData directly
+    print('⚠️ setDisasterPoints called - consider using realtime updates instead');
   }
 
   /// Replace all evacuation points (called when evacuation points are updated)
+  /// Note: This is kept for backwards compatibility but realtime should handle updates
   void setEvacuationPoints(List<LatLng> points) {
-    evacuationPoints.value = points;
+    // This method is deprecated in favor of realtime updates
+    // If you need to manually set points, consider using _evacuationPointsData directly
+    print('⚠️ setEvacuationPoints called - consider using realtime updates instead');
   }
 
   /// Add a single evacuation point (called when response team creates one)
-  /// TODO: This should also call API to persist the evacuation point
-  /// After API call succeeds, the point will appear in both maps
+  /// The point will be automatically added to the map via realtime subscription
+  /// This method is kept for API compatibility but the local add is handled by realtime
   Future<void> addEvacuationPoint(LatLng point) async {
-    try {
-      // TODO: Call API to create evacuation point
-      // Example: await evacuationService.createEvacuationPoint(point);
-      // After API call succeeds, add to local list
-      
-      if (!evacuationPoints.contains(point)) {
-        evacuationPoints.add(point);
-        // TODO: Notify backend/other clients via real-time listener or API
-      }
-    } catch (e) {
-      // Handle error - could show error message to user
-      rethrow;
-    }
+    // Note: The actual insertion happens in addEvacuationPointPage
+    // When SupabaseService.addEvacuationPoint() is called, the realtime
+    // subscription will automatically receive the INSERT event and update the map
+    // No need to manually add to evacuationPoints list here
+    print('ℹ️ addEvacuationPoint called - realtime will handle the update');
   }
 
   /// Remove a single evacuation point (called when response team removes one)
-  /// TODO: This should also call API to remove the evacuation point
+  /// The point will be automatically removed from the map via realtime subscription
+  /// This method is kept for API compatibility but the local removal is handled by realtime
   Future<void> removeEvacuationPoint(LatLng point) async {
-    try {
-      // TODO: Call API to remove evacuation point
-      // Example: await evacuationService.removeEvacuationPoint(point);
-      // After API call succeeds, remove from local list
-      
-      evacuationPoints.remove(point);
-      // TODO: Notify backend/other clients via real-time listener or API
-    } catch (e) {
-      // Handle error - could show error message to user
-      rethrow;
-    }
+    // Note: When SupabaseService.deleteEvacuationPoint() is called, the realtime
+    // subscription will automatically receive the DELETE event and update the map
+    // No need to manually remove from evacuationPoints list here
+    print('ℹ️ removeEvacuationPoint called - realtime will handle the update');
   }
 
-  /// Add a single disaster point (called when a new disaster event is received from API)
+  /// Add a single disaster point (called when a new disaster event is received)
+  /// The point will be automatically added to the map via realtime subscription
+  /// This method is kept for API compatibility but the local add is handled by realtime
   void addDisasterPoint(LatLng point) {
-    if (!disasterPoints.contains(point)) {
-      disasterPoints.add(point);
-    }
+    // Note: When a disaster is inserted into Supabase, the realtime
+    // subscription will automatically receive the INSERT event and update the map
+    // No need to manually add to disasterPoints list here
+    print('ℹ️ addDisasterPoint called - realtime will handle the update');
   }
 
   /// Remove a single disaster point (called when a disaster is resolved/removed)
+  /// The point will be automatically removed from the map via realtime subscription
+  /// This method is kept for API compatibility but the local removal is handled by realtime
   void removeDisasterPoint(LatLng point) {
-    disasterPoints.remove(point);
+    // Note: When a disaster is deleted from Supabase, the realtime
+    // subscription will automatically receive the DELETE event and update the map
+    // No need to manually remove from disasterPoints list here
+    print('ℹ️ removeDisasterPoint called - realtime will handle the update');
   }
 
   // ---------- SOS Points API ----------
@@ -275,3 +586,4 @@ class ResponseTeamMapViewModel extends GetxController {
     sosPoints.value = points;
   }
 }
+
