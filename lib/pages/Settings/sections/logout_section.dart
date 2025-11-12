@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:resqapp/pages/Settings/SettingsViewModel.dart';
 import 'package:resqapp/theme/theme_app.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LogoutSection extends StatelessWidget {
   const LogoutSection({Key? key}) : super(key: key);
@@ -67,6 +70,13 @@ class LogoutSection extends StatelessWidget {
                       ),
                     );
                     if (result == true) {
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.remove('userId');
+                      print('✅ userId removed from SharedPreferences on logout');
+
+                      // Add additional logout logic if needed (e.g., Supabase sign out)
+                      // await Supabase.instance.client.auth.signOut();
+
                       Navigator.of(context).pushReplacementNamed('/login');
                     }
                   },

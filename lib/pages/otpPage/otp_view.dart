@@ -9,6 +9,8 @@ import 'sections/usernameInput/usernameInputView.dart';
 import 'sections/usernameInput/usernameInputViewModel.dart';
 import 'sections/confirmationButton/confirmationButtonView.dart';
 import 'sections/confirmationButton/confirmationButtonViewModel.dart';
+import '../userMap/user_map_view.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class OTPView extends StatelessWidget {
   final String phoneNumber;
@@ -103,6 +105,47 @@ class OTPScreen extends StatelessWidget {
                                 const ConfirmationButtonView(),
                               ],
                             ),
+                          )
+                        else if (otpViewModel.currentState ==
+                            ViewState.authenticated)
+                          // Navigate to UserMapView when authenticated
+                          Builder(
+                            builder: (context) {
+                              // Save userId to SharedPreferences and navigate
+                              WidgetsBinding.instance.addPostFrameCallback((
+                                _,
+                              ) async {
+                                final prefs =
+                                    await SharedPreferences.getInstance();
+                                bool isSaved = await prefs.setString(
+                                  'userId',
+                                  otpViewModel.userId,
+                                );
+
+                                if (isSaved) {
+                                  print(
+                                    '✅ userId successfully saved to SharedPreferences: ${otpViewModel.userId}',
+                                  );
+                                } else {
+                                  print(
+                                    '❌ Failed to save userId to SharedPreferences.',
+                                  );
+                                }
+
+                                if (context.mounted) {
+                                  Navigator.pushAndRemoveUntil(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const UserMapView(),
+                                    ),
+                                    (Route<dynamic> route) => false,
+                                  );
+                                }
+                              });
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            },
                           ),
                         if (otpViewModel.isLoading)
                           Container(

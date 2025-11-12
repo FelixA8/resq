@@ -1,13 +1,14 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import 'models/otp_model.dart';
 import '../../service/supabase_service.dart';
 import '../../models/supabase_models.dart';
 import '../../services/sms_service.dart';
 
-enum ViewState { otpInput, usernameInput }
+enum ViewState { otpInput, usernameInput, authenticated }
 
 class OTPViewModel extends ChangeNotifier {
   OTPModel? _otpModel;
@@ -20,6 +21,7 @@ class OTPViewModel extends ChangeNotifier {
 
   String? _verificationId;
   String? _generatedOtpCode;
+  String userId = ""; // Store userId after saving username
 
   // Getters
   OTPModel? get otpModel => _otpModel;
@@ -175,8 +177,21 @@ class OTPViewModel extends ChangeNotifier {
       if (isValid) {
         _otpModel = _otpModel?.copyWith(otpCode: code);
 
-        // Transition to username input state after successful OTP verification
-        _currentState = ViewState.usernameInput;
+        // New logic: Check for existing user by phone number
+        final existingUser = await SupabaseService.getUserByPhone(_otpModel!.phoneNumber);
+        if (existingUser != null) {
+          // User exists: Fetch and store details, skip username input
+          this.userId = existingUser.userId;
+          // Optionally update OTPModel with fetched username if needed for UI
+          _otpModel = _otpModel?.copyWith(username: existingUser.username);
+          print('✅ Existing user found: ${existingUser.username} (${this.userId})');
+          // Transition to authenticated state for direct navigation to userMapView
+          _currentState = ViewState.authenticated;
+        } else {
+          // No existing user: Proceed to username input
+          print('ℹ️ No existing user - requiring username input');
+          _currentState = ViewState.usernameInput;
+        }
       } else {
         _errorMessage = 'Invalid OTP code';
       }
@@ -278,8 +293,9 @@ class OTPViewModel extends ChangeNotifier {
       final result = await SupabaseService.createUser(newUser);
 
       if (result != null) {
+        this.userId = userId; // Store userId for later use
         print(
-          '✅ User created successfully: ${result.username} (${result.userId})',
+          '✅ User created successfully: ${result.username} (${this.userId})',
         );
         _errorMessage = '';
         _isLoading = false;

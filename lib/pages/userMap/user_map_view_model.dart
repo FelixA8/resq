@@ -3,13 +3,14 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:resqapp/models/supabase_models.dart';
 import 'package:resqapp/service/supabase_service.dart';
 import 'package:resqapp/services/location_helper.dart';
+import 'package:resqapp/pages/SOSWaiting/sos_waiting_view_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class ResponseTeamMapViewModel extends GetxController {
-  final String instanceCode;
+class UserMapViewModel extends GetxController {
   final MapController mapController = MapController();
   
   // Reactive state
@@ -21,18 +22,25 @@ class ResponseTeamMapViewModel extends GetxController {
   final RxList<LatLng> disasterPoints = <LatLng>[].obs;
   final RxList<EvacuationPoint> _evacuationPointsData = <EvacuationPoint>[].obs;
   final RxList<LatLng> evacuationPoints = <LatLng>[].obs;
-  final RxList<LatLng> sosPoints = <LatLng>[].obs;
+
+  // SOS State Management
+  final Rx<SOSWaitingViewModel?> _sosWaitingViewModel = Rx<SOSWaitingViewModel?>(null);
+  final RxBool _isSOSActive = false.obs;
+  final Rx<SosEvent?> _activeSosEvent = Rx<SosEvent?>(null);
+  
+  bool get isSOSActive => _isSOSActive.value;
+  SOSWaitingViewModel? get sosWaitingViewModel => _sosWaitingViewModel.value;
+  SosEvent? get activeSosEvent => _activeSosEvent.value;
 
   // Realtime subscriptions
   RealtimeChannel? _evacuationPointsSubscription;
   RealtimeChannel? _disastersSubscription;
 
-  ResponseTeamMapViewModel({required this.instanceCode});
-
   @override
   void onInit() {
     _initializeLocation();
     _initializeData();
+    _checkForActiveSOS();
     _subscribeToEvacuationPoints();
     _subscribeToDisasters();
     super.onInit();
@@ -47,12 +55,51 @@ class ResponseTeamMapViewModel extends GetxController {
   }
 
   void _initializeData() {
-    // Load disaster points from API (using dummy data for now)
+    // Load disaster points from API
     _loadDisasterPoints();
-    // Load evacuation points (using dummy data for now)
+    // Load evacuation points
     _loadEvacuationPoints();
-    // Load SOS points (these come from users, using dummy data for now)
-    _loadSOSPoints();
+  }
+
+  /// Check if user has an active SOS event in the database
+  /// This is called on initialization to restore SOS state if the app was closed
+  Future<void> _checkForActiveSOS() async {
+    try {
+      print('🔍 Checking for active SOS event...');
+      
+      // Get user ID from shared preferences
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('userId');
+
+      if (userId == null) {
+        print('ℹ️ No user ID found, skipping SOS check');
+        return;
+      }
+
+      // Check database for active SOS event
+      final sosEvent = await SupabaseService.getUserSosEvents(userId);
+
+      if (sosEvent != null) {
+        // Store the active SOS event
+        _activeSosEvent.value = sosEvent;
+        
+        // Restore SOS state
+        _isSOSActive.value = true;
+        
+        // Create SOSWaitingViewModel with the pressedAt timestamp from the SOS event
+        if (_sosWaitingViewModel.value == null) {
+          _sosWaitingViewModel.value = SOSWaitingViewModel(
+            pressedAtMillis: sosEvent.pressedAt,
+          );
+        }
+        
+        print('🆘 SOS state restored successfully');
+      } else {
+        print('ℹ️ No active SOS event found for user');
+      }
+    } catch (e) {
+      print('❌ Error checking for active SOS: $e');
+    }
   }
 
   /// Update the display list from the disaster data list
@@ -115,7 +162,7 @@ class ResponseTeamMapViewModel extends GetxController {
       final supabaseClient = Supabase.instance.client;
       
       _evacuationPointsSubscription = supabaseClient
-          .channel('evacuation_points_changes')
+          .channel('evacuation_points_changes_user')
           .onPostgresChanges(
             event: PostgresChangeEvent.all,
             schema: 'public',
@@ -141,7 +188,7 @@ class ResponseTeamMapViewModel extends GetxController {
       final supabaseClient = Supabase.instance.client;
       
       _disastersSubscription = supabaseClient
-          .channel('disasters_changes')
+          .channel('disasters_changes_user')
           .onPostgresChanges(
             event: PostgresChangeEvent.all,
             schema: 'public',
@@ -399,30 +446,6 @@ class ResponseTeamMapViewModel extends GetxController {
     await _loadEvacuationPoints();
   }
 
-  /// Load SOS points (sent by users when they press SOS button)
-  /// TODO: Replace with actual API call or real-time listener
-  Future<void> _loadSOSPoints() async {
-    try {
-      // TODO: Replace with actual API call or real-time listener
-      // Example: final response = await sosService.getSOSPoints();
-      // sosPoints.value = response.map((point) => LatLng(point.lat, point.lng)).toList();
-      
-      // Dummy data for now - will be populated when users send SOS
-      // Adding one dummy SOS location for testing
-      sosPoints.value = [
-        LatLng(-6.2150, 106.8475), // Dummy SOS location near Jakarta
-      ];
-    } catch (e) {
-      // Handle error - for now, just use empty list
-      sosPoints.clear();
-    }
-  }
-
-  /// Refresh SOS points
-  Future<void> refreshSOSPoints() async {
-    await _loadSOSPoints();
-  }
-
   /// Initialize location using the LocationHelper
   Future<void> _initializeLocation() async {
     try {
@@ -494,6 +517,33 @@ class ResponseTeamMapViewModel extends GetxController {
     await _initializeLocation();
   }
 
+  // ---------- SOS Management Methods ----------
+  
+  void startSOS() {
+    _isSOSActive.value = true;
+    // Create SOSWaitingViewModel if it doesn't exist, or reuse existing one
+    if (_sosWaitingViewModel.value == null) {
+      // Use the pressedAt timestamp from the active SOS event if available
+      _sosWaitingViewModel.value = SOSWaitingViewModel(
+        pressedAtMillis: _activeSosEvent.value?.pressedAt,
+      );
+    }
+  }
+  
+  void stopSOS() {
+    _isSOSActive.value = false;
+    _sosWaitingViewModel.value?.dispose();
+    _sosWaitingViewModel.value = null;
+    _activeSosEvent.value = null;
+  }
+  
+  /// Update the active SOS event data
+  /// This can be called when SOS event is updated (e.g., assigned to a team)
+  void updateActiveSosEvent(SosEvent sosEvent) {
+    _activeSosEvent.value = sosEvent;
+    print('📝 Active SOS event updated: ${sosEvent.sosId}');
+  }
+
   // ---------- Annotations API ----------
   
   /// Replace all disaster points (called after fetching from API)
@@ -553,37 +603,29 @@ class ResponseTeamMapViewModel extends GetxController {
     print('ℹ️ removeDisasterPoint called - realtime will handle the update');
   }
 
-  // ---------- SOS Points API ----------
+  // ---------- SOS Functionality ----------
   
-  /// Add a single SOS point (called when a user sends SOS)
-  /// This should be called via real-time listener or API callback when user sends SOS
-  /// TODO: This will be called automatically when backend receives SOS from user
-  void addSOSPoint(LatLng point) {
-    if (!sosPoints.contains(point)) {
-      sosPoints.add(point);
-      // TODO: Notify via real-time listener or API callback
-    }
-  }
-
-  /// Remove a single SOS point (called when SOS is resolved/cancelled)
-  /// TODO: This should also call API to mark SOS as resolved
-  Future<void> removeSOSPoint(LatLng point) async {
+  /// Send SOS with current location to response team
+  /// This will send the user's current location to the backend,
+  /// which will then notify the response team
+  /// TODO: Replace with actual API call
+  Future<void> sendSOS() async {
     try {
-      // TODO: Call API to mark SOS as resolved
-      // Example: await sosService.resolveSOS(point);
-      // After API call succeeds, remove from local list
+      // TODO: Call API to send SOS with current location
+      // Example: await sosService.sendSOS(currentLocation);
+      // The backend will then notify response team via real-time listener or API
       
-      sosPoints.remove(point);
-      // TODO: Notify via real-time listener or API callback
+      // For now, this is a placeholder - in real implementation,
+      // the backend will receive this and notify response team
+      // Response team will receive it via their API listener and call addSOSPoint()
+      
+      // TODO: After API call succeeds, you might want to show success message
     } catch (e) {
       // Handle error - could show error message to user
       rethrow;
     }
   }
-
-  /// Replace all SOS points (called when SOS points are updated)
-  void setSOSPoints(List<LatLng> points) {
-    sosPoints.value = points;
-  }
 }
+
+
 

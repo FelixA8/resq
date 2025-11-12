@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:resqapp/pages/userMap/userMapViewModel.dart';
+import 'package:get/get.dart';
 import 'package:resqapp/pages/SOSWaiting/sos_waiting_view.dart';
-import 'package:resqapp/pages/SOSWaiting/sos_waiting_view_model.dart';
+import 'package:resqapp/pages/userMap/user_map_view_model.dart';
 import 'package:resqapp/theme/theme_app.dart';
 import 'dart:math' as math;
 
@@ -12,9 +11,11 @@ class SOSActiveBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var theme = ResQTheme();
-    return Consumer<UserMapViewModel>(
-      builder: (context, viewModel, child) {
-        if (!viewModel.isSOSActive) {
+    
+    // Get the UserMapViewModel from GetX
+    return GetX<UserMapViewModel>(
+      builder: (controller) {
+        if (!controller.isSOSActive) {
           return SizedBox.shrink();
         }
         
@@ -23,16 +24,8 @@ class SOSActiveBanner extends StatelessWidget {
             // Navigate to SOS waiting view with existing ViewModel
             Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (_) => MultiProvider(
-                  providers: [
-                    ChangeNotifierProvider<UserMapViewModel>.value(
-                      value: viewModel,
-                    ),
-                    ChangeNotifierProvider<SOSWaitingViewModel>.value(
-                      value: viewModel.sosWaitingViewModel!,
-                    ),
-                  ],
-                  child: SOSWaitingView(viewModel: viewModel.sosWaitingViewModel),
+                builder: (_) => SOSWaitingView(
+                  viewModel: controller.sosWaitingViewModel,
                 ),
               ),
             );
@@ -188,4 +181,3 @@ class RotatingBorderPainter extends CustomPainter {
     return oldDelegate.progress != progress;
   }
 }
-

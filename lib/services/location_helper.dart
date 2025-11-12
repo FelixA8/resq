@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -212,6 +213,66 @@ class LocationHelper {
       );
     }
   }
+
+  /// Get address details from coordinates using reverse geocoding
+  static Future<LocationDetailResult> getLocationDetails(LatLng coordinates) async {
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        coordinates.latitude,
+        coordinates.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        Placemark placemark = placemarks.first;
+        
+        // Extract city information
+        String city = placemark.locality ?? 
+                     placemark.administrativeArea ?? 
+                     placemark.subAdministrativeArea ?? 
+                     'Unknown City';
+
+        // Create detailed location string
+        List<String> addressParts = [];
+        
+        if (placemark.street != null && placemark.street!.isNotEmpty) {
+          addressParts.add(placemark.street!);
+        }
+        if (placemark.subLocality != null && placemark.subLocality!.isNotEmpty) {
+          addressParts.add(placemark.subLocality!);
+        }
+        if (placemark.locality != null && placemark.locality!.isNotEmpty) {
+          addressParts.add(placemark.locality!);
+        }
+        if (placemark.administrativeArea != null && placemark.administrativeArea!.isNotEmpty) {
+          addressParts.add(placemark.administrativeArea!);
+        }
+
+        String locationDetail = addressParts.isNotEmpty 
+            ? addressParts.join(', ')
+            : 'Lat: ${coordinates.latitude.toStringAsFixed(6)}, Lng: ${coordinates.longitude.toStringAsFixed(6)}';
+
+        return LocationDetailResult(
+          city: city,
+          locationDetail: locationDetail,
+          success: true,
+        );
+      } else {
+        return LocationDetailResult(
+          city: 'Unknown City',
+          locationDetail: 'Lat: ${coordinates.latitude.toStringAsFixed(6)}, Lng: ${coordinates.longitude.toStringAsFixed(6)}',
+          success: false,
+          error: 'No address found for this location',
+        );
+      }
+    } catch (e) {
+      return LocationDetailResult(
+        city: 'Unknown City',
+        locationDetail: 'Lat: ${coordinates.latitude.toStringAsFixed(6)}, Lng: ${coordinates.longitude.toStringAsFixed(6)}',
+        success: false,
+        error: e.toString(),
+      );
+    }
+  }
 }
 
 class LocationResult {
@@ -222,6 +283,20 @@ class LocationResult {
   LocationResult({
     required this.location,
     required this.hasPermission,
+    this.error,
+  });
+}
+
+class LocationDetailResult {
+  final String city;
+  final String locationDetail;
+  final bool success;
+  final String? error;
+
+  LocationDetailResult({
+    required this.city,
+    required this.locationDetail,
+    required this.success,
     this.error,
   });
 }

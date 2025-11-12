@@ -8,8 +8,21 @@ class SOSWaitingViewModel extends ChangeNotifier {
 
   String get formattedTime => _formatDuration(_elapsedTime);
 
-  SOSWaitingViewModel() {
-    _startTime = DateTime.now();
+  /// Creates a SOSWaitingViewModel
+  /// 
+  /// [pressedAtMillis] - Optional timestamp in milliseconds (from SosEvent.pressedAt)
+  /// If provided, the timer will calculate elapsed time from this timestamp.
+  /// If not provided, it defaults to the current time.
+  SOSWaitingViewModel({double? pressedAtMillis}) {
+    if (pressedAtMillis != null && pressedAtMillis > 0) {
+      // Convert milliseconds timestamp to DateTime
+      _startTime = DateTime.fromMillisecondsSinceEpoch(pressedAtMillis.toInt());
+      print('⏱️ SOSWaitingViewModel initialized with pressedAt: $_startTime');
+    } else {
+      _startTime = DateTime.now();
+      print('⏱️ SOSWaitingViewModel initialized with current time: $_startTime');
+    }
+    
     _ticker = Ticker(_onTick);
     _ticker.start();
   }

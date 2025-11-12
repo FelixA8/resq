@@ -20,6 +20,7 @@ class ResponseTeamMapView extends GetView<ResponseTeamMapViewModel> {
 
     return Scaffold(
         body: Obx(() {
+
           return Stack(
             children: [
               FlutterMap(

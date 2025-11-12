@@ -82,6 +82,24 @@ class SupabaseService {
     }
   }
 
+  static Future<ResqUser?> getUserByPhone(String phoneNumber) async {
+  try {
+    final response = 
+      await _client
+        .from('users')
+        .select()
+        .eq('phone_number', phoneNumber)
+        .single();
+    if (response.isNotEmpty) {
+      return ResqUser.fromJson(response); // Assuming ResqUser has a fromJson constructor
+    }
+    return null;
+  } catch (e) {
+    print('Error fetching user by phone: $e');
+    return null;
+  }
+}
+
   /// Create a new user
   static Future<ResqUser?> createUser(ResqUser user) async {
     try {
@@ -197,14 +215,28 @@ class SupabaseService {
 
   // ==================== Disasters ====================
 
-  /// Get all disasters
+  /// Get all disasters that occurred today
   static Future<List<Disaster>> getDisasters() async {
     try {
+      // Calculate start and end of today in milliseconds since epoch
+      final now = DateTime.now();
+      final startOfDay = DateTime(now.year, now.month, now.day);
+      final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59, 999);
+      
+      final startOfDayMs = startOfDay.millisecondsSinceEpoch.toDouble();
+      final endOfDayMs = endOfDay.millisecondsSinceEpoch.toDouble();
+      
+      print('🔍 Fetching disasters from ${startOfDay} to ${endOfDay}');
+      print('📊 Timestamp range: $startOfDayMs - $endOfDayMs');
+
       final response = await _client
           .from('disasters')
           .select()
+          .gte('occurred_at', startOfDayMs)
+          .lte('occurred_at', endOfDayMs)
           .order('occurred_at', ascending: false);
 
+      print('✅ Found ${(response as List).length} disasters today');
       return (response as List).map((json) => Disaster.fromJson(json)).toList();
     } catch (e) {
       print('Error getting disasters: $e');
@@ -215,12 +247,39 @@ class SupabaseService {
   // ==================== SOS Events ====================
 
   /// Create SOS event
-  static Future<SosEvent?> createSosEvent(SosEvent sosEvent) async {
+  static Future<SosEvent?> createSosEvent({
+    required String userId,
+    required double lat,
+    required double lng,
+  }) async {
     try {
-      await _client.from('sos_events').insert(sosEvent.toJson());
-      return sosEvent;
+      final currentTimestamp = DateTime.now().millisecondsSinceEpoch.toDouble();
+      
+      final sosData = {
+        'user_id': userId,
+        'location_lat': lat,
+        'location_lng': lng,
+        'response_team_id': null,
+        'is_current': false,
+        'pressed_at': currentTimestamp,
+        'assigned_at': 0.0,
+        'resolved_at': 0.0,
+      };
+      
+      print('📤 Inserting SOS event: $sosData');
+      
+      final response = await _client
+          .from('sos_events')
+          .insert(sosData)
+          .select()
+          .single();
+      
+      print('✅ SOS event created: $response');
+      
+      return SosEvent.fromJson(response);
     } catch (e) {
-      print('Error creating SOS event: $e');
+      print('❌ Error creating SOS event: $e');
+      print('📊 Error type: ${e.runtimeType}');
       return null;
     }
   }
@@ -241,54 +300,115 @@ class SupabaseService {
   }
 
   /// Get SOS events for a user
+  /// Returns the most recent SOS event for the user
   static Future<SosEvent?> getUserSosEvents(String userId) async {
     try {
       final response = await _client
           .from('sos_events')
           .select()
           .eq('user_id', userId)
-          .order('sos_id', ascending: false);
+          .order('sos_id', ascending: false)
+          .limit(1)
+          .maybeSingle();
 
-      return (response as SosEvent);
+      if (response == null) {
+        print('ℹ️ No SOS events found for user: $userId');
+        return null;
+      }
+      
+      return SosEvent.fromJson(response);
     } catch (e) {
-      print('Error getting SOS events: $e');
+      print('❌ Error getting SOS events: $e');
       return null;
     }
   }
 
   /// Assign SOS event to response team
+  /// Updates the sos_events table with the response team assignment
   static Future<bool> assignSosToTeam({
     required String sosId,
     required String responseTeamId,
   }) async {
     try {
-      await _client.from('sos_assignments').insert({
-        'sos_id': sosId,
-        'response_team_id': responseTeamId,
-        'assigned_at': DateTime.now().toIso8601String(),
-        'is_current': true,
-      });
+      final currentTimestamp = DateTime.now().millisecondsSinceEpoch.toDouble();
+      
+      await _client
+          .from('sos_events')
+          .update({
+            'response_team_id': responseTeamId,
+            'assigned_at': currentTimestamp,
+            'is_current': true,
+          })
+          .eq('sos_id', sosId);
+      
+      print('✅ SOS event $sosId assigned to team $responseTeamId');
       return true;
     } catch (e) {
-      print('Error assigning SOS: $e');
+      print('❌ Error assigning SOS: $e');
       return false;
     }
   }
 
   /// Resolve SOS event
+  /// Updates the sos_events table to mark the SOS as resolved
   static Future<bool> resolveSosEvent(String sosId) async {
     try {
+      final currentTimestamp = DateTime.now().millisecondsSinceEpoch.toDouble();
+      
       await _client
-          .from('sos_assignments')
+          .from('sos_events')
           .update({
-            'resolved_at': DateTime.now().toIso8601String(),
+            'resolved_at': currentTimestamp,
             'is_current': false,
           })
           .eq('sos_id', sosId)
           .eq('is_current', true);
+      
+      print('✅ SOS event $sosId resolved');
       return true;
     } catch (e) {
-      print('Error resolving SOS: $e');
+      print('❌ Error resolving SOS: $e');
+      return false;
+    }
+  }
+
+  /// Delete SOS event by user ID
+  /// Deletes the most recent active SOS event for a user
+  static Future<bool> deleteSosEventByUserId(String userId) async {
+    try {
+      print('🗑️ Attempting to delete SOS event for user: $userId');
+      
+      // Delete all active SOS events for this user (where is_current = true)
+      await _client
+          .from('sos_events')
+          .delete()
+          .eq('user_id', userId);
+      
+      print('✅ SOS event(s) deleted for user: $userId');
+      return true;
+    } catch (e) {
+      print('❌ Error deleting SOS event: $e');
+      print('📊 Error type: ${e.runtimeType}');
+      return false;
+    }
+  }
+
+  /// Delete SOS event by SOS ID
+  /// Deletes a specific SOS event
+  static Future<bool> deleteSosEventById(String sosId) async {
+    try {
+      print('🗑️ Attempting to delete SOS event: $sosId');
+      
+      await _client
+          .from('sos_events')
+          .delete()
+          .eq('sos_id', sosId);
+      
+      print('✅ SOS event deleted: $sosId');
+      return true;
+    } catch (e) {
+      print('❌ Error deleting SOS event: $e');
+      print('📊 Error type: ${e.runtimeType}');
       return false;
     }
   }

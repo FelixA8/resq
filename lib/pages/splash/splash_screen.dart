@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:resqapp/pages/responseLoginPage/response_login_page_view_model.dart';
 import 'package:resqapp/pages/responseTeam/response_team_dashboard_view.dart';
 import 'package:resqapp/pages/loginPage/login_page_view.dart';
+import 'package:resqapp/pages/userMap/user_map_view.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -34,10 +36,22 @@ class _SplashScreenState extends State<SplashScreen> {
       );
     } else {
       // Navigate to Login Page if no instanceCode exists
-      Get.off(
-        () => const LoginPageView(),
-        transition: Transition.fadeIn,
-      );
+      
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('userId');
+
+      print("current userId in splash screen: $userId");
+
+      if (userId != null && userId.isNotEmpty) {
+        // User is already logged in, go to the map page (UserMapView or whatever your main app page is)
+        Get.off(() => UserMapView(), transition: Transition.fadeIn);
+      } else {
+        // Not logged in; show login page
+        Get.off(
+          () => const LoginPageView(),
+          transition: Transition.fadeIn,
+        );
+      }
     }
   }
 

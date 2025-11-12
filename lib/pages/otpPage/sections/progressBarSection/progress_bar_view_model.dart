@@ -44,6 +44,9 @@ class ProgressBarViewModel extends ChangeNotifier {
         case ViewState.usernameInput:
           newProgress = 0.66; // 2/3 progress for username input
           break;
+        case ViewState.authenticated:
+          newProgress = 1; // 2/3 progress for username input
+          break;
       }
 
       if (_progress != newProgress) {

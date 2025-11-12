@@ -139,7 +139,7 @@ class Contact {
 /// Disaster event
 class Disaster {
   final String disasterId;
-  final DateTime? occurredAt;
+  final double? occurredAt;
   final double? centerLat;
   final double? centerLng;
   final double? magnitude;
@@ -161,7 +161,7 @@ class Disaster {
       disasterId: json['disaster_id'] as String,
       occurredAt:
           json['occurred_at'] != null
-              ? DateTime.parse(json['occurred_at'])
+              ? (json['occurred_at'] as num).toDouble()
               : null,
       centerLat:
           json['center_lat'] != null
@@ -183,7 +183,7 @@ class Disaster {
   Map<String, dynamic> toJson() {
     return {
       'disaster_id': disasterId,
-      'occurred_at': occurredAt?.toIso8601String(),
+      'occurred_at': occurredAt,
       'center_lat': centerLat,
       'center_lng': centerLng,
       'magnitude': magnitude,
@@ -191,6 +191,8 @@ class Disaster {
       'shakemap': shakemap,
     };
   }
+
+  bool hasLocation() => centerLat != null && centerLng != null;
 }
 
 /// Response team member
@@ -305,29 +307,31 @@ class EvacuationPoint {
 class SosEvent {
   final String sosId;
   final String? userId;
-  final bool? sosPressed;
-  final DateTime? pressedAt;
   final double? locationLat;
   final double? locationLng;
+  final String? responseTeamId;
+  final bool? isCurrent;
+  final double? pressedAt;
+  final double? assignedAt;
+  final double? resolvedAt;
 
   SosEvent({
     required this.sosId,
     this.userId,
-    this.sosPressed,
-    this.pressedAt,
     this.locationLat,
     this.locationLng,
+    this.responseTeamId,
+    this.isCurrent,
+    this.pressedAt,
+    this.assignedAt,
+    this.resolvedAt,
   });
 
   factory SosEvent.fromJson(Map<String, dynamic> json) {
+    print(json);
     return SosEvent(
       sosId: json['sos_id'] as String,
       userId: json['user_id'] as String?,
-      sosPressed: json['sos_pressed'] as bool?,
-      pressedAt:
-          json['pressed_at'] != null
-              ? DateTime.parse(json['pressed_at'])
-              : null,
       locationLat:
           json['location_lat'] != null
               ? (json['location_lat'] as num).toDouble()
@@ -336,6 +340,20 @@ class SosEvent {
           json['location_lng'] != null
               ? (json['location_lng'] as num).toDouble()
               : null,
+      responseTeamId: json['response_team_id'] as String?,
+      isCurrent: json['is_current'] as bool?,
+      pressedAt:
+          json['pressed_at'] != null
+              ? (json['pressed_at'] as num).toDouble()
+              : 0.0,
+      assignedAt:
+          json['assigned_at'] != null
+              ? (json['assigned_at'] as num).toDouble()
+              : 0.0,
+      resolvedAt:
+          json['resolved_at'] != null
+              ? (json['resolved_at'] as num).toDouble()
+              : 0.0,
     );
   }
 
@@ -343,60 +361,46 @@ class SosEvent {
     return {
       'sos_id': sosId,
       'user_id': userId,
-      'sos_pressed': sosPressed,
-      'pressed_at': pressedAt,
       'location_lat': locationLat,
       'location_lng': locationLng,
+      'response_team_id': responseTeamId,
+      'is_current': isCurrent,
+      'pressed_at': pressedAt,
+      'assigned_at': assignedAt,
+      'resolved_at': resolvedAt,
     };
   }
 
   bool hasLocation() => locationLat != null && locationLng != null;
-}
-
-/// SOS assignment to response team
-class SosAssignment {
-  final String sosId;
-  final String? responseTeamId;
-  final DateTime? assignedAt;
-  final DateTime? resolvedAt;
-  final bool? isCurrent;
-
-  SosAssignment({
-    required this.sosId,
-    this.responseTeamId,
-    this.assignedAt,
-    this.resolvedAt,
-    this.isCurrent,
-  });
-
-  factory SosAssignment.fromJson(Map<String, dynamic> json) {
-    return SosAssignment(
-      sosId: json['sos_id'] as String,
-      responseTeamId: json['response_team_id'] as String?,
-      assignedAt:
-          json['assigned_at'] != null
-              ? DateTime.parse(json['assigned_at'])
-              : null,
-      resolvedAt:
-          json['resolved_at'] != null
-              ? DateTime.parse(json['resolved_at'])
-              : null,
-      isCurrent: json['is_current'] as bool?,
+  
+  bool get isAssigned => responseTeamId != null;
+  bool get isResolved => resolvedAt != null && resolvedAt! > 0;
+  bool get isActive => isCurrent == true && !isResolved;
+  
+  /// Create a copy of this SosEvent with updated fields
+  SosEvent copyWith({
+    String? sosId,
+    String? userId,
+    double? locationLat,
+    double? locationLng,
+    String? responseTeamId,
+    bool? isCurrent,
+    double? pressedAt,
+    double? assignedAt,
+    double? resolvedAt,
+  }) {
+    return SosEvent(
+      sosId: sosId ?? this.sosId,
+      userId: userId ?? this.userId,
+      locationLat: locationLat ?? this.locationLat,
+      locationLng: locationLng ?? this.locationLng,
+      responseTeamId: responseTeamId ?? this.responseTeamId,
+      isCurrent: isCurrent ?? this.isCurrent,
+      pressedAt: pressedAt ?? this.pressedAt,
+      assignedAt: assignedAt ?? this.assignedAt,
+      resolvedAt: resolvedAt ?? this.resolvedAt,
     );
   }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'sos_id': sosId,
-      'response_team_id': responseTeamId,
-      'assigned_at': assignedAt?.toIso8601String(),
-      'resolved_at': resolvedAt?.toIso8601String(),
-      'is_current': isCurrent,
-    };
-  }
-
-  bool get isResolved => resolvedAt != null;
-  bool get isActive => isCurrent == true && !isResolved;
 }
 
 /// Junction table linking disasters to response teams
