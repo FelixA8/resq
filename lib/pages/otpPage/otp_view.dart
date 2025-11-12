@@ -9,7 +9,7 @@ import 'sections/usernameInput/usernameInputView.dart';
 import 'sections/usernameInput/usernameInputViewModel.dart';
 import 'sections/confirmationButton/confirmationButtonView.dart';
 import 'sections/confirmationButton/confirmationButtonViewModel.dart';
-import '../userMap/userMapView.dart';
+import '../userMap/user_map_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class OTPView extends StatelessWidget {

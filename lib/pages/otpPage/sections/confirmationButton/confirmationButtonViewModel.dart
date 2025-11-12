@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:resqapp/pages/userMap/userMapView.dart';
+import 'package:resqapp/pages/userMap/user_map_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../otp_view_model.dart';
 

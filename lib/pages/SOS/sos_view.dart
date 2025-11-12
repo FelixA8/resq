@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import 'sos_view_model.dart';
 import 'sections/sos_confirmation_section.dart';
 import 'sections/sos_button_section.dart';
 import '../SOSWaiting/sos_waiting_view.dart';
-import '../SOSWaiting/sos_waiting_view_model.dart';
-import '../userMap/userMapViewModel.dart';
 
 class SOSView extends StatelessWidget {
   const SOSView({Key? key}) : super(key: key);
@@ -24,67 +22,66 @@ class SOSView extends StatelessWidget {
     // Responsive handle bar width
     final handleBarWidth = (screenWidth * 0.11).clamp(35.0, 45.0);
     
-    return ChangeNotifierProvider(
-      create: (_) => SOSViewModel(),
-      child: Consumer<SOSViewModel>(
-        builder: (context, viewModel, child) {
-            return Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(height: spacing12),
-                  Container(
-                    width: handleBarWidth,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(2),
+    // Create a local SOSViewModel for this view
+    final sosViewModel = Get.put(SOSViewModel(), tag: 'sos_modal');
+    
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(height: spacing12),
+          Container(
+            width: handleBarWidth,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          SizedBox(height: spacing15),
+          SOSConfirmationSection(),
+          SizedBox(height: spacing8),
+          SOSButtonSection(
+            onPressed: () async {
+              // Call the view model to handle the SOS button press
+              final result = await sosViewModel.handleSOSButtonPress();
+              
+              if (result['success'] == true) {
+                // Close the modal
+                Navigator.of(context).pop();
+                
+                // Cleanup
+                sosViewModel.cleanup();
+                Get.delete<SOSViewModel>(tag: 'sos_modal');
+
+                // Navigate to waiting view if successful
+                final sosWaitingViewModel = result['sosWaitingViewModel'];
+                if (sosWaitingViewModel != null) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => SOSWaitingView(
+                        viewModel: sosWaitingViewModel,
+                      ),
                     ),
+                  );
+                }
+              } else {
+                // Show error message
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(result['error'] ?? 'An error occurred'),
+                    backgroundColor: Colors.red,
                   ),
-                  SizedBox(height: spacing15),
-                  SOSConfirmationSection(),
-                  SizedBox(height: spacing8),
-                  SOSButtonSection(
-                    onPressed: () {
-                      viewModel.triggerSOS();
-                      
-                      // Get UserMapViewModel from parent context
-                      final userMapViewModel = Provider.of<UserMapViewModel>(context, listen: false);
-                      userMapViewModel.startSOS();
-                      
-                      // Close the bottom sheet first
-                      Navigator.of(context).pop();
-                      
-                      // Then navigate to SOS waiting view with the ViewModel instance
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => MultiProvider(
-                            providers: [
-                              ChangeNotifierProvider<UserMapViewModel>.value(
-                                value: userMapViewModel,
-                              ),
-                              ChangeNotifierProvider<SOSWaitingViewModel>.value(
-                                value: userMapViewModel.sosWaitingViewModel!,
-                              ),
-                            ],
-                            child: SOSWaitingView(
-                              viewModel: userMapViewModel.sosWaitingViewModel,
-                            ),
-                          ),
-                        ),
-                      );
-                      // TODO: Add SOS logic here
-                    },
-                  ),
-                  SizedBox(height: spacing32),
-                ],
-              ),
-            );
-        },
+                );
+              }
+            },
+          ),
+          SizedBox(height: spacing32),
+        ],
       ),
     );
   }

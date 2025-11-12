@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:resqapp/pages/userMap/userMapViewModel.dart';
+import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:resqapp/pages/userMap/user_map_view_model.dart';
+import 'package:resqapp/service/supabase_service.dart';
 import 'package:resqapp/theme/theme_app.dart';
 
 class SOSWaitingCancelButtonSection extends StatelessWidget {
@@ -59,12 +61,34 @@ class SOSWaitingCancelButtonSection extends StatelessWidget {
             ),
             // Konfirmasi button (actually cancels SOS) - Right side, grey text button
             TextButton(
-              onPressed: () {
+              onPressed: () async {
                 // Close the dialog first
                 Navigator.of(dialogContext).pop();
                 
-                // Get UserMapViewModel and cancel SOS
-                final userMapViewModel = Provider.of<UserMapViewModel>(context, listen: false);
+                try {
+                  // Get user ID from shared preferences
+                  final prefs = await SharedPreferences.getInstance();
+                  final userId = prefs.getString('userId');
+
+                  if (userId != null) {
+                    // Delete SOS event from database
+                    print('🗑️ Cancelling SOS for user: $userId');
+                    final deleted = await SupabaseService.deleteSosEventByUserId(userId);
+                    
+                    if (deleted) {
+                      print('✅ SOS event successfully deleted from database');
+                    } else {
+                      print('⚠️ Failed to delete SOS event from database');
+                    }
+                  } else {
+                    print('⚠️ User ID not found, cannot delete SOS event');
+                  }
+                } catch (e) {
+                  print('❌ Error cancelling SOS: $e');
+                }
+                
+                // Get UserMapViewModel from GetX and cancel SOS
+                final userMapViewModel = Get.find<UserMapViewModel>();
                 userMapViewModel.stopSOS();
                 
                 // Navigate back to map view
