@@ -7,7 +7,7 @@ class ResponseLoginLogo extends StatelessWidget {
   Widget build(BuildContext context) {
     return Image.asset(
       'assets/images/logos/resq-response-team-logo.png',
-      height: 110,
+      height: 100,
     );
   }
 }

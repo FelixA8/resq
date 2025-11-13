@@ -86,10 +86,31 @@ class ResponseTeamDashboardView
                       maximumSize: Size(35, 35),
                     ),
                     onPressed: () async {
-                      // Clear saved instanceCode from shared preferences
-                      await ResponseLoginPageViewModel.clearInstanceCode();
-                      // Navigate back to login page
-                      Get.offAllNamed('/responseLogin');
+                      final result = await showDialog<bool>(
+                        context: context,
+                        builder:
+                            (context) => AlertDialog(
+                              title: Text('Konfirmasi Logout'),
+                              content: Text(
+                                'Apakah Anda yakin ingin keluar akun?',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed:
+                                      () => Navigator.of(context).pop(false),
+                                  child: Text('Batal'),
+                                ),
+                                TextButton(
+                                  onPressed:
+                                      () => Navigator.of(context).pop(true),
+                                  child: Text('Konfirmasi'),
+                                ),
+                              ],
+                            ),
+                      );
+                      if (result == true) {
+                        Navigator.of(context).pushReplacementNamed('/login');
+                      }
                     },
                     child: Image.asset(
                       'assets/images/icons/logout.png',
