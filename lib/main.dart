@@ -2,18 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:resqapp/pages/responseLoginPage/response_login_page_view.dart';
 import 'package:resqapp/pages/settings/SettingsView.dart';
-import 'package:resqapp/pages/loginPage/lower_case_view_model.dart';
 import 'package:resqapp/pages/otpPage/otp_view.dart';
 import 'package:resqapp/pages/userMap/user_map_view.dart';
 import 'package:resqapp/pages/splash/splash_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:intl/date_symbol_data_local.dart';
 // import 'service/supabase_service.dart'; // Uncomment if using testConnection in main
 import 'pages/loginPage/login_page_view.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize date formatting for Indonesian locale
+  await initializeDateFormatting('id_ID', null);
 
   // Load environment variables from .env file
   try {

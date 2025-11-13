@@ -177,7 +177,7 @@ class UserMapViewModel extends GetxController {
       for (var i = 0; i < allDisasters.length && i < 10; i++) {
         final d = allDisasters[i];
         final dateStr = d.occurredAt != null 
-            ? DateTime.fromMillisecondsSinceEpoch(d.occurredAt!.toInt() * 1000).toString()
+            ? DateTime.fromMillisecondsSinceEpoch(d.occurredAt!.toInt()).toString()
             : 'No date';
         print('   ${i + 1}. ${d.disasterId}');
         print('      Date: $dateStr');
@@ -190,7 +190,7 @@ class UserMapViewModel extends GetxController {
       final now = DateTime.now();
       final todayDisasters = allDisasters.where((d) {
         if (d.occurredAt == null) return false;
-        final date = DateTime.fromMillisecondsSinceEpoch(d.occurredAt!.toInt() * 1000);
+        final date = DateTime.fromMillisecondsSinceEpoch(d.occurredAt!.toInt());
         return date.year == now.year && 
                date.month == now.month && 
                date.day == now.day;
@@ -401,7 +401,7 @@ class UserMapViewModel extends GetxController {
     
     try {
       // Convert milliseconds timestamp to DateTime
-      final disasterDate = DateTime.fromMillisecondsSinceEpoch(disaster.occurredAt!.toInt() * 1000);
+      final disasterDate = DateTime.fromMillisecondsSinceEpoch(disaster.occurredAt!.toInt());
       final now = DateTime.now();
       
       // Check if disaster occurred today
@@ -732,7 +732,7 @@ class UserMapViewModel extends GetxController {
     if (timestamp == null) return 'Tidak tersedia';
     try {
       final dateTime =
-          DateTime.fromMillisecondsSinceEpoch(timestamp.toInt() * 1000);
+          DateTime.fromMillisecondsSinceEpoch(timestamp.toInt());
       return '${_disasterDateFormatter.format(dateTime)} WIB';
     } catch (_) {
       return 'Tidak tersedia';
