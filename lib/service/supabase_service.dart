@@ -232,14 +232,61 @@ class SupabaseService {
       final response = await _client
           .from('disasters')
           .select()
-          .gte('occurred_at', startOfDayMs)
-          .lte('occurred_at', endOfDayMs)
+          // .gte('occurred_at', startOfDayMs)
+          // .lte('occurred_at', endOfDayMs)
           .order('occurred_at', ascending: false);
 
       print('✅ Found ${(response as List).length} disasters today');
+      
+      // Debug: Print each disaster's details
+      if ((response as List).isNotEmpty) {
+        print('📋 Disaster details:');
+        for (var disasterJson in response) {
+          print('  - ID: ${disasterJson['disaster_id']}');
+          print('    Occurred: ${disasterJson['occurred_at']}');
+          print('    Location: ${disasterJson['center_lat']}, ${disasterJson['center_lng']}');
+          print('    Magnitude: ${disasterJson['magnitude']}');
+        }
+      } else {
+        print('⚠️ No disasters found for today. Checking all disasters in database...');
+        // Check all disasters for debugging
+        final allDisasters = await getAllDisasters();
+        print('📊 Total disasters in database: ${allDisasters.length}');
+        if (allDisasters.isNotEmpty) {
+          print('📋 Recent disasters (last 5):');
+          for (var i = 0; i < allDisasters.length && i < 5; i++) {
+            final d = allDisasters[i];
+            if (d.occurredAt != null) {
+              final date = DateTime.fromMillisecondsSinceEpoch(d.occurredAt!.toInt());
+              print('  - ${d.disasterId}: ${date.toString()} (${d.magnitude} SR)');
+            }
+          }
+        }
+      }
+      
       return (response as List).map((json) => Disaster.fromJson(json)).toList();
     } catch (e) {
-      print('Error getting disasters: $e');
+      print('❌ Error getting disasters: $e');
+      print('📊 Error type: ${e.runtimeType}');
+      return [];
+    }
+  }
+
+  /// Get all disasters (for debugging - not filtered by date)
+  static Future<List<Disaster>> getAllDisasters() async {
+    try {
+      print('🔍 Fetching ALL disasters from database (no date filter)...');
+      
+      final response = await _client
+          .from('disasters')
+          .select()
+          .order('occurred_at', ascending: false)
+          .limit(100); // Limit to last 100 for performance
+
+      print('✅ Found ${(response as List).length} total disasters in database');
+      return (response as List).map((json) => Disaster.fromJson(json)).toList();
+    } catch (e) {
+      print('❌ Error getting all disasters: $e');
       return [];
     }
   }

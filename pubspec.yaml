@@ -135,6 +135,10 @@ flutter:
     - assets/images/icons/phone-three.png
     - assets/images/icons/sos-gray.png
     - assets/images/icons/sos-logo.png
+    - assets/images/icons/earthquake-scale.png
+    - assets/images/icons/date.png
+    - assets/images/icons/tsunami.png
+    - assets/images/icons/depth.png
     
     
 

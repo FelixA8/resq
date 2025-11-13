@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:resqapp/models/supabase_models.dart';
@@ -9,9 +10,13 @@ import 'package:resqapp/service/supabase_service.dart';
 import 'package:resqapp/services/location_helper.dart';
 import 'package:resqapp/pages/SOSWaiting/sos_waiting_view_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class UserMapViewModel extends GetxController {
   final MapController mapController = MapController();
+  final DateFormat _disasterDateFormatter =
+      DateFormat('d MMMM yyyy, HH:mm:ss', 'id_ID');
+  final Map<String, String> _disasterAddressCache = {};
   
   // Reactive state
   final Rx<LatLng> currentLocation = LatLng(-6.2088, 106.8456).obs; // Jakarta default
@@ -59,6 +64,8 @@ class UserMapViewModel extends GetxController {
     _loadDisasterPoints();
     // Load evacuation points
     _loadEvacuationPoints();
+    // Debug: Check all disasters (will run automatically and log results)
+    debugCheckAllDisasters();
   }
 
   /// Check if user has an active SOS event in the database
@@ -104,10 +111,18 @@ class UserMapViewModel extends GetxController {
 
   /// Update the display list from the disaster data list
   void _updateDisasterPointsDisplay() {
-    disasterPoints.value = _disasterPointsData
+    final validDisasters = _disasterPointsData
         .where((disaster) => disaster.centerLat != null && disaster.centerLng != null)
+        .toList();
+    
+    disasterPoints.value = validDisasters
         .map((disaster) => LatLng(disaster.centerLat!, disaster.centerLng!))
         .toList();
+    
+    print('📍 Updated disaster points display: ${disasterPoints.length} markers');
+    if (validDisasters.length != _disasterPointsData.length) {
+      print('⚠️ ${_disasterPointsData.length - validDisasters.length} disasters filtered out (missing location)');
+    }
   }
 
   /// Load disaster points from Supabase
@@ -121,10 +136,71 @@ class UserMapViewModel extends GetxController {
       _updateDisasterPointsDisplay();
       
       print('✅ Loaded ${_disasterPointsData.length} disaster points');
+      print('📍 Displaying ${disasterPoints.length} markers on map');
+      
+      // Debug: Print disaster details
+      if (_disasterPointsData.isEmpty) {
+        print('⚠️ No disasters loaded. This could mean:');
+        print('   1. No disasters occurred today');
+        print('   2. Database connection issue');
+        print('   3. Disasters exist but have no location data');
+      } else {
+        print('📋 Loaded disasters:');
+        for (var i = 0; i < _disasterPointsData.length && i < 3; i++) {
+          final d = _disasterPointsData[i];
+          print('   ${i + 1}. ${d.disasterId} - Lat: ${d.centerLat}, Lng: ${d.centerLng}, Mag: ${d.magnitude}');
+        }
+      }
     } catch (e) {
       print('❌ Error loading disaster points: $e');
+      print('📊 Error type: ${e.runtimeType}');
       _disasterPointsData.clear();
       _updateDisasterPointsDisplay();
+    }
+  }
+
+  /// Debug method: Check all disasters in database (not just today's)
+  /// Use this to verify if disasters exist in the database
+  Future<void> debugCheckAllDisasters() async {
+    try {
+      print('🔍 [DEBUG] Checking all disasters in database...');
+      final allDisasters = await SupabaseService.getAllDisasters();
+      
+      print('📊 [DEBUG] Total disasters in database: ${allDisasters.length}');
+      
+      if (allDisasters.isEmpty) {
+        print('⚠️ [DEBUG] Database is empty - no disasters found');
+        return;
+      }
+      
+      print('📋 [DEBUG] Recent disasters:');
+      for (var i = 0; i < allDisasters.length && i < 10; i++) {
+        final d = allDisasters[i];
+        final dateStr = d.occurredAt != null 
+            ? DateTime.fromMillisecondsSinceEpoch(d.occurredAt!.toInt()).toString()
+            : 'No date';
+        print('   ${i + 1}. ${d.disasterId}');
+        print('      Date: $dateStr');
+        print('      Location: ${d.centerLat}, ${d.centerLng}');
+        print('      Magnitude: ${d.magnitude} SR');
+        print('      Has location: ${d.hasLocation()}');
+      }
+      
+      // Check how many are from today
+      final now = DateTime.now();
+      final todayDisasters = allDisasters.where((d) {
+        if (d.occurredAt == null) return false;
+        final date = DateTime.fromMillisecondsSinceEpoch(d.occurredAt!.toInt());
+        return date.year == now.year && 
+               date.month == now.month && 
+               date.day == now.day;
+      }).toList();
+      
+      print('📅 [DEBUG] Disasters from today: ${todayDisasters.length}');
+      print('📅 [DEBUG] Disasters from other dates: ${allDisasters.length - todayDisasters.length}');
+      
+    } catch (e) {
+      print('❌ [DEBUG] Error checking all disasters: $e');
     }
   }
 
@@ -603,6 +679,110 @@ class UserMapViewModel extends GetxController {
     print('ℹ️ removeDisasterPoint called - realtime will handle the update');
   }
 
+  /// Find disaster by location coordinates
+  /// Returns the disaster that matches the given coordinates (with tolerance for floating point comparison)
+  Disaster? findDisasterByLocation(LatLng location) {
+    const tolerance = 0.0001; // Small tolerance for floating point comparison
+    
+    try {
+      return _disasterPointsData.firstWhere(
+        (disaster) =>
+            disaster.centerLat != null &&
+            disaster.centerLng != null &&
+            (disaster.centerLat! - location.latitude).abs() < tolerance &&
+            (disaster.centerLng! - location.longitude).abs() < tolerance,
+        orElse: () => throw StateError('No disaster found at this location'),
+      );
+    } catch (e) {
+      print('⚠️ No disaster found at location: ${location.latitude}, ${location.longitude}');
+      return null;
+    }
+  }
+
+  // ---------- Disaster Detail Helpers ----------
+
+  Future<String> fetchDisasterAddress(Disaster disaster) async {
+    final cacheKey = disaster.disasterId;
+
+    final cachedAddress = _disasterAddressCache[cacheKey];
+    if (cachedAddress != null) {
+      return cachedAddress;
+    }
+
+    if (disaster.centerLat == null || disaster.centerLng == null) {
+      const fallback = 'Lokasi tidak tersedia';
+      _disasterAddressCache[cacheKey] = fallback;
+      return fallback;
+    }
+
+    try {
+      final location = LatLng(disaster.centerLat!, disaster.centerLng!);
+      final result = await LocationHelper.getLocationDetails(location);
+      final address = result.locationDetail;
+      _disasterAddressCache[cacheKey] = address;
+      return address;
+    } catch (_) {
+      const fallback = 'Lokasi tidak tersedia';
+      _disasterAddressCache[cacheKey] = fallback;
+      return fallback;
+    }
+  }
+
+  String formatDisasterDate(double? timestamp) {
+    if (timestamp == null) return 'Tidak tersedia';
+    try {
+      final dateTime =
+          DateTime.fromMillisecondsSinceEpoch(timestamp.toInt());
+      return '${_disasterDateFormatter.format(dateTime)} WIB';
+    } catch (_) {
+      return 'Tidak tersedia';
+    }
+  }
+
+  String formatDisasterMagnitude(double? magnitude) {
+    return magnitude != null
+        ? '${magnitude.toStringAsFixed(2)} SR'
+        : 'Tidak tersedia';
+  }
+
+  String getTsunamiPotential(double? magnitude) {
+    if (magnitude == null) return 'Tidak Berpotensi';
+    return magnitude >= 7.0 ? 'Berpotensi' : 'Tidak Berpotensi';
+  }
+
+  String formatDisasterDepth(String? depth) {
+    return (depth == null || depth.isEmpty) ? 'Tidak tersedia' : depth;
+  }
+
+  Future<void> openDisasterShakeMap(Disaster disaster) async {
+    final url = disaster.shakemap;
+    if (url == null || url.isEmpty) {
+      throw const DisasterActionException('Peta guncangan tidak tersedia');
+    }
+
+    try {
+      final uri = Uri.parse(url);
+      final canOpen = await canLaunchUrl(uri);
+      if (!canOpen) {
+        throw const DisasterActionException(
+            'Tidak dapat membuka peta guncangan');
+      }
+
+      final opened = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+
+      if (!opened) {
+        throw const DisasterActionException(
+            'Tidak dapat membuka peta guncangan');
+      }
+    } catch (e) {
+      if (e is DisasterActionException) rethrow;
+      throw DisasterActionException('Error: ${e.toString()}');
+    }
+  }
+
   // ---------- SOS Functionality ----------
   
   /// Send SOS with current location to response team
@@ -625,6 +805,15 @@ class UserMapViewModel extends GetxController {
       rethrow;
     }
   }
+}
+
+class DisasterActionException implements Exception {
+  final String message;
+
+  const DisasterActionException(this.message);
+
+  @override
+  String toString() => message;
 }
 
 
