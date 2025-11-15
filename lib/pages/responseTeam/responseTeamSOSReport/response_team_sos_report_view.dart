@@ -15,9 +15,7 @@ class ResponseTeamSOSReportView extends StatelessWidget {
         builder: (context, viewModel, child) {
           return Column(
             children: [
-              // Title Section
               const TitleSection(),
-              // SOS Reports List
               Expanded(
                 child: viewModel.isLoading
                     ? const Center(

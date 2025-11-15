@@ -43,7 +43,7 @@ class SOSWaitingCancelButtonSection extends StatelessWidget {
                 Navigator.of(dialogContext).pop();
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(theme.colors.primary),
+                backgroundColor: theme.colors.primary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -130,7 +130,7 @@ class SOSWaitingCancelButtonSection extends StatelessWidget {
             _showCancelConfirmationDialog(context);
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: Color(theme.colors.primary),
+            backgroundColor: theme.colors.primary,
             fixedSize: Size(buttonWidth, buttonHeight),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),

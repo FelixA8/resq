@@ -14,7 +14,7 @@ class EvacuationHeaderView extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(theme.padding.ms),
       decoration: BoxDecoration(
-        color: Color(theme.colors.primary),
+        color: theme.colors.primary,
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
@@ -74,14 +74,14 @@ class EvacuationHeaderView extends StatelessWidget {
                 children: [
                   Icon(
                     Icons.add,
-                    color: Color(theme.colors.primary),
+                    color: theme.colors.primary,
                     size: 19,
                   ),
                   SizedBox(width: 4),
                   Text(
                     "Tambahkan",
                     style: TextStyle(
-                      color: Color(theme.colors.primary),
+                      color: theme.colors.primary,
                       fontWeight: FontWeight.w500,
                       fontSize: 12,
                       fontFamily: 'SF Pro',

@@ -120,7 +120,7 @@ class _EmergencyContactsSectionState extends State<EmergencyContactsSection> {
                                     fontFamily: 'SF Pro',
                                     fontWeight: FontWeight.w500,
                                     fontSize: 15,
-                                    color: Color(theme.colors.primary), // Use theme primary color
+                                    color: theme.colors.primary, // Use theme primary color
                                   ),
                                   decoration: InputDecoration(
                                     border: InputBorder.none,
@@ -130,7 +130,7 @@ class _EmergencyContactsSectionState extends State<EmergencyContactsSection> {
                                   ),
                                   keyboardType: TextInputType.phone,
                                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                                  cursorColor: Color(theme.colors.primary), // Use theme primary color
+                                  cursorColor: theme.colors.primary, // Use theme primary color
                                   onTap: () {
                                     controllers[index].selection = TextSelection.fromPosition(
                                       TextPosition(offset: controllers[index].text.length),
@@ -151,7 +151,7 @@ class _EmergencyContactsSectionState extends State<EmergencyContactsSection> {
                       isEdit
                           ? TextButton(
                               style: TextButton.styleFrom(
-                                backgroundColor: Color(theme.colors.primary), // Use theme primary color
+                                backgroundColor: theme.colors.primary, // Use theme primary color
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),

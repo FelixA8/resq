@@ -8,7 +8,6 @@ class SOSWaitingIllustrationSection extends StatelessWidget {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
     
-    // Responsive height: 25-30% of screen height, but with constraints
     final illustrationHeight = (screenHeight * 0.25).clamp(100.0, 300.0);
     
     return Padding(

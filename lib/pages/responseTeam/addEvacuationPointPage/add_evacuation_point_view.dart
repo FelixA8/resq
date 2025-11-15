@@ -41,7 +41,7 @@ class AddEvacuationPointView extends GetView<AddEvacuationPointViewModel> {
             margin: EdgeInsets.all(12),
             child: Icon(
               Icons.arrow_back_ios,
-              color: Color(theme.colors.primary),
+              color: theme.colors.primary,
               size: 20,
             ),
           ),
@@ -52,7 +52,7 @@ class AddEvacuationPointView extends GetView<AddEvacuationPointViewModel> {
             fontFamily: 'SF Pro',
             fontSize: 20,
             fontWeight: FontWeight.w500,
-            color: Color(theme.colors.primary),
+            color: theme.colors.primary,
           ),
         ),
         centerTitle: false,

@@ -108,29 +108,17 @@ class OTPScreen extends StatelessWidget {
                           )
                         else if (otpViewModel.currentState ==
                             ViewState.authenticated)
-                          // Navigate to UserMapView when authenticated
                           Builder(
                             builder: (context) {
-                              // Save userId to SharedPreferences and navigate
                               WidgetsBinding.instance.addPostFrameCallback((
                                 _,
                               ) async {
                                 final prefs =
                                     await SharedPreferences.getInstance();
-                                bool isSaved = await prefs.setString(
+                                bool _ = await prefs.setString(
                                   'userId',
                                   otpViewModel.userId,
                                 );
-
-                                if (isSaved) {
-                                  print(
-                                    '✅ userId successfully saved to SharedPreferences: ${otpViewModel.userId}',
-                                  );
-                                } else {
-                                  print(
-                                    '❌ Failed to save userId to SharedPreferences.',
-                                  );
-                                }
 
                                 if (context.mounted) {
                                   Navigator.pushAndRemoveUntil(

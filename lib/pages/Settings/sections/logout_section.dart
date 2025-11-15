@@ -46,7 +46,7 @@ class LogoutSection extends StatelessWidget {
                       fontFamily: 'SF Pro',
                       fontWeight: FontWeight.w500,
                       fontSize: 16,
-                      color: Color(theme.colors.primary),
+                      color: theme.colors.primary,
                     ),
                   ),
                 ),
@@ -86,7 +86,7 @@ class LogoutSection extends StatelessWidget {
                       'assets/images/icons/logout.png', // Use your signout icon asset
                       width: 22,
                       height: 22,
-                      color: Color(theme.colors.primary),
+                      color: theme.colors.primary,
                     ),
                   ),
                 ),

@@ -24,14 +24,7 @@ class UsernameViewModel extends ChangeNotifier {
       // TODO: Replace with actual Firebase implementation
       await Future.delayed(
         const Duration(seconds: 1),
-      ); // Simulate network delay
-
-      // Placeholder for Firebase implementation
-      // final databaseReference = FirebaseDatabase.instance.reference();
-      // await databaseReference.child('users').child(userId).set({
-      //   'username': _model.username,
-      //   'timestamp': ServerValue.timestamp,
-      // });
+      ); 
 
       _isLoading = false;
       notifyListeners();

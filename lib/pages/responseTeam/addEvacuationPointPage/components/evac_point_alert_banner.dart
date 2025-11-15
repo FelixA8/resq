@@ -17,7 +17,7 @@ class EvacPointAlertBanner extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(color: Color(theme.colors.primary)),
+      decoration: BoxDecoration(color: theme.colors.primary),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

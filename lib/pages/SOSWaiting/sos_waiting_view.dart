@@ -45,7 +45,6 @@ class _SOSWaitingContent extends StatelessWidget {
       body: SafeArea(
         child: Stack(
           children: [
-            // Main content column
             Column(
               children: [
                 SizedBox(height: spacing16),
@@ -53,15 +52,12 @@ class _SOSWaitingContent extends StatelessWidget {
                 SizedBox(height: spacing24),
                 const SOSWaitingDescriptionSection(),
                 SizedBox(height: spacing32),
-                // Timer section
                 SOSWaitingTimerSection(),
                 SizedBox(height: spacing8),
                 SOSWaitingCancelButtonSection(),
-                // Spacer to push illustration down
                 Spacer(),
               ],
             ),
-            // Illustration positioned at bottom
             Positioned(
               left: 0,
               right: 0,

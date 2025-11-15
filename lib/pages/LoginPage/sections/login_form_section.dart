@@ -22,7 +22,7 @@ class LoginFormSection extends StatelessWidget {
                 width: 67,
                 height: 51,
                 decoration: BoxDecoration(
-                  color: Color(theme.colors.neutral.low),
+                  color: theme.colors.neutral.low,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
@@ -74,7 +74,7 @@ class LoginFormSection extends StatelessWidget {
                           fontFamily: 'SF Pro',
                           fontWeight: FontWeight.w500,
                           fontSize: 15,
-                          color: Color(theme.colors.neutral.med),
+                          color: theme.colors.neutral.med,
                         ),
                         border: InputBorder.none,
                         isCollapsed: true,
@@ -118,7 +118,7 @@ class LoginFormSection extends StatelessWidget {
                 Icon(
                   Icons.keyboard_arrow_right,
                   size: 18,
-                  color: Color(theme.colors.primary),
+                  color: theme.colors.primary,
                 ),
               ],
             ),

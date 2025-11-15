@@ -72,27 +72,15 @@ class OTPViewModel extends ChangeNotifier {
         ),
       );
 
-      // Test Supabase connection first
-      print('🔄 Testing Supabase connection...');
       final connectionOk = await SupabaseService.testConnection();
 
       OtpCode? result;
 
       if (!connectionOk) {
-        // POC Fallback: Generate OTP even without database connection
-        print(
-          '⚠️ Database connection failed - using POC mode (OTP not saved to database)',
-        );
-        print('🔐 Generated OTP code: ${_generatedOtpCode}');
-        print('📝 Note: In production, database connection is required');
-
-        // For POC, we still allow OTP generation but warn the user
-        result = otpCode; // Use the generated code even without database save
-        _errorMessage = ''; // Clear error since we're in POC mode
+        result = otpCode;
+        _errorMessage = '';
       } else {
-        print('🔄 Calling SupabaseService.createOtpCode...');
         result = await SupabaseService.createOtpCode(otpCode);
-        print('📤 OTP creation result: $result');
       }
 
       if (result != null) {
@@ -102,21 +90,9 @@ class OTPViewModel extends ChangeNotifier {
           otpCode: _generatedOtpCode!,
         );
 
-        // Show OTP code for testing purposes
-        SmsService.showOtpForTesting(
-          phoneNumber: phoneNumber,
-          otpCode: _generatedOtpCode!,
-        );
-
         if (smsSent) {
-          print(
-            '✅ OTP Code generated and SMS app opened: ${_generatedOtpCode!} to $phoneNumber',
-          );
           _errorMessage = '';
         } else {
-          print(
-            '⚠️ OTP Code generated: ${_generatedOtpCode!} but SMS app failed to open for $phoneNumber',
-          );
           _errorMessage =
               'OTP generated but SMS app failed to open. Code: $_generatedOtpCode';
         }
@@ -153,43 +129,26 @@ class OTPViewModel extends ChangeNotifier {
     try {
       bool isValid = false;
 
-      // Try to verify with Supabase first
       try {
         isValid = await SupabaseService.verifyOtpCode(_verificationId!, code);
 
         if (isValid) {
-          // Invalidate the OTP code in Supabase (mark as used)
           await SupabaseService.invalidateOtpCode(_verificationId!);
         }
       } catch (e) {
-        // POC Fallback: If database unavailable, verify against locally generated code
-        print(
-          '⚠️ Database verification failed - using local verification (POC mode)',
-        );
-        print('🔍 Verifying code locally: ${_generatedOtpCode} == $code');
         isValid = _generatedOtpCode == code;
-
-        if (isValid) {
-          print('✅ Local verification successful (POC mode)');
-        }
       }
 
       if (isValid) {
         _otpModel = _otpModel?.copyWith(otpCode: code);
 
-        // New logic: Check for existing user by phone number
         final existingUser = await SupabaseService.getUserByPhone(_otpModel!.phoneNumber);
         if (existingUser != null) {
-          // User exists: Fetch and store details, skip username input
           this.userId = existingUser.userId;
-          // Optionally update OTPModel with fetched username if needed for UI
           _otpModel = _otpModel?.copyWith(username: existingUser.username);
-          print('✅ Existing user found: ${existingUser.username} (${this.userId})');
-          // Transition to authenticated state for direct navigation to userMapView
           _currentState = ViewState.authenticated;
         } else {
           // No existing user: Proceed to username input
-          print('ℹ️ No existing user - requiring username input');
           _currentState = ViewState.usernameInput;
         }
       } else {
@@ -216,12 +175,9 @@ class OTPViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Invalidate the old OTP code
       if (_verificationId != null) {
         await SupabaseService.invalidateOtpCode(_verificationId!);
       }
-
-      // Create new OTP code
       await _createAndStoreOtpCode(_otpModel!.phoneNumber);
 
       _otpModel = _otpModel?.copyWith(
@@ -241,7 +197,7 @@ class OTPViewModel extends ChangeNotifier {
   }
 
   void _startResendTimer() {
-    _resendTimeLeft = 5; // 5 seconds cooldown as requested
+    _resendTimeLeft = 5;
     _resendTimer?.cancel();
     _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_resendTimeLeft > 0) {
@@ -264,7 +220,6 @@ class OTPViewModel extends ChangeNotifier {
     });
   }
 
-  // Username-related methods
   void setUsername(String value) {
     _otpModel = _otpModel?.copyWith(username: value);
     notifyListeners();
@@ -277,7 +232,6 @@ class OTPViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Generate a unique user ID (you can use UUID package or timestamp-based)
       final userId = Uuid().v4();
 
       // Create ResqUser object
@@ -285,18 +239,14 @@ class OTPViewModel extends ChangeNotifier {
         userId: userId,
         phoneNumber: _otpModel!.phoneNumber,
         username: _otpModel!.username,
-        role: 'citizen', // Default role for regular users
-        // city can be added later through profile setup
+        role: 'citizen',
       );
 
       // Save user to Supabase
       final result = await SupabaseService.createUser(newUser);
 
       if (result != null) {
-        this.userId = userId; // Store userId for later use
-        print(
-          '✅ User created successfully: ${result.username} (${this.userId})',
-        );
+        this.userId = userId;
         _errorMessage = '';
         _isLoading = false;
         notifyListeners();

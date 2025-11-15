@@ -67,7 +67,7 @@ class _RadiantCircleButtonState extends State<RadiantCircleButton> with SingleTi
                     color: Colors.transparent,
                     boxShadow: [
                       BoxShadow(
-                        color: Color(theme.colors.primary).withOpacity(_animation.value * 0.18),
+                        color: theme.colors.primary.withOpacity(_animation.value * 0.18),
                         blurRadius: 10 * _animation.value,
                         spreadRadius: 5 * _animation.value,
                       ),
