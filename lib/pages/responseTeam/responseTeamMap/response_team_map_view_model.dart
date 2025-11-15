@@ -2,15 +2,21 @@ import 'dart:async';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:resqapp/models/supabase_models.dart';
 import 'package:resqapp/service/supabase_service.dart';
 import 'package:resqapp/services/location_helper.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:resqapp/components/disaster_detail_modal.dart';
 
 class ResponseTeamMapViewModel extends GetxController {
   final String instanceCode;
   final MapController mapController = MapController();
+  final DateFormat _disasterDateFormatter =
+      DateFormat('d MMMM yyyy, HH:mm:ss', 'id_ID');
+  final Map<String, String> _disasterAddressCache = {};
   
   // Reactive state
   final Rx<LatLng> currentLocation = LatLng(-6.2088, 106.8456).obs; // Jakarta default
@@ -278,7 +284,7 @@ class ResponseTeamMapViewModel extends GetxController {
     
     try {
       // Convert milliseconds timestamp to DateTime
-      final disasterDate = DateTime.fromMillisecondsSinceEpoch(disaster.occurredAt!.toInt());
+      final disasterDate = DateTime.fromMillisecondsSinceEpoch(disaster.occurredAt!.toInt()*1000);
       final now = DateTime.now();
       
       // Check if disaster occurred today
@@ -585,5 +591,132 @@ class ResponseTeamMapViewModel extends GetxController {
   void setSOSPoints(List<LatLng> points) {
     sosPoints.value = points;
   }
+
+  /// Find disaster by location coordinates
+  /// Returns the disaster that matches the given coordinates (with tolerance for floating point comparison)
+  Disaster? findDisasterByLocation(LatLng location) {
+    const tolerance = 0.0001; // Small tolerance for floating point comparison
+    
+    try {
+      return _disasterPointsData.firstWhere(
+        (disaster) =>
+            disaster.centerLat != null &&
+            disaster.centerLng != null &&
+            (disaster.centerLat! - location.latitude).abs() < tolerance &&
+            (disaster.centerLng! - location.longitude).abs() < tolerance,
+        orElse: () => throw StateError('No disaster found at this location'),
+      );
+    } catch (e) {
+      print('⚠️ No disaster found at location: ${location.latitude}, ${location.longitude}');
+      return null;
+    }
+  }
+
+  /// Find evacuation point by location coordinates
+  /// Returns the evacuation point that matches the given coordinates (with tolerance for floating point comparison)
+  EvacuationPoint? findEvacuationPointByLocation(LatLng location) {
+    const tolerance = 0.0001; // Small tolerance for floating point comparison
+    
+    try {
+      return _evacuationPointsData.firstWhere(
+        (point) =>
+            point.locationLat != null &&
+            point.locationLng != null &&
+            (point.locationLat! - location.latitude).abs() < tolerance &&
+            (point.locationLng! - location.longitude).abs() < tolerance,
+        orElse: () => throw StateError('No evacuation point found at this location'),
+      );
+    } catch (e) {
+      print('⚠️ No evacuation point found at location: ${location.latitude}, ${location.longitude}');
+      return null;
+    }
+  }
+
+  // ---------- Disaster Detail Helpers ----------
+
+  Future<String> fetchDisasterAddress(Disaster disaster) async {
+    final cacheKey = disaster.disasterId;
+
+    final cachedAddress = _disasterAddressCache[cacheKey];
+    if (cachedAddress != null) {
+      return cachedAddress;
+    }
+
+    if (disaster.centerLat == null || disaster.centerLng == null) {
+      const fallback = 'Lokasi tidak tersedia';
+      _disasterAddressCache[cacheKey] = fallback;
+      return fallback;
+    }
+
+    try {
+      final location = LatLng(disaster.centerLat!, disaster.centerLng!);
+      final result = await LocationHelper.getLocationDetails(location);
+      final address = result.locationDetail;
+      _disasterAddressCache[cacheKey] = address;
+      return address;
+    } catch (_) {
+      const fallback = 'Lokasi tidak tersedia';
+      _disasterAddressCache[cacheKey] = fallback;
+      return fallback;
+    }
+  }
+
+  String formatDisasterDate(double? timestamp) {
+    if (timestamp == null) return 'Tidak tersedia';
+    try {
+      final dateTime =
+          DateTime.fromMillisecondsSinceEpoch(timestamp.toInt()*1000);
+      return '${_disasterDateFormatter.format(dateTime)} WIB';
+    } catch (_) {
+      return 'Tidak tersedia';
+    }
+  }
+
+  String formatDisasterMagnitude(double? magnitude) {
+    return magnitude != null
+        ? '${magnitude.toStringAsFixed(2)} SR'
+        : 'Tidak tersedia';
+  }
+
+  String getTsunamiPotential(double? magnitude) {
+    if (magnitude == null) return 'Tidak Berpotensi';
+    return magnitude >= 7.0 ? 'Berpotensi' : 'Tidak Berpotensi';
+  }
+
+  String formatDisasterDepth(String? depth) {
+    return (depth == null || depth.isEmpty) ? 'Tidak tersedia' : depth;
+  }
+
+  Future<void> openDisasterShakeMap(Disaster disaster) async {
+    final url = disaster.shakemap;
+    if (url == null || url.isEmpty) {
+      throw const DisasterActionException('Peta guncangan tidak tersedia');
+    }
+
+    try {
+      final uri = Uri.parse(url);
+      final canOpen = await canLaunchUrl(uri);
+      if (!canOpen) {
+        throw const DisasterActionException(
+            'Tidak dapat membuka peta guncangan');
+      }
+
+      final opened = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+
+      if (!opened) {
+        throw const DisasterActionException(
+            'Tidak dapat membuka peta guncangan');
+      }
+    } catch (e) {
+      if (e is DisasterActionException) rethrow;
+      throw DisasterActionException('Error: ${e.toString()}');
+    }
+  }
 }
+
+// DisasterActionException is now defined in lib/components/disaster_detail_modal.dart
+// Import it from there if needed elsewhere
 

@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 import 'package:resqapp/pages/responseTeam/responseTeamMap/response_team_map_view_model.dart';
 import 'package:resqapp/theme/theme_app.dart';
 import 'package:resqapp/pages/userMap/components/radiant_marker.dart';
+import 'package:resqapp/pages/responseTeam/responseTeamMap/components/disaster_detail_modal.dart';
+import 'package:resqapp/pages/responseTeam/responseTeamMap/components/evacuation_point_detail_modal.dart';
 
 class ResponseTeamMapView extends GetView<ResponseTeamMapViewModel> {
   final String instanceCode;
@@ -76,16 +78,50 @@ class ResponseTeamMapView extends GetView<ResponseTeamMapViewModel> {
                   MarkerLayer(
                     markers: controller.evacuationPoints
                         .map(
-                          (point) => Marker(
-                            point: point,
-                            width: 42,
-                            height: 42,
-                            child: Image.asset(
-                              'assets/images/icons/map-evacuation-point.png',
+                          (point) {
+                            // Find the evacuation point data for this point
+                            final evacuationPoint = controller.findEvacuationPointByLocation(point);
+                            return Marker(
+                              point: point,
                               width: 42,
                               height: 42,
-                            ),
-                          ),
+                              child: GestureDetector(
+                                onTap: () {
+                                  if (evacuationPoint != null) {
+                                    showModalBottomSheet(
+                                      context: context,
+                                      isScrollControlled: true,
+                                      backgroundColor: Colors.transparent,
+                                      builder: (modalContext) {
+                                        final screenHeight =
+                                            MediaQuery.of(context).size.height;
+                                        // Responsive height: adjust based on screen size
+                                        final heightFactor =
+                                            screenHeight < 700 ? 0.30 : 0.28;
+
+                                        return FractionallySizedBox(
+                                          heightFactor: heightFactor,
+                                          child: EvacuationPointDetailModal(
+                                            evacuationPoint: evacuationPoint,
+                                          ),
+                                        );
+                                      },
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.vertical(
+                                          top: Radius.circular(24),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                },
+                                child: Image.asset(
+                                  'assets/images/icons/map-evacuation-point.png',
+                                  width: 42,
+                                  height: 42,
+                                ),
+                              ),
+                            );
+                          },
                         )
                         .toList(),
                   ),
@@ -93,19 +129,53 @@ class ResponseTeamMapView extends GetView<ResponseTeamMapViewModel> {
                   MarkerLayer(
                     markers: controller.disasterPoints
                         .map(
-                          (point) => Marker(
-                            point: point,
-                            width: 42,
-                            height: 42,
-                            child: RadiantMarker(
-                              color: Colors.redAccent,
-                              child: Image.asset(
-                                'assets/images/icons/map-disaster-earthquake.png',
-                                width: 42,
-                                height: 42,
+                          (point) {
+                            // Find the disaster data for this point
+                            final disaster = controller.findDisasterByLocation(point);
+                            return Marker(
+                              point: point,
+                              width: 42,
+                              height: 42,
+                              child: GestureDetector(
+                                onTap: () {
+                                  if (disaster != null) {
+                                    showModalBottomSheet(
+                                      context: context,
+                                      isScrollControlled: true,
+                                      backgroundColor: Colors.transparent,
+                                      builder: (modalContext) {
+                                        final screenHeight =
+                                            MediaQuery.of(context).size.height;
+                                        // Responsive height: adjust based on screen size
+                                        final heightFactor =
+                                            screenHeight < 700 ? 0.6 : 0.5;
+
+                                        return FractionallySizedBox(
+                                          heightFactor: heightFactor,
+                                          child: DisasterDetailModal(
+                                            disaster: disaster,
+                                          ),
+                                        );
+                                      },
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.vertical(
+                                          top: Radius.circular(24),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                },
+                                child: RadiantMarker(
+                                  color: Colors.redAccent,
+                                  child: Image.asset(
+                                    'assets/images/icons/map-disaster-earthquake.png',
+                                    width: 42,
+                                    height: 42,
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
+                            );
+                          },
                         )
                         .toList(),
                   ),

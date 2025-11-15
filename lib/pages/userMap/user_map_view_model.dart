@@ -11,6 +11,7 @@ import 'package:resqapp/services/location_helper.dart';
 import 'package:resqapp/pages/SOSWaiting/sos_waiting_view_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:resqapp/components/disaster_detail_modal.dart';
 
 class UserMapViewModel extends GetxController {
   final MapController mapController = MapController();
@@ -699,6 +700,26 @@ class UserMapViewModel extends GetxController {
     }
   }
 
+  /// Find evacuation point by location coordinates
+  /// Returns the evacuation point that matches the given coordinates (with tolerance for floating point comparison)
+  EvacuationPoint? findEvacuationPointByLocation(LatLng location) {
+    const tolerance = 0.0001; // Small tolerance for floating point comparison
+    
+    try {
+      return _evacuationPointsData.firstWhere(
+        (point) =>
+            point.locationLat != null &&
+            point.locationLng != null &&
+            (point.locationLat! - location.latitude).abs() < tolerance &&
+            (point.locationLng! - location.longitude).abs() < tolerance,
+        orElse: () => throw StateError('No evacuation point found at this location'),
+      );
+    } catch (e) {
+      print('⚠️ No evacuation point found at location: ${location.latitude}, ${location.longitude}');
+      return null;
+    }
+  }
+
   // ---------- Disaster Detail Helpers ----------
 
   Future<String> fetchDisasterAddress(Disaster disaster) async {
@@ -807,11 +828,5 @@ class UserMapViewModel extends GetxController {
   }
 }
 
-class DisasterActionException implements Exception {
-  final String message;
-
-  const DisasterActionException(this.message);
-
-  @override
-  String toString() => message;
-}
+// DisasterActionException is now defined in lib/components/disaster_detail_modal.dart
+// Import it from there if needed elsewhere
