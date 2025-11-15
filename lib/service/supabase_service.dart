@@ -307,7 +307,7 @@ class SupabaseService {
         'location_lat': lat,
         'location_lng': lng,
         'response_team_id': null,
-        'is_current': false,
+        'is_current': true,
         'pressed_at': currentTimestamp,
         'assigned_at': 0.0,
         'resolved_at': 0.0,
@@ -332,19 +332,41 @@ class SupabaseService {
   }
 
   /// Get SOS events
-  static Future<List<SosEvent>> getSoSEvents() async {
-    try {
-      final response = await _client
-          .from('sos_events')
-          .select()
-          .order('pressed_at', ascending: true);
+  // static Future<List<SosEvent>> getSoSEvents() async {
+  //   try {
+  //     final response = await _client
+  //         .from('sos_events')
+  //         .select()
+  //         .order('pressed_at', ascending: true);
 
-      return (response as List).map((json) => SosEvent.fromJson(json)).toList();
-    } catch (e) {
-      print('Error getting SOS events: $e');
-      return [];
-    }
+  //     return (response as List).map((json) => SosEvent.fromJson(json)).toList();
+  //   } catch (e) {
+  //     print('Error getting SOS events: $e');
+  //     print('IIIIIIIIIIUIIUIUIIIIIUIIUIIUIIU got ')
+  //     return [];
+  //   }
+  // }
+  static Future<List<SosEvent>> getSoSEvents() async {
+  try {
+    final response = await _client
+        .from('sos_events')
+        .select()
+        .order('pressed_at', ascending: true);
+
+    final events = (response as List)
+        .map((json) => SosEvent.fromJson(json))
+        .toList();
+
+    print('Active SOS count: ${events.length}');
+
+    return events;
+  } catch (e) {
+    print('Error getting SOS events: $e');
+    print('IIIIIIIIIIUIIUIUIIIIIUIIUIIUIIU got an error');
+    return [];
   }
+}
+
 
   /// Get SOS events for a user
   /// Returns the most recent SOS event for the user

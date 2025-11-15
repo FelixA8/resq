@@ -327,6 +327,10 @@ class SosEvent {
     this.resolvedAt,
   });
 
+  // bool get isActive {
+  //   return isCurrent == true && resolvedAt == null;
+  // }
+
   factory SosEvent.fromJson(Map<String, dynamic> json) {
     print(json);
     return SosEvent(
@@ -342,18 +346,16 @@ class SosEvent {
               : null,
       responseTeamId: json['response_team_id'] as String?,
       isCurrent: json['is_current'] as bool?,
-      pressedAt:
-          json['pressed_at'] != null
-              ? (json['pressed_at'] as num).toDouble()
-              : 0.0,
-      assignedAt:
-          json['assigned_at'] != null
-              ? (json['assigned_at'] as num).toDouble()
-              : 0.0,
-      resolvedAt:
-          json['resolved_at'] != null
-              ? (json['resolved_at'] as num).toDouble()
-              : 0.0,
+      pressedAt: json['pressed_at'] != null
+    ? (json['pressed_at'] as num).toDouble()
+    : null,
+      assignedAt: json['assigned_at'] != null
+    ? (json['assigned_at'] as num).toDouble()
+    : null,
+      resolvedAt: json['resolved_at'] != null
+    ? (json['resolved_at'] as num).toDouble()
+    : null,
+
     );
   }
 

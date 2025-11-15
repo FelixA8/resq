@@ -27,11 +27,13 @@ class ResponseTeamMapViewModel extends GetxController {
   final RxList<LatLng> disasterPoints = <LatLng>[].obs;
   final RxList<EvacuationPoint> _evacuationPointsData = <EvacuationPoint>[].obs;
   final RxList<LatLng> evacuationPoints = <LatLng>[].obs;
+  final RxList<SosEvent> _sosEventsData = <SosEvent>[].obs;
   final RxList<LatLng> sosPoints = <LatLng>[].obs;
 
   // Realtime subscriptions
   RealtimeChannel? _evacuationPointsSubscription;
   RealtimeChannel? _disastersSubscription;
+  RealtimeChannel? _sosEventsSubscription;
 
   ResponseTeamMapViewModel({required this.instanceCode});
 
@@ -41,14 +43,38 @@ class ResponseTeamMapViewModel extends GetxController {
     _initializeData();
     _subscribeToEvacuationPoints();
     _subscribeToDisasters();
+    _subscribeToSOSEvents();
     super.onInit();
+    _loadSOSPoints();
+    subscribeToSOSUpdates();
   }
+
+  void subscribeToSOSUpdates() {
+  Supabase.instance.client
+      .channel('public:sos_events')
+      .onPostgresChanges(
+        event: PostgresChangeEvent.all,
+        table: 'sos_events',
+        callback: (payload) async {
+          print('🔄 Realtime SOS update received: ${payload.eventType}');
+
+          // Re-fetch all SOS events
+          await _loadSOSPoints();
+
+          // Re-render markers
+          update();
+        },
+      )
+      .subscribe();
+}
+
 
   @override
   void onClose() {
     // Clean up realtime subscriptions
     _evacuationPointsSubscription?.unsubscribe();
     _disastersSubscription?.unsubscribe();
+    _sosEventsSubscription?.unsubscribe();
     super.onClose();
   }
 
@@ -112,6 +138,7 @@ class ResponseTeamMapViewModel extends GetxController {
       _updateEvacuationPointsDisplay();
     }
   }
+  
 
   /// Subscribe to realtime changes on evacuation_points table
   void _subscribeToEvacuationPoints() {
@@ -136,6 +163,122 @@ class ResponseTeamMapViewModel extends GetxController {
       print('✅ Realtime subscription established');
     } catch (e) {
       print('❌ Error setting up realtime subscription: $e');
+    }
+  }
+
+  /// Subscribe to realtime changes on sos_events table
+  void _subscribeToSOSEvents() {
+    try {
+      print('🔔 Setting up realtime subscription for sos_events...');
+      
+      final supabaseClient = Supabase.instance.client;
+      
+      _sosEventsSubscription = supabaseClient
+          .channel('sos_events_changes')
+          .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'sos_events',
+            callback: (payload) {
+              print('🔔 SOS realtime event received: ${payload.eventType}');
+              _handleSOSEventChange(payload);
+            },
+          )
+          .subscribe();
+      
+      print('✅ SOS realtime subscription established');
+    } catch (e) {
+      print('❌ Error setting up SOS realtime subscription: $e');
+    }
+  }
+
+  /// Handle realtime changes to SOS events
+  void _handleSOSEventChange(PostgresChangePayload payload) {
+    try {
+      switch (payload.eventType) {
+        case PostgresChangeEvent.insert:
+          _handleSOSEventInsert(payload.newRecord);
+          break;
+        case PostgresChangeEvent.update:
+          _handleSOSEventUpdate(payload.oldRecord, payload.newRecord);
+          break;
+        case PostgresChangeEvent.delete:
+          _handleSOSEventDelete(payload.oldRecord);
+          break;
+        default:
+          print('⚠️ Unknown SOS event type: ${payload.eventType}');
+      }
+    } catch (e) {
+      print('❌ Error handling SOS event change: $e');
+    }
+  }
+
+  /// Handle INSERT event - add new SOS event to map (only if active)
+  void _handleSOSEventInsert(Map<String, dynamic> record) {
+    try {
+      final sosEvent = SosEvent.fromJson(record);
+      
+      if (sosEvent.sosId.isNotEmpty && sosEvent.isActive) {
+        // Avoid duplicates by checking ID
+        final exists = _sosEventsData.any(
+          (s) => s.sosId == sosEvent.sosId,
+        );
+        
+        if (!exists) {
+          _sosEventsData.add(sosEvent);
+          _updateSOSPointsDisplay();
+          print('✅ Added new SOS event: ${sosEvent.sosId}');
+        }
+      }
+    } catch (e) {
+      print('❌ Error handling SOS INSERT: $e');
+    }
+  }
+
+  /// Handle UPDATE event - update existing SOS event
+  void _handleSOSEventUpdate(
+    Map<String, dynamic> oldRecord,
+    Map<String, dynamic> newRecord,
+  ) {
+    try {
+      final newSosEvent = SosEvent.fromJson(newRecord);
+      
+      if (newSosEvent.sosId.isNotEmpty) {
+        // Find and replace the existing SOS event by ID
+        final index = _sosEventsData.indexWhere(
+          (s) => s.sosId == newSosEvent.sosId,
+        );
+        
+        if (index != -1) {
+          _sosEventsData[index] = newSosEvent;
+          _updateSOSPointsDisplay();
+          print('✅ Updated SOS event: ${newSosEvent.sosId}');
+        } else if (newSosEvent.isActive) {
+          // If not found and is active, add it
+          _sosEventsData.add(newSosEvent);
+          _updateSOSPointsDisplay();
+          print('✅ Added SOS event ${newSosEvent.sosId} - became active');
+        }
+      }
+    } catch (e) {
+      print('❌ Error handling SOS UPDATE: $e');
+    }
+  }
+
+  /// Handle DELETE event - remove SOS event from map
+  void _handleSOSEventDelete(Map<String, dynamic> record) {
+    try {
+      final sosEvent = SosEvent.fromJson(record);
+      
+      if (sosEvent.sosId.isNotEmpty) {
+        _sosEventsData.removeWhere(
+          (s) => s.sosId == sosEvent.sosId,
+        );
+        _updateSOSPointsDisplay();
+        print('✅ Removed SOS event: ${sosEvent.sosId}');
+      }
+    } catch (e) {
+      print('❌ Error handling SOS DELETE: $e');
     }
   }
 
@@ -405,22 +548,42 @@ class ResponseTeamMapViewModel extends GetxController {
     await _loadEvacuationPoints();
   }
 
+  /// Update the display list from the SOS events data list
+  void _updateSOSPointsDisplay() {
+    sosPoints.value = _sosEventsData
+        .where((sos) => sos.hasLocation() && sos.isActive)
+        .map((sos) => LatLng(sos.locationLat!, sos.locationLng!))
+        .toList();
+  }
+
   /// Load SOS points (sent by users when they press SOS button)
-  /// TODO: Replace with actual API call or real-time listener
+  /// Loads active SOS events from Supabase
   Future<void> _loadSOSPoints() async {
     try {
-      // TODO: Replace with actual API call or real-time listener
-      // Example: final response = await sosService.getSOSPoints();
-      // sosPoints.value = response.map((point) => LatLng(point.lat, point.lng)).toList();
+      print('🆘 Loading SOS events from Supabase...');
+      final sosEvents = await SupabaseService.getSoSEvents();
       
-      // Dummy data for now - will be populated when users send SOS
-      // Adding one dummy SOS location for testing
-      sosPoints.value = [
-        LatLng(-6.2150, 106.8475), // Dummy SOS location near Jakarta
-      ];
+      // Filter only active SOS events (isCurrent == true and not resolved)
+      final activeSOSEvents = sosEvents
+          .where((sos) => sos.isActive)
+          .toList();
+      
+      _sosEventsData.value = activeSOSEvents;
+      _updateSOSPointsDisplay();
+      print("---- DEBUG EACH SOS ----");
+for (var s in sosEvents) {
+  print("SOS ID: ${s.sosId}");
+  print("isCurrent: ${s.isCurrent}");
+  print("resolvedAt: ${s.resolvedAt}");
+  print("isActive (calculated): ${s.isActive}");
+}
+
+      
+      print('✅ Loaded ${activeSOSEvents.length} active SOS events');
     } catch (e) {
-      // Handle error - for now, just use empty list
-      sosPoints.clear();
+      print('❌ Error loading SOS events: $e');
+      _sosEventsData.clear();
+      _updateSOSPointsDisplay();
     }
   }
 
@@ -632,6 +795,87 @@ class ResponseTeamMapViewModel extends GetxController {
     }
   }
 
+  /// Find SOS event by location coordinates
+  /// Returns the SOS event that matches the given coordinates (with tolerance for floating point comparison)
+  SosEvent? findSOSByLocation(LatLng location) {
+    const tolerance = 0.0001; // Small tolerance for floating point comparison
+    
+    try {
+      return _sosEventsData.firstWhere(
+        (sos) =>
+            sos.locationLat != null &&
+            sos.locationLng != null &&
+            (sos.locationLat! - location.latitude).abs() < tolerance &&
+            (sos.locationLng! - location.longitude).abs() < tolerance,
+        orElse: () => throw StateError('No SOS event found at this location'),
+      );
+    } catch (e) {
+      print('⚠️ No SOS event found at location: ${location.latitude}, ${location.longitude}');
+      return null;
+    }
+  }
+
+  // ---------- SOS Detail Helpers ----------
+
+  /// Fetch user information by user ID
+  Future<ResqUser?> fetchUserById(String userId) async {
+    try {
+      return await SupabaseService.getUserById(userId);
+    } catch (e) {
+      print('❌ Error fetching user: $e');
+      return null;
+    }
+  }
+
+  /// Fetch SOS report location address
+  Future<String> fetchSOSAddress(SosEvent sosEvent) async {
+    if (sosEvent.locationLat == null || sosEvent.locationLng == null) {
+      return 'Lokasi tidak tersedia';
+    }
+
+    try {
+      final location = LatLng(sosEvent.locationLat!, sosEvent.locationLng!);
+      final result = await LocationHelper.getLocationDetails(location);
+      return result.locationDetail;
+    } catch (_) {
+      return 'Lokasi tidak tersedia';
+    }
+  }
+
+  /// Format SOS report time
+  String formatSOSReportTime(double? timestamp) {
+  if (timestamp == null || timestamp == 0) return '-';
+
+  final dateTime = DateTime.fromMillisecondsSinceEpoch(timestamp.toInt());
+
+  final time =
+      "${dateTime.hour.toString().padLeft(2, '0')}:"
+      "${dateTime.minute.toString().padLeft(2, '0')}:"
+      "${dateTime.second.toString().padLeft(2, '0')}";
+
+  // Month names in Indonesian (you can adjust if needed)
+  const months = [
+    "Januari",
+    "Februari",
+    "Maret",
+    "April",
+    "Mei",
+    "Juni",
+    "Juli",
+    "Agustus",
+    "September",
+    "Oktober",
+    "November",
+    "Desember"
+  ];
+
+  final date =
+      "${dateTime.day} ${months[dateTime.month - 1]} ${dateTime.year}";
+
+  return "$time, $date";
+}
+
+
   // ---------- Disaster Detail Helpers ----------
 
   Future<String> fetchDisasterAddress(Disaster disaster) async {
@@ -716,6 +960,8 @@ class ResponseTeamMapViewModel extends GetxController {
     }
   }
 }
+
+
 
 // DisasterActionException is now defined in lib/components/disaster_detail_modal.dart
 // Import it from there if needed elsewhere
