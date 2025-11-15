@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:resqapp/pages/LoginPage/lower_case_view_model.dart';
+import 'package:resqapp/pages/loginPage/lower_case_view_model.dart';
 import '../../../theme/theme_app.dart';
 import '../../../components/confirmation_button.dart';
 
@@ -22,7 +22,7 @@ class LoginFormSection extends StatelessWidget {
                 width: 67,
                 height: 51,
                 decoration: BoxDecoration(
-                  color: Color(theme.colors.neutral.low),
+                  color: theme.colors.neutral.low,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
@@ -74,11 +74,13 @@ class LoginFormSection extends StatelessWidget {
                           fontFamily: 'SF Pro',
                           fontWeight: FontWeight.w500,
                           fontSize: 15,
-                          color: Color(theme.colors.neutral.med),
+                          color: theme.colors.neutral.med,
                         ),
                         border: InputBorder.none,
                         isCollapsed: true,
-                        contentPadding: EdgeInsets.symmetric(horizontal: theme.padding.m),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: theme.padding.m,
+                        ),
                       ),
                     ),
                   ),
@@ -95,31 +97,31 @@ class LoginFormSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 9),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const SizedBox(width: 8),
-              const Text(
-                'Masuk sebagai response team',
-                style: TextStyle(
-                  fontFamily: 'SF Pro',
-                  fontWeight: FontWeight.w400,
-                  fontSize: 15,
-                  color: Colors.black,
+          GestureDetector(
+            onTap: () {
+              Navigator.pushNamed(context, '/responseLogin');
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(width: 8),
+                const Text(
+                  'Masuk sebagai response team',
+                  style: TextStyle(
+                    fontFamily: 'SF Pro',
+                    fontWeight: FontWeight.w400,
+                    fontSize: 15,
+                    color: Colors.black,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 3),
-              GestureDetector(
-                onTap: () {
-                  Navigator.pushNamed(context, '/responseLogin');
-                },
-                child: Icon(
+                const SizedBox(width: 3),
+                Icon(
                   Icons.keyboard_arrow_right,
                   size: 18,
-                  color: Color(theme.colors.primary),
+                  color: theme.colors.primary,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),

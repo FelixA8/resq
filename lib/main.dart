@@ -1,12 +1,36 @@
 import 'package:flutter/material.dart';
-import 'package:resqapp/pages/LoginPage/lower_case_view_model.dart';
-import 'package:resqapp/pages/userMap/userMapView.dart';
-import 'pages/otp/otpView.dart';
-import 'package:provider/provider.dart';
-import 'pages/LoginPage/login_page_view.dart';
-import 'pages/ResponseLoginPage/ResponseLoginPageView.dart';
+import 'package:get/get.dart';
+import 'dart:developer' as developer;
 
-void main() {
+import 'package:resqapp/pages/responseLoginPage/response_login_page_view.dart';
+import 'package:resqapp/pages/settings/SettingsView.dart';
+import 'package:resqapp/pages/otpPage/otp_view.dart';
+import 'package:resqapp/pages/userMap/user_map_view.dart';
+import 'package:resqapp/pages/splash/splash_screen.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'pages/loginPage/login_page_view.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('id_ID', null);
+
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (e) {
+    developer.log(
+      '🚨 Please create a .env file with SUPABASE_URL and SUPABASE_ANON_KEY',
+    );
+  } 
+
+  final supabaseUrl = dotenv.env['SUPABASE_URL'] ?? "";
+  final supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'] ?? "";
+
+  await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
+
+  developer.log('Supabase client initialized successfully');
+
   runApp(const MyApp());
 }
 
@@ -15,18 +39,35 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'ResQ',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFB71C1C)),
         fontFamily: 'SF Pro',
       ),
-      home: ChangeNotifierProvider(
-        create: (_) => LoginPageViewModel(),
-        child: const LoginPageView(),
-      ),
+      home: const SplashScreen(),
+
+      //New Routing Method
+      getPages: [
+        GetPage(
+          name: '/otpView',
+          page: () {
+            final args = Get.arguments as Map?;
+            final phone = args?['phone'] ?? '';
+            return OTPView(phoneNumber: phone);
+          },
+        ),
+        GetPage(name: '/usermapview', page: () => UserMapView()),
+        GetPage(
+          name: '/responseLogin',
+          page: () => const ResponseLoginPageView(),
+        ),
+      ],
+
+      //Old Routing Method
       routes: {
+        '/login': (context) => const LoginPageView(),
         '/otpView': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as Map?;
           final phone = args?['phone'] ?? '';
@@ -36,6 +77,7 @@ class MyApp extends StatelessWidget {
           return UserMapView();
         },
         '/responseLogin': (context) => const ResponseLoginPageView(),
+        '/settings': (context) => const SettingsView(),
       },
     );
   }

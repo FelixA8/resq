@@ -47,16 +47,16 @@ class AppSize {
 class AppColors {
   const AppColors();
 
-  final int primary = 0xFFB71C1C;
+  final Color primary = const Color(0xFFB71C1C);
   final NeutralColor neutral = const NeutralColor();
 }
 
 class NeutralColor {
   const NeutralColor();
-  final int light = 0xFFE9E9E9;
-  final int low = 0xFFD9D9D9;
-  final int med = 0xFF7B7B7D;
-  final int high = 0xFF3F3F3F;
+  final Color light = const Color(0xFFE9E9E9);
+  final Color low = const Color(0xFFD9D9D9);
+  final Color med = const Color(0xFF7B7B7D);
+  final Color high = const Color(0xFF3F3F3F);
 }
 
 class AppText {
