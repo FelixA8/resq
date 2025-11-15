@@ -96,7 +96,7 @@ class _SOSDetailModalState extends State<SOSDetailModal> {
             _isLoadingUser
                 ? CircularProgressIndicator(
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      Color(theme.colors.primary),
+                      theme.colors.primary,
                     ),
                   )
                 : Text(
@@ -113,7 +113,7 @@ class _SOSDetailModalState extends State<SOSDetailModal> {
             _isLoadingAddress
                 ? CircularProgressIndicator(
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      Color(theme.colors.primary),
+                      theme.colors.primary,
                     ),
                   )
                 : Text(
@@ -150,7 +150,7 @@ class _SOSDetailModalState extends State<SOSDetailModal> {
                 iconPath,
                 width: 30,
                 height: 30,
-                color: Color(theme.colors.primary),
+                color: theme.colors.primary,
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -174,7 +174,7 @@ class _SOSDetailModalState extends State<SOSDetailModal> {
                         fontFamily: 'SF Pro',
                         fontWeight: FontWeight.w500,
                         fontSize: 16,
-                        color: Color(theme.colors.primary),
+                        color: theme.colors.primary,
                       ),
                     ),
                   ],

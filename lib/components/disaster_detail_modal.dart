@@ -98,7 +98,7 @@ class _DisasterDetailModalState extends State<DisasterDetailModal> {
           icon,
           width: 30,
           height: 30,
-          color: Color(theme.colors.primary),
+          color: theme.colors.primary,
         ),
         const SizedBox(width: 16),
 
@@ -124,7 +124,7 @@ class _DisasterDetailModalState extends State<DisasterDetailModal> {
                   fontFamily: 'SF Pro',
                   fontWeight: FontWeight.w500,
                   fontSize: 16,
-                  color: Color(theme.colors.primary),
+                  color: theme.colors.primary,
                 ),
               ),
             ],
@@ -255,7 +255,7 @@ class _DisasterDetailModalState extends State<DisasterDetailModal> {
             _isLoadingAddress
                 ? CircularProgressIndicator(
                     valueColor:
-                        AlwaysStoppedAnimation<Color>(Color(theme.colors.primary)),
+                        AlwaysStoppedAnimation<Color>(theme.colors.primary),
                   )
                 : Text(
                     _address ?? 'Lokasi tidak tersedia',
@@ -283,7 +283,7 @@ class _DisasterDetailModalState extends State<DisasterDetailModal> {
                   fontFamily: 'SF Pro',
                   fontWeight: FontWeight.w400,
                   fontSize: 13,
-                  color: Color(theme.colors.primary),
+                  color: theme.colors.primary,
                   decoration: TextDecoration.underline,
                 ),
               ),
@@ -291,7 +291,7 @@ class _DisasterDetailModalState extends State<DisasterDetailModal> {
               Icon(
                 Icons.download,
                 size: 16,
-                color: Color(theme.colors.primary),
+                color: theme.colors.primary,
               ),
             ],
           ),
