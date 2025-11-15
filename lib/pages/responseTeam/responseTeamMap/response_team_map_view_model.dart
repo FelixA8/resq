@@ -10,6 +10,8 @@ import 'package:resqapp/services/location_helper.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:resqapp/components/disaster_detail_modal.dart';
+import 'package:flutter/services.dart';
+
 
 class ResponseTeamMapViewModel extends GetxController {
   final String instanceCode;
@@ -57,9 +59,16 @@ class ResponseTeamMapViewModel extends GetxController {
         table: 'sos_events',
         callback: (payload) async {
           print('🔄 Realtime SOS update received: ${payload.eventType}');
+          final previousCount = sosPoints.length;
 
           // Re-fetch all SOS events
           await _loadSOSPoints();
+
+          final newCount = sosPoints.length;
+          if (newCount > previousCount) {
+            print("🚨 NEW SOS DETECTED — Triggering haptic alert");
+            HapticFeedback.heavyImpact(); // Strong vibration
+          }
 
           // Re-render markers
           update();
