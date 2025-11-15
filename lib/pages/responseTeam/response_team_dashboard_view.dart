@@ -4,7 +4,6 @@ import 'package:resqapp/pages/responseTeam/response_team_dashboard_view_model.da
 import 'package:resqapp/pages/responseTeam/responseTeamEvacuationPointPage/response_team_evacuation_point_view.dart';
 import 'package:resqapp/pages/responseTeam/responseTeamMap/response_team_map_view.dart';
 import 'package:resqapp/pages/responseTeam/responseTeamSOSReport/response_team_sos_report_view.dart';
-import 'package:resqapp/pages/responseLoginPage/response_login_page_view_model.dart';
 import 'package:resqapp/theme/theme_app.dart';
 
 class ResponseTeamDashboardView
@@ -57,7 +56,7 @@ class ResponseTeamDashboardView
                     fontFamily: 'SF Pro',
                     fontWeight: FontWeight.w400,
                     fontSize: 13,
-                    color: Color(theme.colors.primary),
+                    color: theme.colors.primary,
                   ),
                 ),
               ],
@@ -71,7 +70,6 @@ class ResponseTeamDashboardView
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Settings button (white rounded square)
                 SizedBox(
                   height: 35,
                   child: ElevatedButton(
@@ -125,7 +123,6 @@ class ResponseTeamDashboardView
         ],
       ),
       body: Obx(() {
-        // Switch between views based on selected index
         switch (controller.selectedIndex.value) {
           case 0:
             return const ResponseTeamEvacuationPointView();
@@ -153,7 +150,7 @@ class ResponseTeamDashboardView
             onTap: controller.onTabChanged,
             type: BottomNavigationBarType.fixed,
             backgroundColor: Colors.white,
-            selectedItemColor: Color(theme.colors.primary),
+            selectedItemColor: theme.colors.primary,
             unselectedItemColor: Colors.grey,
             selectedFontSize: 12,
             unselectedFontSize: 12,
@@ -175,7 +172,7 @@ class ResponseTeamDashboardView
                     height: 24,
                     color:
                         controller.selectedIndex.value == 0
-                            ? Color(theme.colors.primary)
+                            ? theme.colors.primary
                             : Colors.grey,
                   ),
                 ),
@@ -190,7 +187,7 @@ class ResponseTeamDashboardView
                     height: 24,
                     color:
                         controller.selectedIndex.value == 1
-                            ? Color(theme.colors.primary)
+                            ? theme.colors.primary
                             : Colors.grey,
                   ),
                 ),
@@ -205,7 +202,7 @@ class ResponseTeamDashboardView
                     height: 24,
                     color:
                         controller.selectedIndex.value == 2
-                            ? Color(theme.colors.primary)
+                            ? theme.colors.primary
                             : Colors.grey,
                   ),
                 ),

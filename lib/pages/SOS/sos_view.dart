@@ -13,16 +13,13 @@ class SOSView extends StatelessWidget {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
     
-    // Responsive spacing based on screen height
     final spacing8 = screenHeight * 0.01;
     final spacing12 = screenHeight * 0.015;
     final spacing15 = screenHeight * 0.018;
     final spacing32 = screenHeight * 0.04;
     
-    // Responsive handle bar width
     final handleBarWidth = (screenWidth * 0.11).clamp(35.0, 45.0);
     
-    // Create a local SOSViewModel for this view
     final sosViewModel = Get.put(SOSViewModel(), tag: 'sos_modal');
     
     return Container(
@@ -47,18 +44,14 @@ class SOSView extends StatelessWidget {
           SizedBox(height: spacing8),
           SOSButtonSection(
             onPressed: () async {
-              // Call the view model to handle the SOS button press
               final result = await sosViewModel.handleSOSButtonPress();
               
               if (result['success'] == true) {
-                // Close the modal
                 Navigator.of(context).pop();
                 
-                // Cleanup
                 sosViewModel.cleanup();
                 Get.delete<SOSViewModel>(tag: 'sos_modal');
 
-                // Navigate to waiting view if successful
                 final sosWaitingViewModel = result['sosWaitingViewModel'];
                 if (sosWaitingViewModel != null) {
                   Navigator.of(context).push(
@@ -70,7 +63,6 @@ class SOSView extends StatelessWidget {
                   );
                 }
               } else {
-                // Show error message
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(result['error'] ?? 'An error occurred'),

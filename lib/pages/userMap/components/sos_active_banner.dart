@@ -34,7 +34,7 @@ class SOSActiveBanner extends StatelessWidget {
             width: double.infinity,
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: Color(theme.colors.primary),
+              color: theme.colors.primary,
             ),
             child: Row(
               children: [
@@ -130,7 +130,7 @@ class _AnimatedSOSCircleState extends State<AnimatedSOSCircle>
                   fontFamily: 'SF Pro',
                   fontWeight: FontWeight.w900,
                   fontSize: 20,
-                  color: Color(theme.colors.primary),
+                  color: theme.colors.primary,
                 ),
               ),
             ),

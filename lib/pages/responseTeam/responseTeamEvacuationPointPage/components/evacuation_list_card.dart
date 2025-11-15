@@ -103,7 +103,7 @@ class EvacuationPointCard extends StatelessWidget {
                   backgroundColor: Color(
                     0x78F2D6D6,
                   ), // rgba(242, 214, 214, 0.47)
-                  textColor: Color(theme.colors.primary),
+                  textColor: theme.colors.primary,
                   onTap: onDelete,
                 ),
               ],

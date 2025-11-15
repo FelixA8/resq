@@ -6,7 +6,7 @@ class SOSWaitingHeaderSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final responsiveFontSize = screenWidth * 0.06; // Scales with screen width
+    final responsiveFontSize = screenWidth * 0.06;
     
     return Row(
       children: [
@@ -29,7 +29,7 @@ class SOSWaitingHeaderSection extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(width: 48), // To balance the back button
+        SizedBox(width: 48),
       ],
     );
   }

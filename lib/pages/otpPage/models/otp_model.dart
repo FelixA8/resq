@@ -24,7 +24,6 @@ class OTPModel {
   }
 
   String get formattedPhoneNumber {
-    // Basic phone number formatting - you might want to enhance this
     if (phoneNumber.length < 4) return phoneNumber;
     return '${phoneNumber.substring(0, 4)} ${phoneNumber.substring(4)}';
   }

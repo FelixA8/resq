@@ -15,15 +15,13 @@ class ConfirmationButtonViewModel extends ChangeNotifier {
   }
 
   void setUsernameViewModel(UsernameViewModel? viewModel) {
-    // Remove listener from previous view model
     _usernameViewModel?.removeListener(_updateEnabledState);
 
     _usernameViewModel = viewModel;
 
-    // Add listener to new view model
     if (viewModel != null) {
       viewModel.addListener(_updateEnabledState);
-      _updateEnabledState(); // Update immediately
+      _updateEnabledState();
     }
 
     notifyListeners();

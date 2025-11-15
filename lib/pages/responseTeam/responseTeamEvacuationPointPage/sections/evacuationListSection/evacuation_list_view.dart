@@ -46,7 +46,7 @@ class EvacuationListView extends StatelessWidget {
               if (controller.isLoading.value) {
                 return Center(
                   child: CircularProgressIndicator(
-                    color: Color(theme.colors.primary),
+                    color: theme.colors.primary,
                   ),
                 );
               }
@@ -54,7 +54,7 @@ class EvacuationListView extends StatelessWidget {
               if (controller.evacuationPoints.isEmpty) {
                 return RefreshIndicator(
                   onRefresh: controller.refreshData,
-                  color: Color(theme.colors.primary),
+                  color: theme.colors.primary,
                   child: ListView(
                     children: [
                       SizedBox(
@@ -63,7 +63,7 @@ class EvacuationListView extends StatelessWidget {
                           child: Text(
                             "Tidak ada poin evakuasi",
                             style: TextStyle(
-                              color: Color(theme.colors.neutral.med),
+                              color: theme.colors.neutral.med,
                               fontSize: 14,
                               fontFamily: 'SF Pro',
                             ),
@@ -77,7 +77,7 @@ class EvacuationListView extends StatelessWidget {
 
               return RefreshIndicator(
                 onRefresh: controller.refreshData,
-                color: Color(theme.colors.primary),
+                color: theme.colors.primary,
                 child: ListView.separated(
                   padding: EdgeInsets.symmetric(horizontal: theme.padding.s),
                   itemCount: controller.evacuationPoints.length,

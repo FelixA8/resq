@@ -16,15 +16,13 @@ class ConfirmationButtonViewModel extends ChangeNotifier {
   }
 
   void setOTPViewModel(OTPViewModel? viewModel) {
-    // Remove listener from previous view model
     _otpViewModel?.removeListener(_updateEnabledState);
 
     _otpViewModel = viewModel;
 
-    // Add listener to new view model
     if (viewModel != null) {
       viewModel.addListener(_updateEnabledState);
-      _updateEnabledState(); // Update immediately
+      _updateEnabledState();
     }
 
     notifyListeners();

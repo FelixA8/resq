@@ -201,7 +201,7 @@ class EvacuationDeleteDialog extends StatelessWidget {
             height: 48,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              color: Color(theme.colors.primary),
+              color: theme.colors.primary,
             ),
             child: TextButton(
               onPressed: () {
