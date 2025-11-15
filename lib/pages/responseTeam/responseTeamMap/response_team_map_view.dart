@@ -192,9 +192,31 @@ class ResponseTeamMapView extends GetView<ResponseTeamMapViewModel> {
                             child: GestureDetector(
                               onTap: () {
                                 if (sosEvent != null) {
-                                  // ... your bottom sheet logic
+                                  showModalBottomSheet(
+                                    context: context,
+                                    isScrollControlled: true,
+                                    backgroundColor: Colors.transparent,
+                                    builder: (modalContext) {
+                                      final screenHeight =
+                                          MediaQuery.of(context).size.height;
+                                      final heightFactor =
+                                          screenHeight < 700 ? 0.45 : 0.41;
+                                      return FractionallySizedBox(
+                                        heightFactor: heightFactor,
+                                        child: SOSDetailModal(
+                                          sosEvent: sosEvent,
+                                        ),
+                                      );
+                                    },
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.vertical(
+                                        top: Radius.circular(24),
+                                      ),
+                                    ),
+                                  );
                                 }
                               },
+
                               child: RadiantMarker(
                                 color: Colors.redAccent,
                                 child: Image.asset(
