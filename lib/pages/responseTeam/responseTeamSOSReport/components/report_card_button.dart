@@ -48,7 +48,7 @@ class ReportCardButton extends StatelessWidget {
       return ElevatedButton.icon(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Color(theme.colors.primary),
+          backgroundColor: theme.colors.primary,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
           shape: RoundedRectangleBorder(

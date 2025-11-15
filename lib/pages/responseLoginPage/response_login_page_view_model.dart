@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:resqapp/pages/responseTeam/response_team_dashboard_view.dart';
-import 'package:resqapp/service/login_service.dart';
+import 'package:resqapp/service/supabase_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ResponseLoginPageViewModel extends GetxController {
@@ -32,10 +32,7 @@ class ResponseLoginPageViewModel extends GetxController {
     errorMessage.value = '';
 
     try {
-      final user = await LoginService().responseTeamLogin(
-        code, password
-      );
-
+      final user = await SupabaseService.loginResponseTeam(code, password);
       if (user == null) {
         _showErrorSnackbar('Kode instansi atau kata sandi salah');
         isLoading.value = false;

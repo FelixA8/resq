@@ -16,7 +16,7 @@ class SOSWaitingTimerSection extends StatelessWidget {
     return Consumer<SOSWaitingViewModel>(
       builder: (context, viewModel, child) {
         return RadiantCircleButton(
-          mainColor: Color(theme.colors.primary),
+          mainColor: theme.colors.primary,
           child: FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(

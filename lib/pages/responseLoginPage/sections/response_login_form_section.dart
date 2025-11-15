@@ -19,7 +19,7 @@ class ResponseLoginFormSection extends StatelessWidget {
       margin: EdgeInsets.symmetric(horizontal: theme.padding.m),
       padding: EdgeInsets.all(theme.padding.l),
       decoration: BoxDecoration(
-        color: Color(theme.colors.neutral.light),
+        color: theme.colors.neutral.light,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(

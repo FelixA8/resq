@@ -20,7 +20,7 @@ class SettingsView extends StatelessWidget {
           backgroundColor: Colors.white,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: Color(theme.colors.primary)),
+            icon: Icon(Icons.arrow_back, color: theme.colors.primary),
             onPressed: () => Navigator.of(context).pop(),
           ),
           title: Text(
@@ -29,7 +29,7 @@ class SettingsView extends StatelessWidget {
               fontFamily: 'SF Pro',
               fontWeight: FontWeight.w700,
               fontSize: 24,
-              color: Color(theme.colors.primary),
+              color: theme.colors.primary,
             ),
           ),
           centerTitle: true,

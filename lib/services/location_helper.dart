@@ -5,15 +5,15 @@ import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 
 class LocationHelper {
+  // Jakarta default
   static const LatLng defaultLocation = LatLng(
     -6.2088,
     106.8456,
-  ); // Jakarta default
+  );
 
   /// Initialize location by checking permissions first, then getting location
   static Future<LocationResult> initializeLocation() async {
     try {
-      // Step 1: Check if location services are enabled
       bool locationServiceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!locationServiceEnabled) {
         Get.snackbar(
@@ -30,10 +30,8 @@ class LocationHelper {
         );
       }
 
-      // Step 2: Check current permission status
       LocationPermission permission = await Geolocator.checkPermission();
 
-      // Step 3: Request permission if denied
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
 
@@ -53,23 +51,6 @@ class LocationHelper {
         }
       }
 
-      // Step 4: Handle permanently denied permission
-      if (permission == LocationPermission.deniedForever) {
-        Get.snackbar(
-          'Permission Denied Permanently',
-          'Please enable location permission in your device settings',
-          snackPosition: SnackPosition.BOTTOM,
-          duration: Duration(seconds: 1),
-          isDismissible: true,
-        );
-        return LocationResult(
-          location: defaultLocation,
-          hasPermission: false,
-          error: 'Permission denied permanently',
-        );
-      }
-
-      // Step 5: Permission granted! Now get location
       return await _getLocationAfterPermission();
     } catch (e) {
       Get.snackbar(
@@ -88,7 +69,6 @@ class LocationHelper {
   /// Get location after permission has been granted
   static Future<LocationResult> _getLocationAfterPermission() async {
     try {
-      // Try to get last known position first (quick)
       Position? lastKnownPosition = await Geolocator.getLastKnownPosition();
       if (lastKnownPosition != null) {
         return LocationResult(
@@ -100,17 +80,14 @@ class LocationHelper {
         );
       }
 
-      // If no last known position, get current location
       return await _getCurrentLocation();
     } catch (e) {
-      // If quick location fails, try full location
       return await _getCurrentLocation();
     }
   }
 
   static Future<LocationResult> _getCurrentLocation() async {
     try {
-      // Verify location service is still enabled
       bool locationServiceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!locationServiceEnabled) {
         Get.snackbar(
@@ -124,24 +101,6 @@ class LocationHelper {
           location: defaultLocation,
           hasPermission: false,
           error: 'Location service disabled',
-        );
-      }
-
-      // Verify permission is still granted
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        Get.snackbar(
-          'Permission Denied',
-          'Location permission is required to show your position on the map',
-          snackPosition: SnackPosition.BOTTOM,
-          duration: Duration(seconds: 1),
-          isDismissible: true,
-        );
-        return LocationResult(
-          location: defaultLocation,
-          hasPermission: false,
-          error: 'Permission denied',
         );
       }
 

@@ -15,7 +15,7 @@ class SOSButtonSection extends StatelessWidget {
     final responsiveFontSize = (screenWidth * 0.12).clamp(36.0, 50.0);
     
     return RadiantCircleButton(
-      mainColor: Color(theme.colors.primary),
+      mainColor: theme.colors.primary,
       onPressed: onPressed,
       child: FittedBox(
         fit: BoxFit.scaleDown,

@@ -16,7 +16,6 @@ class UserMapView extends GetView<UserMapViewModel> {
 
   @override
   Widget build(BuildContext context) {
-    // Register the controller if not already registered
     if (!Get.isRegistered<UserMapViewModel>()) {
       Get.put(UserMapViewModel(), permanent: true);
     }
@@ -25,7 +24,6 @@ class UserMapView extends GetView<UserMapViewModel> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        // Remove leading hamburger menu
         leading: null,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -56,7 +54,7 @@ class UserMapView extends GetView<UserMapViewModel> {
                     fontFamily: 'SF Pro',
                     fontWeight: FontWeight.w400,
                     fontSize: 13,
-                    color: Color(theme.colors.primary),
+                    color: theme.colors.primary,
                   ),
                 ),
               ],
@@ -70,7 +68,6 @@ class UserMapView extends GetView<UserMapViewModel> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Settings button (white rounded square)
                 SizedBox(
                   height: 35,
                   child: ElevatedButton(
@@ -85,7 +82,6 @@ class UserMapView extends GetView<UserMapViewModel> {
                       maximumSize: Size(35, 35),
                     ),
                     onPressed: () {
-                      // TODO: Navigate to settings page
                       Navigator.pushNamed(context, '/settings');
                     },
                     child: Image.asset(
@@ -106,7 +102,7 @@ class UserMapView extends GetView<UserMapViewModel> {
                         backgroundColor:
                             isSOSActive
                                 ? Colors.grey.shade400
-                                : Color(theme.colors.primary),
+                                : theme.colors.primary,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -162,9 +158,7 @@ class UserMapView extends GetView<UserMapViewModel> {
       body: Obx(() {
         return Column(
           children: [
-            // Red SOS Banner
             SOSActiveBanner(),
-            // Map and other content
             Expanded(
               child: Stack(
                 children: [
@@ -222,7 +216,6 @@ class UserMapView extends GetView<UserMapViewModel> {
                             ),
                         ],
                       ),
-                      // Evacuation points layer
                       MarkerLayer(
                         markers:
                             controller.evacuationPoints
@@ -274,7 +267,6 @@ class UserMapView extends GetView<UserMapViewModel> {
                                 )
                                 .toList(),
                       ),
-                      // Disaster (earthquake) points layer
                       MarkerLayer(
                         markers:
                             controller.disasterPoints

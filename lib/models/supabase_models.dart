@@ -1,9 +1,3 @@
-// Supabase Database Models for ResQ App
-// Generated from database_schema.md
-// File: lib/models/supabase_models.dart
-
-import 'dart:ffi';
-
 /// User account information
 class ResqUser {
   final String userId;

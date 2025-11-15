@@ -72,7 +72,7 @@ class _ProfileSectionState extends State<ProfileSection> {
       decoration: BoxDecoration(
         color: isEditing
             ? Color(0xFFF1C8C8)
-            : Color(theme.colors.primary),
+            : theme.colors.primary,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -130,7 +130,7 @@ class _ProfileSectionState extends State<ProfileSection> {
           isEditing
               ? ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(theme.colors.primary),
+                    backgroundColor: theme.colors.primary,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -171,14 +171,14 @@ class _ProfileSectionState extends State<ProfileSection> {
                       _focusNode.requestFocus();
                     });
                   },
-                  icon: Icon(Icons.edit, color: Color(theme.colors.primary)),
+                  icon: Icon(Icons.edit, color: theme.colors.primary),
                   label: Text(
                     'Edit',
                     style: TextStyle(
                       fontFamily: 'SF Pro',
                       fontWeight: FontWeight.w500,
                       fontSize: 16,
-                      color: Color(theme.colors.primary),
+                      color: theme.colors.primary,
                     ),
                   ),
                 ),

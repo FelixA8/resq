@@ -5,6 +5,9 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:developer' as developer;
+
+
 import 'package:resqapp/models/supabase_models.dart';
 import 'package:resqapp/service/supabase_service.dart';
 import 'package:resqapp/services/location_helper.dart';
@@ -19,17 +22,13 @@ class UserMapViewModel extends GetxController {
       DateFormat('d MMMM yyyy, HH:mm:ss', 'id_ID');
   final Map<String, String> _disasterAddressCache = {};
   
-  // Reactive state
   final Rx<LatLng> currentLocation = LatLng(-6.2088, 106.8456).obs; // Jakarta default
   final RxBool isLoading = false.obs;
   final RxBool hasLocationPermission = false.obs;
-  
   final RxList<Disaster> _disasterPointsData = <Disaster>[].obs;
   final RxList<LatLng> disasterPoints = <LatLng>[].obs;
   final RxList<EvacuationPoint> _evacuationPointsData = <EvacuationPoint>[].obs;
   final RxList<LatLng> evacuationPoints = <LatLng>[].obs;
-
-  // SOS State Management
   final Rx<SOSWaitingViewModel?> _sosWaitingViewModel = Rx<SOSWaitingViewModel?>(null);
   final RxBool _isSOSActive = false.obs;
   final Rx<SosEvent?> _activeSosEvent = Rx<SosEvent?>(null);
@@ -38,7 +37,6 @@ class UserMapViewModel extends GetxController {
   SOSWaitingViewModel? get sosWaitingViewModel => _sosWaitingViewModel.value;
   SosEvent? get activeSosEvent => _activeSosEvent.value;
 
-  // Realtime subscriptions
   RealtimeChannel? _evacuationPointsSubscription;
   RealtimeChannel? _disastersSubscription;
 
@@ -54,33 +52,24 @@ class UserMapViewModel extends GetxController {
 
   @override
   void onClose() {
-    // Clean up realtime subscriptions
     _evacuationPointsSubscription?.unsubscribe();
     _disastersSubscription?.unsubscribe();
     super.onClose();
   }
 
   void _initializeData() {
-    // Load disaster points from API
     _loadDisasterPoints();
-    // Load evacuation points
     _loadEvacuationPoints();
-    // Debug: Check all disasters (will run automatically and log results)
-    debugCheckAllDisasters();
   }
 
   /// Check if user has an active SOS event in the database
-  /// This is called on initialization to restore SOS state if the app was closed
   Future<void> _checkForActiveSOS() async {
     try {
-      print('🔍 Checking for active SOS event...');
-      
       // Get user ID from shared preferences
       final prefs = await SharedPreferences.getInstance();
       final userId = prefs.getString('userId');
 
       if (userId == null) {
-        print('ℹ️ No user ID found, skipping SOS check');
         return;
       }
 
@@ -88,25 +77,19 @@ class UserMapViewModel extends GetxController {
       final sosEvent = await SupabaseService.getUserSosEvents(userId);
 
       if (sosEvent != null) {
-        // Store the active SOS event
         _activeSosEvent.value = sosEvent;
-        
-        // Restore SOS state
         _isSOSActive.value = true;
         
-        // Create SOSWaitingViewModel with the pressedAt timestamp from the SOS event
         if (_sosWaitingViewModel.value == null) {
           _sosWaitingViewModel.value = SOSWaitingViewModel(
             pressedAtMillis: sosEvent.pressedAt,
           );
         }
-        
-        print('🆘 SOS state restored successfully');
       } else {
-        print('ℹ️ No active SOS event found for user');
+        developer.log('No active SOS event found for user');
       }
     } catch (e) {
-      print('❌ Error checking for active SOS: $e');
+      developer.log('Error checking for active SOS: $e');
     }
   }
 
@@ -119,89 +102,17 @@ class UserMapViewModel extends GetxController {
     disasterPoints.value = validDisasters
         .map((disaster) => LatLng(disaster.centerLat!, disaster.centerLng!))
         .toList();
-    
-    print('📍 Updated disaster points display: ${disasterPoints.length} markers');
-    if (validDisasters.length != _disasterPointsData.length) {
-      print('⚠️ ${_disasterPointsData.length - validDisasters.length} disasters filtered out (missing location)');
-    }
   }
 
-  /// Load disaster points from Supabase
-  /// This is called once on initialization, then realtime updates take over
   Future<void> _loadDisasterPoints() async {
     try {
-      print('🌋 Loading disaster points from Supabase...');
-      final disasters = await SupabaseService.getDisasters();
+      final disasters = await SupabaseService.getFilteredDisasters();
       
       _disasterPointsData.value = disasters;
       _updateDisasterPointsDisplay();
-      
-      print('✅ Loaded ${_disasterPointsData.length} disaster points');
-      print('📍 Displaying ${disasterPoints.length} markers on map');
-      
-      // Debug: Print disaster details
-      if (_disasterPointsData.isEmpty) {
-        print('⚠️ No disasters loaded. This could mean:');
-        print('   1. No disasters occurred today');
-        print('   2. Database connection issue');
-        print('   3. Disasters exist but have no location data');
-      } else {
-        print('📋 Loaded disasters:');
-        for (var i = 0; i < _disasterPointsData.length && i < 3; i++) {
-          final d = _disasterPointsData[i];
-          print('   ${i + 1}. ${d.disasterId} - Lat: ${d.centerLat}, Lng: ${d.centerLng}, Mag: ${d.magnitude}');
-        }
-      }
     } catch (e) {
-      print('❌ Error loading disaster points: $e');
-      print('📊 Error type: ${e.runtimeType}');
       _disasterPointsData.clear();
       _updateDisasterPointsDisplay();
-    }
-  }
-
-  /// Debug method: Check all disasters in database (not just today's)
-  /// Use this to verify if disasters exist in the database
-  Future<void> debugCheckAllDisasters() async {
-    try {
-      print('🔍 [DEBUG] Checking all disasters in database...');
-      final allDisasters = await SupabaseService.getAllDisasters();
-      
-      print('📊 [DEBUG] Total disasters in database: ${allDisasters.length}');
-      
-      if (allDisasters.isEmpty) {
-        print('⚠️ [DEBUG] Database is empty - no disasters found');
-        return;
-      }
-      
-      print('📋 [DEBUG] Recent disasters:');
-      for (var i = 0; i < allDisasters.length && i < 10; i++) {
-        final d = allDisasters[i];
-        final dateStr = d.occurredAt != null 
-            ? DateTime.fromMillisecondsSinceEpoch(d.occurredAt!.toInt()*1000).toString()
-            : 'No date';
-        print('   ${i + 1}. ${d.disasterId}');
-        print('      Date: $dateStr');
-        print('      Location: ${d.centerLat}, ${d.centerLng}');
-        print('      Magnitude: ${d.magnitude} SR');
-        print('      Has location: ${d.hasLocation()}');
-      }
-      
-      // Check how many are from today
-      final now = DateTime.now();
-      final todayDisasters = allDisasters.where((d) {
-        if (d.occurredAt == null) return false;
-        final date = DateTime.fromMillisecondsSinceEpoch(d.occurredAt!.toInt()*1000);
-        return date.year == now.year && 
-               date.month == now.month && 
-               date.day == now.day;
-      }).toList();
-      
-      print('📅 [DEBUG] Disasters from today: ${todayDisasters.length}');
-      print('📅 [DEBUG] Disasters from other dates: ${allDisasters.length - todayDisasters.length}');
-      
-    } catch (e) {
-      print('❌ [DEBUG] Error checking all disasters: $e');
     }
   }
 
@@ -214,18 +125,16 @@ class UserMapViewModel extends GetxController {
   }
 
   /// Load evacuation points from Supabase
-  /// This is called once on initialization, then realtime updates take over
   Future<void> _loadEvacuationPoints() async {
     try {
-      print('📍 Loading evacuation points from Supabase...');
       final points = await SupabaseService.getEvacuationPoints();
       
       _evacuationPointsData.value = points;
       _updateEvacuationPointsDisplay();
       
-      print('✅ Loaded ${_evacuationPointsData.length} evacuation points');
+      developer.log('Loaded ${_evacuationPointsData.length} evacuation points');
     } catch (e) {
-      print('❌ Error loading evacuation points: $e');
+      developer.log('❌ Error loading evacuation points: $e');
       _evacuationPointsData.clear();
       _updateEvacuationPointsDisplay();
     }
@@ -234,8 +143,6 @@ class UserMapViewModel extends GetxController {
   /// Subscribe to realtime changes on evacuation_points table
   void _subscribeToEvacuationPoints() {
     try {
-      print('🔔 Setting up realtime subscription for evacuation_points...');
-      
       final supabaseClient = Supabase.instance.client;
       
       _evacuationPointsSubscription = supabaseClient
@@ -245,15 +152,15 @@ class UserMapViewModel extends GetxController {
             schema: 'public',
             table: 'evacuation_points',
             callback: (payload) {
-              print('🔔 Realtime event received: ${payload.eventType}');
+              developer.log('Realtime event received: ${payload.eventType}');
               _handleEvacuationPointChange(payload);
             },
           )
           .subscribe();
       
-      print('✅ Realtime subscription established');
+      developer.log('Realtime subscription established');
     } catch (e) {
-      print('❌ Error setting up realtime subscription: $e');
+      developer.log('Error setting up realtime subscription: $e');
     }
   }
 

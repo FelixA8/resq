@@ -105,7 +105,7 @@ class AddEvacPointFormSection extends GetView<AddEvacuationPointViewModel> {
                         ? Center(
                           child: CircularProgressIndicator(
                             valueColor: AlwaysStoppedAnimation<Color>(
-                              Color(theme.colors.primary),
+                              theme.colors.primary,
                             ),
                           ),
                         )
