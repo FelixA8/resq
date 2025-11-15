@@ -138,6 +138,8 @@ flutter:
     - assets/images/icons/date.png
     - assets/images/icons/tsunami.png
     - assets/images/icons/depth.png
+    - assets/images/icons/time.png
+    - assets/images/icons/phone.png
     
     
 
