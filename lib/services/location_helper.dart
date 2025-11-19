@@ -184,13 +184,11 @@ class LocationHelper {
       if (placemarks.isNotEmpty) {
         Placemark placemark = placemarks.first;
         
-        // Extract city information
         String city = placemark.locality ?? 
                      placemark.administrativeArea ?? 
                      placemark.subAdministrativeArea ?? 
                      'Unknown City';
 
-        // Create detailed location string
         List<String> addressParts = [];
         
         if (placemark.street != null && placemark.street!.isNotEmpty) {

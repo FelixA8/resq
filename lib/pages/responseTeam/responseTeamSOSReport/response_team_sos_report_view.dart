@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import 'response_team_sos_report_view_model.dart';
 import 'components/title_section.dart';
 import 'components/sos_report_card.dart';
@@ -9,61 +9,79 @@ class ResponseTeamSOSReportView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => ResponseTeamSOSReportViewModel(),
-      child: Consumer<ResponseTeamSOSReportViewModel>(
-        builder: (context, viewModel, child) {
-          return Column(
-            children: [
-              const TitleSection(),
-              Expanded(
-                child: viewModel.isLoading
-                    ? const Center(
-                        child: CircularProgressIndicator(),
-                      )
-                    : viewModel.errorMessage != null
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  viewModel.errorMessage!,
-                                  style: const TextStyle(color: Colors.red),
-                                ),
-                                const SizedBox(height: 16),
-                                ElevatedButton(
-                                  onPressed: () => viewModel.refreshReports(),
-                                  child: const Text('Retry'),
-                                ),
-                              ],
+    // Get or create the ViewModel using GetX
+    final viewModel = Get.put(ResponseTeamSOSReportViewModel());
+
+    return Column(
+      children: [
+        const TitleSection(),
+        Expanded(
+          child: Obx(() {
+            if (viewModel.isLoading.value) {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
+            
+            if (viewModel.errorMessage.value != null) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      viewModel.errorMessage.value!,
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => viewModel.refreshReports(),
+                      child: const Text('Coba lagi'),
+                    ),
+                  ],
+                ),
+              );
+            }
+            
+            if (viewModel.sosReports.isEmpty) {
+              return const Center(
+                child: Text('Tidak ada laporan SOS'),
+              );
+            }
+            
+            return RefreshIndicator(
+              onRefresh: () => viewModel.refreshReports(),
+              child: ListView.builder(
+                controller: viewModel.scrollController,
+                padding: const EdgeInsets.only(bottom: 16),
+                itemCount: viewModel.sosReports.length + 
+                    (viewModel.hasMoreData.value ? 1 : 0),
+                itemBuilder: (context, index) {
+                  // Show loading indicator at the bottom
+                  if (index == viewModel.sosReports.length) {
+                    return viewModel.isLoadingMore.value
+                        ? const Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: Center(
+                              child: CircularProgressIndicator(),
                             ),
                           )
-                        : viewModel.sosReports.isEmpty
-                            ? const Center(
-                                child: Text('No SOS reports available'),
-                              )
-                            : RefreshIndicator(
-                                onRefresh: () => viewModel.refreshReports(),
-                                child: ListView.builder(
-                                  padding: const EdgeInsets.only(bottom: 16),
-                                  itemCount: viewModel.sosReports.length,
-                                  itemBuilder: (context, index) {
-                                    final report = viewModel.sosReports[index];
-                                    return SOSReportCard(
-                                      report: report,
-                                      formatTimestamp: viewModel.formatTimestamp,
-                                      onViewMapPressed: () {
-                                        viewModel.viewOnMap(report.reportId);
-                                      },
-                                    );
-                                  },
-                                ),
-                              ),
+                        : const SizedBox.shrink();
+                  }
+                  
+                  final reportItem = viewModel.sosReports[index];
+                  return SOSReportCard(
+                    reportItem: reportItem,
+                    formatTimestamp: viewModel.formatTimestamp,
+                    onViewMapPressed: () {
+                      viewModel.viewOnMap(reportItem.sosEvent.sosId);
+                    },
+                  );
+                },
               ),
-            ],
-          );
-        },
-      ),
+            );
+          }),
+        ),
+      ],
     );
   }
 }
