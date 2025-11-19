@@ -5,13 +5,13 @@ import 'report_card_button.dart';
 
 /// Reusable SOS Report Card Component
 class SOSReportCard extends StatelessWidget {
-  final SOSReportItem report;
+  final SosReportItem reportItem;
   final VoidCallback? onViewMapPressed;
   final String Function(DateTime) formatTimestamp;
 
   const SOSReportCard({
     Key? key,
-    required this.report,
+    required this.reportItem,
     this.onViewMapPressed,
     required this.formatTimestamp,
   }) : super(key: key);
@@ -19,21 +19,23 @@ class SOSReportCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = ResQTheme();
+    final sosEvent = reportItem.sosEvent;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      padding: EdgeInsets.all(theme.padding.ms),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              offset: Offset(0, 2),
+              blurRadius: 10,
+              spreadRadius: 0,
+            ),
+          ],
+        ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -48,7 +50,7 @@ class SOSReportCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      report.userName,
+                      reportItem.username,
                       style: TextStyle(
                         fontFamily: 'SF Pro',
                         fontWeight: FontWeight.w500,
@@ -58,7 +60,7 @@ class SOSReportCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      report.phoneNumber,
+                      reportItem.phoneNumber,
                       style: const TextStyle(
                         fontFamily: 'SF Pro',
                         fontWeight: FontWeight.w400,
@@ -77,7 +79,7 @@ class SOSReportCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  formatTimestamp(report.timestamp),
+                  reportItem.formattedTime,
                   style: TextStyle(
                     fontFamily: 'SF Pro',
                     fontWeight: FontWeight.w600,
@@ -96,7 +98,7 @@ class SOSReportCard extends StatelessWidget {
             children: [
               // Left: Distance
               Text(
-                '${report.distanceKm.toStringAsFixed(1)} Km',
+                '${reportItem.formattedDistance} Km',
                 style: TextStyle(
                   fontFamily: 'SF Pro',
                   fontWeight: FontWeight.w500,
@@ -105,11 +107,16 @@ class SOSReportCard extends StatelessWidget {
                 ),
               ),
               // Right: Button
-              ReportCardButton(
-                isAssigned: report.isAssigned,
-                assignedUnitId: report.assignedUnitId,
-                onPressed: report.isAssigned ? null : onViewMapPressed,
-              ),
+              sosEvent.responseTeamId != null
+                  ? ReportCardButton(
+                      isAssigned: sosEvent.isAssigned,
+                      assignedUnitId: sosEvent.responseTeamId,
+                      onPressed: sosEvent.isAssigned ? null : onViewMapPressed,
+                    )
+                  : ReportCardButton(
+                      isAssigned: false,
+                      onPressed: onViewMapPressed,
+                    ),
             ],
           ),
         ],

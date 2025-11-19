@@ -354,6 +354,46 @@ class SupabaseService {
     }
   }
 
+  /// Get paginated SOS events (for SOS report list)
+  /// Returns active SOS events ordered by most recent first
+  static Future<List<SosEvent>> getPaginatedSosEvents({
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    try {
+      final response = await _client
+          .from('sos_events')
+          .select()
+          .order('pressed_at', ascending: false)
+          .range(offset, offset + limit - 1);
+
+      final events = (response as List)
+          .map((json) => SosEvent.fromJson(json))
+          .toList();
+
+      developer.log('Fetched ${events.length} SOS events (offset: $offset, limit: $limit)');
+      return events;
+    } catch (e) {
+      developer.log('Error getting paginated SOS events: $e');
+      return [];
+    }
+  }
+
+  /// Get total count of active SOS events
+  static Future<int> getActiveSosEventsCount() async {
+    try {
+      final response = await _client
+          .from('sos_events')
+          .select('sos_id')
+          .eq('is_current', true);
+
+      return (response as List).length;
+    } catch (e) {
+      developer.log('Error getting SOS events count: $e');
+      return 0;
+    }
+  }
+
   // ==================== Evacuation Points ====================
   /// Get evacuation points
   static Future<List<EvacuationPoint>> getEvacuationPoints({
