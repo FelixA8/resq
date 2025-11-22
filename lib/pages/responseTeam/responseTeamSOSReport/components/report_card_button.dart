@@ -34,7 +34,7 @@ class ReportCardButton extends StatelessWidget {
           disabledBackgroundColor: Colors.grey.shade400,
         ),
         child: Text(
-          'Ditangani oleh Unit $assignedUnitId',
+          'Ditangani oleh Unit ${assignedUnitId?.substring(0, 5)}',
           style: const TextStyle(
             fontFamily: 'SF Pro',
             fontWeight: FontWeight.w500,

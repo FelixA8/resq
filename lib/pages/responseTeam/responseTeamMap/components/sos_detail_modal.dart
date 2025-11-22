@@ -9,23 +9,42 @@ class SOSDetailModal extends StatelessWidget {
 
   const SOSDetailModal({
     Key? key,
-    required this.sosEvent,
+    required this.sosEvent
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final viewModel = Get.find<ResponseTeamMapViewModel>();
     
-    return reusable.SOSDetailModal(
-      sosEvent: sosEvent,
-      onFetchUser: (userId) => viewModel.fetchUserById(userId),
-      onFetchAddress: (sosEvent) => viewModel.fetchSOSAddress(sosEvent),
-      formatReportTime: (timestamp) => viewModel.formatSOSReportTime(timestamp),
-      onShowRoute: () {
-        // TODO: Implement show route functionality
-        print('Show route to SOS location: ${sosEvent.sosId}');
-      },
-    );
+    return Obx(() {
+      final _ = viewModel.sosEventsCount;
+      final currentLocation = viewModel.currentLocation.value;
+      final updatedSosEvent = viewModel.findSOSById(sosEvent.sosId) ?? sosEvent;
+      
+      final isNavigating = viewModel.isCurrentlyNavigatingTo(updatedSosEvent);
+      final currentResponseTeamId = viewModel.getCurrentResponseTeamId();
+      final isAssignedToOtherTeam = updatedSosEvent.responseTeamId != null && 
+          updatedSosEvent.responseTeamId != currentResponseTeamId;
+      final isRouteButtonEnabled = !isAssignedToOtherTeam;
+      final distanceKm = viewModel.calculateDistanceToSos(updatedSosEvent);
+      
+      return reusable.SOSDetailModal(
+        sosEvent: updatedSosEvent,
+        onFetchUser: (userId) => viewModel.fetchUserById(userId),
+        onFetchAddress: (sosEvent) => viewModel.fetchSOSAddress(sosEvent),
+        formatReportTime: (timestamp) => viewModel.formatSOSReportTime(timestamp),
+        onShowRoute: () {
+          viewModel.showRouteToSos(updatedSosEvent);
+        },
+        isNavigating: isNavigating,
+        distanceKm: distanceKm,
+        onCancelRoute: () {
+          viewModel.cancelRoute(updatedSosEvent);
+        },
+        currentResponseTeamId: currentResponseTeamId,
+        isRouteButtonEnabled: isRouteButtonEnabled,
+      );
+    });
   }
 }
 

@@ -36,7 +36,7 @@ class ResponseTeamMapView extends GetView<ResponseTeamMapViewModel> {
                 minZoom: 5.0,
                 maxZoom: 18.0,
                 interactionOptions: InteractionOptions(
-                  flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                  flags: InteractiveFlag.all,
                 ),
               ),
               children: [
@@ -44,6 +44,18 @@ class ResponseTeamMapView extends GetView<ResponseTeamMapViewModel> {
                   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                   userAgentPackageName: 'com.example.disaster_map',
                   maxZoom: 19,
+                ),
+                PolylineLayer(
+                  polylines: [
+                    if (controller.routePoints.isNotEmpty)
+                      Polyline(
+                        points: controller.routePoints.toList(),
+                        color: Colors.blue, // Navigation blue color
+                        strokeWidth: 5.0,
+                        borderColor: Colors.blue.withOpacity(0.3),
+                        borderStrokeWidth: 2.0,
+                      ),
+                  ],
                 ),
                 // User location marker layer
                 MarkerLayer(
@@ -179,7 +191,6 @@ class ResponseTeamMapView extends GetView<ResponseTeamMapViewModel> {
                         );
                       }).toList(),
                 ),
-                // SOS points layer (sent by users when they press SOS button)
                 Obx(() {
                   return MarkerLayer(
                     markers:
@@ -204,7 +215,7 @@ class ResponseTeamMapView extends GetView<ResponseTeamMapViewModel> {
                                       return FractionallySizedBox(
                                         heightFactor: heightFactor,
                                         child: SOSDetailModal(
-                                          sosEvent: sosEvent,
+                                          sosEvent: sosEvent
                                         ),
                                       );
                                     },

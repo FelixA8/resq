@@ -9,7 +9,6 @@ class ResponseTeamSOSReportView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Get or create the ViewModel using GetX
     final viewModel = Get.put(ResponseTeamSOSReportViewModel());
 
     return Column(
@@ -43,8 +42,17 @@ class ResponseTeamSOSReportView extends StatelessWidget {
             }
             
             if (viewModel.sosReports.isEmpty) {
-              return const Center(
-                child: Text('Tidak ada laporan SOS'),
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => viewModel.refreshReports(),
+                      child: const Text('Tidak ditemukan SOS, Silahkan coba lagi'),
+                    ),
+                  ],
+                ),
               );
             }
             
