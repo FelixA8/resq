@@ -37,9 +37,6 @@ class _DisasterDetailModalState extends State<DisasterDetailModal> {
     _loadAddress();
   }
 
-  // -----------------------------
-  // Location & ShakeMap Handling
-  // -----------------------------
   Future<void> _loadAddress() async {
     setState(() => _isLoadingAddress = true);
 
@@ -76,9 +73,6 @@ class _DisasterDetailModalState extends State<DisasterDetailModal> {
     );
   }
 
-  // -----------------------------
-  // UI Builders
-  // -----------------------------
   Widget _buildDivider() => Container(
         margin: const EdgeInsets.symmetric(vertical: 8),
         height: 1.5,
@@ -134,9 +128,6 @@ class _DisasterDetailModalState extends State<DisasterDetailModal> {
     );
   }
 
-  // -----------------------------
-  // Build Method
-  // -----------------------------
   @override
   Widget build(BuildContext context) {
     return Container(
