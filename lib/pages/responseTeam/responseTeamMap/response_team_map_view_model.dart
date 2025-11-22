@@ -61,16 +61,12 @@ class ResponseTeamMapViewModel extends GetxController {
           print('🔄 Realtime SOS update received: ${payload.eventType}');
           final previousCount = sosPoints.length;
 
-          // Re-fetch all SOS events
           await _loadSOSPoints();
 
           final newCount = sosPoints.length;
           if (newCount > previousCount) {
-            print("🚨 NEW SOS DETECTED — Triggering haptic alert");
-            HapticFeedback.heavyImpact(); // Strong vibration
+            HapticFeedback.heavyImpact();
           }
-
-          // Re-render markers
           update();
         },
       )
@@ -80,23 +76,23 @@ class ResponseTeamMapViewModel extends GetxController {
 
   @override
   void onClose() {
-    // Clean up realtime subscriptions
     _evacuationPointsSubscription?.unsubscribe();
     _disastersSubscription?.unsubscribe();
     _sosEventsSubscription?.unsubscribe();
     super.onClose();
   }
+  
+  @override void dispose() {
+    mapController.dispose();
+    super.dispose();
+  }
 
   void _initializeData() {
-    // Load disaster points from API (using dummy data for now)
     _loadDisasterPoints();
-    // Load evacuation points (using dummy data for now)
     _loadEvacuationPoints();
-    // Load SOS points (these come from users, using dummy data for now)
     _loadSOSPoints();
   }
 
-  /// Update the display list from the disaster data list
   void _updateDisasterPointsDisplay() {
     disasterPoints.value = _disasterPointsData
         .where((disaster) => disaster.centerLat != null && disaster.centerLng != null)
@@ -104,25 +100,18 @@ class ResponseTeamMapViewModel extends GetxController {
         .toList();
   }
 
-  /// Load disaster points from Supabase
-  /// This is called once on initialization, then realtime updates take over
   Future<void> _loadDisasterPoints() async {
     try {
-      print('🌋 Loading disaster points from Supabase...');
       final disasters = await SupabaseService.getAllDisasters();
       
       _disasterPointsData.value = disasters;
       _updateDisasterPointsDisplay();
-      
-      print('✅ Loaded ${_disasterPointsData.length} disaster points');
     } catch (e) {
-      print('❌ Error loading disaster points: $e');
       _disasterPointsData.clear();
       _updateDisasterPointsDisplay();
     }
   }
 
-  /// Update the display list from the data list
   void _updateEvacuationPointsDisplay() {
     evacuationPoints.value = _evacuationPointsData
         .where((point) => point.hasLocation())
@@ -130,30 +119,22 @@ class ResponseTeamMapViewModel extends GetxController {
         .toList();
   }
 
-  /// Load evacuation points from Supabase
-  /// This is called once on initialization, then realtime updates take over
   Future<void> _loadEvacuationPoints() async {
     try {
-      print('📍 Loading evacuation points from Supabase...');
       final points = await SupabaseService.getEvacuationPoints();
       
       _evacuationPointsData.value = points;
       _updateEvacuationPointsDisplay();
-      
-      print('✅ Loaded ${_evacuationPointsData.length} evacuation points');
+
     } catch (e) {
-      print('❌ Error loading evacuation points: $e');
       _evacuationPointsData.clear();
       _updateEvacuationPointsDisplay();
     }
   }
   
-
   /// Subscribe to realtime changes on evacuation_points table
   void _subscribeToEvacuationPoints() {
     try {
-      print('🔔 Setting up realtime subscription for evacuation_points...');
-      
       final supabaseClient = Supabase.instance.client;
       
       _evacuationPointsSubscription = supabaseClient
@@ -163,23 +144,18 @@ class ResponseTeamMapViewModel extends GetxController {
             schema: 'public',
             table: 'evacuation_points',
             callback: (payload) {
-              print('🔔 Realtime event received: ${payload.eventType}');
               _handleEvacuationPointChange(payload);
             },
           )
           .subscribe();
-      
-      print('✅ Realtime subscription established');
     } catch (e) {
-      print('❌ Error setting up realtime subscription: $e');
+      print('Error setting up realtime subscription: $e');
     }
   }
 
   /// Subscribe to realtime changes on sos_events table
   void _subscribeToSOSEvents() {
     try {
-      print('🔔 Setting up realtime subscription for sos_events...');
-      
       final supabaseClient = Supabase.instance.client;
       
       _sosEventsSubscription = supabaseClient
@@ -189,19 +165,16 @@ class ResponseTeamMapViewModel extends GetxController {
             schema: 'public',
             table: 'sos_events',
             callback: (payload) {
-              print('🔔 SOS realtime event received: ${payload.eventType}');
               _handleSOSEventChange(payload);
             },
           )
           .subscribe();
       
-      print('✅ SOS realtime subscription established');
     } catch (e) {
-      print('❌ Error setting up SOS realtime subscription: $e');
+      print('Error setting up SOS realtime subscription: $e');
     }
   }
 
-  /// Handle realtime changes to SOS events
   void _handleSOSEventChange(PostgresChangePayload payload) {
     try {
       switch (payload.eventType) {
@@ -215,20 +188,17 @@ class ResponseTeamMapViewModel extends GetxController {
           _handleSOSEventDelete(payload.oldRecord);
           break;
         default:
-          print('⚠️ Unknown SOS event type: ${payload.eventType}');
       }
     } catch (e) {
-      print('❌ Error handling SOS event change: $e');
+      print('Error handling SOS event change: $e');
     }
   }
 
-  /// Handle INSERT event - add new SOS event to map (only if active)
   void _handleSOSEventInsert(Map<String, dynamic> record) {
     try {
       final sosEvent = SosEvent.fromJson(record);
       
       if (sosEvent.sosId.isNotEmpty && sosEvent.isActive) {
-        // Avoid duplicates by checking ID
         final exists = _sosEventsData.any(
           (s) => s.sosId == sosEvent.sosId,
         );
@@ -236,15 +206,13 @@ class ResponseTeamMapViewModel extends GetxController {
         if (!exists) {
           _sosEventsData.add(sosEvent);
           _updateSOSPointsDisplay();
-          print('✅ Added new SOS event: ${sosEvent.sosId}');
         }
       }
     } catch (e) {
-      print('❌ Error handling SOS INSERT: $e');
+      print('Error handling SOS INSERT: $e');
     }
   }
 
-  /// Handle UPDATE event - update existing SOS event
   void _handleSOSEventUpdate(
     Map<String, dynamic> oldRecord,
     Map<String, dynamic> newRecord,
@@ -261,16 +229,13 @@ class ResponseTeamMapViewModel extends GetxController {
         if (index != -1) {
           _sosEventsData[index] = newSosEvent;
           _updateSOSPointsDisplay();
-          print('✅ Updated SOS event: ${newSosEvent.sosId}');
         } else if (newSosEvent.isActive) {
-          // If not found and is active, add it
           _sosEventsData.add(newSosEvent);
           _updateSOSPointsDisplay();
-          print('✅ Added SOS event ${newSosEvent.sosId} - became active');
         }
       }
     } catch (e) {
-      print('❌ Error handling SOS UPDATE: $e');
+      print('Error handling SOS UPDATE: $e');
     }
   }
 
@@ -284,18 +249,15 @@ class ResponseTeamMapViewModel extends GetxController {
           (s) => s.sosId == sosEvent.sosId,
         );
         _updateSOSPointsDisplay();
-        print('✅ Removed SOS event: ${sosEvent.sosId}');
       }
     } catch (e) {
-      print('❌ Error handling SOS DELETE: $e');
+      print('Error handling SOS DELETE: $e');
     }
   }
 
   /// Subscribe to realtime changes on disasters table
   void _subscribeToDisasters() {
     try {
-      print('🔔 Setting up realtime subscription for disasters...');
-      
       final supabaseClient = Supabase.instance.client;
       
       _disastersSubscription = supabaseClient
@@ -310,10 +272,8 @@ class ResponseTeamMapViewModel extends GetxController {
             },
           )
           .subscribe();
-      
-      print('✅ Disaster realtime subscription established');
     } catch (e) {
-      print('❌ Error setting up disaster realtime subscription: $e');
+      print('Error setting up disaster realtime subscription: $e');
     }
   }
 
@@ -352,15 +312,13 @@ class ResponseTeamMapViewModel extends GetxController {
         if (!exists) {
           _evacuationPointsData.add(point);
           _updateEvacuationPointsDisplay();
-          print('✅ Added new evacuation point: ${point.evacuationId}');
         }
       }
     } catch (e) {
-      print('❌ Error handling INSERT: $e');
+      print('Error handling INSERT: $e');
     }
   }
 
-  /// Handle UPDATE event - update existing evacuation point
   void _handleEvacuationPointUpdate(
     Map<String, dynamic> oldRecord,
     Map<String, dynamic> newRecord,
@@ -369,7 +327,6 @@ class ResponseTeamMapViewModel extends GetxController {
       final newPoint = EvacuationPoint.fromJson(newRecord);
       
       if (newPoint.evacuationId != null) {
-        // Find and replace the existing point by ID
         final index = _evacuationPointsData.indexWhere(
           (p) => p.evacuationId == newPoint.evacuationId,
         );
@@ -377,15 +334,14 @@ class ResponseTeamMapViewModel extends GetxController {
         if (index != -1) {
           _evacuationPointsData[index] = newPoint;
           _updateEvacuationPointsDisplay();
-          print('✅ Updated evacuation point: ${newPoint.evacuationId}');
+          print('Updated evacuation point: ${newPoint.evacuationId}');
         } else {
-          // If not found, add it (shouldn't happen, but handle gracefully)
           _evacuationPointsData.add(newPoint);
           _updateEvacuationPointsDisplay();
         }
       }
     } catch (e) {
-      print('❌ Error handling UPDATE: $e');
+      print('Error handling UPDATE: $e');
     }
   }
 
@@ -399,14 +355,13 @@ class ResponseTeamMapViewModel extends GetxController {
           (p) => p.evacuationId == point.evacuationId,
         );
         _updateEvacuationPointsDisplay();
-        print('✅ Removed evacuation point: ${point.evacuationId}');
+        print('Removed evacuation point: ${point.evacuationId}');
       }
     } catch (e) {
-      print('❌ Error handling DELETE: $e');
+      print('Error handling DELETE: $e');
     }
   }
 
-  /// Handle realtime changes to disasters
   void _handleDisasterChange(PostgresChangePayload payload) {
     try {
       switch (payload.eventType) {
@@ -427,45 +382,12 @@ class ResponseTeamMapViewModel extends GetxController {
     }
   }
 
-  /// Check if a disaster occurred today
-  bool _isDisasterFromToday(Disaster disaster) {
-    if (disaster.occurredAt == null) {
-      print('⚠️ Disaster ${disaster.disasterId} has no occurredAt timestamp');
-      return false;
-    }
-    
-    try {
-      // Convert milliseconds timestamp to DateTime
-      final disasterDate = DateTime.fromMillisecondsSinceEpoch(disaster.occurredAt!.toInt()*1000);
-      final now = DateTime.now();
-      
-      // Check if disaster occurred today
-      final isToday = disasterDate.year == now.year &&
-                      disasterDate.month == now.month &&
-                      disasterDate.day == now.day;
-      
-      if (!isToday) {
-        print('🚫 Disaster ${disaster.disasterId} is not from today (occurred: ${disasterDate})');
-      }
-      
-      return isToday;
-    } catch (e) {
-      print('❌ Error checking disaster date: $e');
-      return false;
-    }
-  }
-
   /// Handle INSERT event - add new disaster to map (only if from today)
   void _handleDisasterInsert(Map<String, dynamic> record) {
     try {
       final disaster = Disaster.fromJson(record);
       
       if (disaster.disasterId != null) {
-        // Check if disaster is from today
-        if (!_isDisasterFromToday(disaster)) {
-          print('⏭️ Skipping disaster ${disaster.disasterId} - not from today');
-          return;
-        }
         
         // Avoid duplicates by checking ID
         final exists = _disasterPointsData.any(
@@ -491,40 +413,21 @@ class ResponseTeamMapViewModel extends GetxController {
     try {
       final newDisaster = Disaster.fromJson(newRecord);
       
-      if (newDisaster.disasterId != null) {
-        // Check if updated disaster is from today
-        if (!_isDisasterFromToday(newDisaster)) {
-          print('⏭️ Skipping disaster update ${newDisaster.disasterId} - not from today');
-          // If it was previously shown but now updated to a different date, remove it
-          final index = _disasterPointsData.indexWhere(
-            (d) => d.disasterId == newDisaster.disasterId,
-          );
-          if (index != -1) {
-            _disasterPointsData.removeAt(index);
-            _updateDisasterPointsDisplay();
-            print('🗑️ Removed disaster ${newDisaster.disasterId} - date changed to non-today');
-          }
-          return;
-        }
-        
-        // Find and replace the existing disaster by ID
-        final index = _disasterPointsData.indexWhere(
+      final index = _disasterPointsData.indexWhere(
           (d) => d.disasterId == newDisaster.disasterId,
         );
         
         if (index != -1) {
           _disasterPointsData[index] = newDisaster;
           _updateDisasterPointsDisplay();
-          print('✅ Updated disaster: ${newDisaster.disasterId}');
+          print('Updated disaster: ${newDisaster.disasterId}');
         } else {
-          // If not found, add it (could happen if date was updated to today)
           _disasterPointsData.add(newDisaster);
           _updateDisasterPointsDisplay();
-          print('✅ Added disaster ${newDisaster.disasterId} - date updated to today');
+          print('Added disaster ${newDisaster.disasterId} - date updated to today');
         }
-      }
     } catch (e) {
-      print('❌ Error handling disaster UPDATE: $e');
+      print('Error handling disaster UPDATE: $e');
     }
   }
 
@@ -538,23 +441,10 @@ class ResponseTeamMapViewModel extends GetxController {
           (d) => d.disasterId == disaster.disasterId,
         );
         _updateDisasterPointsDisplay();
-        print('✅ Removed disaster: ${disaster.disasterId}');
       }
     } catch (e) {
-      print('❌ Error handling disaster DELETE: $e');
+      print('Error handling disaster DELETE: $e');
     }
-  }
-
-  /// Refresh disaster points (manual refresh if needed)
-  /// Note: Realtime subscription should handle updates automatically
-  Future<void> refreshDisasterPoints() async {
-    await _loadDisasterPoints();
-  }
-
-  /// Refresh evacuation points (manual refresh if needed)
-  /// Note: Realtime subscription should handle updates automatically
-  Future<void> refreshEvacuationPoints() async {
-    await _loadEvacuationPoints();
   }
 
   /// Update the display list from the SOS events data list
@@ -565,43 +455,23 @@ class ResponseTeamMapViewModel extends GetxController {
         .toList();
   }
 
-  /// Load SOS points (sent by users when they press SOS button)
-  /// Loads active SOS events from Supabase
   Future<void> _loadSOSPoints() async {
     try {
-      print('🆘 Loading SOS events from Supabase...');
       final sosEvents = await SupabaseService.getSoSEvents();
       
-      // Filter only active SOS events (isCurrent == true and not resolved)
       final activeSOSEvents = sosEvents
           .where((sos) => sos.isActive)
           .toList();
       
       _sosEventsData.value = activeSOSEvents;
       _updateSOSPointsDisplay();
-      print("---- DEBUG EACH SOS ----");
-for (var s in sosEvents) {
-  print("SOS ID: ${s.sosId}");
-  print("isCurrent: ${s.isCurrent}");
-  print("resolvedAt: ${s.resolvedAt}");
-  print("isActive (calculated): ${s.isActive}");
-}
-
-      
-      print('✅ Loaded ${activeSOSEvents.length} active SOS events');
     } catch (e) {
-      print('❌ Error loading SOS events: $e');
+      print('Error loading SOS events: $e');
       _sosEventsData.clear();
       _updateSOSPointsDisplay();
     }
   }
 
-  /// Refresh SOS points
-  Future<void> refreshSOSPoints() async {
-    await _loadSOSPoints();
-  }
-
-  /// Initialize location using the LocationHelper
   Future<void> _initializeLocation() async {
     try {
       isLoading.value = true;
@@ -611,34 +481,15 @@ for (var s in sosEvents) {
       currentLocation.value = result.location;
       hasLocationPermission.value = result.hasPermission;
       
-      // Move map to the location
       mapController.move(currentLocation.value, 15.0);
       
     } catch (e) {
-      // LocationHelper already handles error messages
       hasLocationPermission.value = false;
     } finally {
       isLoading.value = false;
     }
   }
-
-  /// Get location after permission has been granted
-  Future<void> _getLocationAfterPermission() async {
-    try {
-      // Try to get last known position first (quick)
-      Position? lastKnownPosition = await Geolocator.getLastKnownPosition();
-      if (lastKnownPosition != null) {
-        currentLocation.value = LatLng(lastKnownPosition.latitude, lastKnownPosition.longitude);
-        mapController.move(currentLocation.value, 15.0);
-        return;
-      }
-      
-      await _getCurrentLocation();
-    } catch (e) {
-      await _getCurrentLocation();
-    }
-  }
-
+  
   Future<void> _getCurrentLocation() async {
     if (!hasLocationPermission.value) return;
     
@@ -672,100 +523,6 @@ for (var s in sosEvents) {
     await _initializeLocation();
   }
 
-  // ---------- Annotations API ----------
-  
-  /// Replace all disaster points (called after fetching from API)
-  /// Note: This is kept for backwards compatibility but realtime should handle updates
-  void setDisasterPoints(List<LatLng> points) {
-    // This method is deprecated in favor of realtime updates
-    // If you need to manually set points, consider using _disasterPointsData directly
-    print('⚠️ setDisasterPoints called - consider using realtime updates instead');
-  }
-
-  /// Replace all evacuation points (called when evacuation points are updated)
-  /// Note: This is kept for backwards compatibility but realtime should handle updates
-  void setEvacuationPoints(List<LatLng> points) {
-    // This method is deprecated in favor of realtime updates
-    // If you need to manually set points, consider using _evacuationPointsData directly
-    print('⚠️ setEvacuationPoints called - consider using realtime updates instead');
-  }
-
-  /// Add a single evacuation point (called when response team creates one)
-  /// The point will be automatically added to the map via realtime subscription
-  /// This method is kept for API compatibility but the local add is handled by realtime
-  Future<void> addEvacuationPoint(LatLng point) async {
-    // Note: The actual insertion happens in addEvacuationPointPage
-    // When SupabaseService.addEvacuationPoint() is called, the realtime
-    // subscription will automatically receive the INSERT event and update the map
-    // No need to manually add to evacuationPoints list here
-    print('ℹ️ addEvacuationPoint called - realtime will handle the update');
-  }
-
-  /// Remove a single evacuation point (called when response team removes one)
-  /// The point will be automatically removed from the map via realtime subscription
-  /// This method is kept for API compatibility but the local removal is handled by realtime
-  Future<void> removeEvacuationPoint(LatLng point) async {
-    // Note: When SupabaseService.deleteEvacuationPoint() is called, the realtime
-    // subscription will automatically receive the DELETE event and update the map
-    // No need to manually remove from evacuationPoints list here
-    print('ℹ️ removeEvacuationPoint called - realtime will handle the update');
-  }
-
-  /// Add a single disaster point (called when a new disaster event is received)
-  /// The point will be automatically added to the map via realtime subscription
-  /// This method is kept for API compatibility but the local add is handled by realtime
-  void addDisasterPoint(LatLng point) {
-    // Note: When a disaster is inserted into Supabase, the realtime
-    // subscription will automatically receive the INSERT event and update the map
-    // No need to manually add to disasterPoints list here
-    print('ℹ️ addDisasterPoint called - realtime will handle the update');
-  }
-
-  /// Remove a single disaster point (called when a disaster is resolved/removed)
-  /// The point will be automatically removed from the map via realtime subscription
-  /// This method is kept for API compatibility but the local removal is handled by realtime
-  void removeDisasterPoint(LatLng point) {
-    // Note: When a disaster is deleted from Supabase, the realtime
-    // subscription will automatically receive the DELETE event and update the map
-    // No need to manually remove from disasterPoints list here
-    print('ℹ️ removeDisasterPoint called - realtime will handle the update');
-  }
-
-  // ---------- SOS Points API ----------
-  
-  /// Add a single SOS point (called when a user sends SOS)
-  /// This should be called via real-time listener or API callback when user sends SOS
-  /// TODO: This will be called automatically when backend receives SOS from user
-  void addSOSPoint(LatLng point) {
-    if (!sosPoints.contains(point)) {
-      sosPoints.add(point);
-      // TODO: Notify via real-time listener or API callback
-    }
-  }
-
-  /// Remove a single SOS point (called when SOS is resolved/cancelled)
-  /// TODO: This should also call API to mark SOS as resolved
-  Future<void> removeSOSPoint(LatLng point) async {
-    try {
-      // TODO: Call API to mark SOS as resolved
-      // Example: await sosService.resolveSOS(point);
-      // After API call succeeds, remove from local list
-      
-      sosPoints.remove(point);
-      // TODO: Notify via real-time listener or API callback
-    } catch (e) {
-      // Handle error - could show error message to user
-      rethrow;
-    }
-  }
-
-  /// Replace all SOS points (called when SOS points are updated)
-  void setSOSPoints(List<LatLng> points) {
-    sosPoints.value = points;
-  }
-
-  /// Find disaster by location coordinates
-  /// Returns the disaster that matches the given coordinates (with tolerance for floating point comparison)
   Disaster? findDisasterByLocation(LatLng location) {
     const tolerance = 0.0001; // Small tolerance for floating point comparison
     
@@ -779,13 +536,11 @@ for (var s in sosEvents) {
         orElse: () => throw StateError('No disaster found at this location'),
       );
     } catch (e) {
-      print('⚠️ No disaster found at location: ${location.latitude}, ${location.longitude}');
+      print('No disaster found at location: ${location.latitude}, ${location.longitude}');
       return null;
     }
   }
 
-  /// Find evacuation point by location coordinates
-  /// Returns the evacuation point that matches the given coordinates (with tolerance for floating point comparison)
   EvacuationPoint? findEvacuationPointByLocation(LatLng location) {
     const tolerance = 0.0001; // Small tolerance for floating point comparison
     
@@ -804,8 +559,6 @@ for (var s in sosEvents) {
     }
   }
 
-  /// Find SOS event by location coordinates
-  /// Returns the SOS event that matches the given coordinates (with tolerance for floating point comparison)
   SosEvent? findSOSByLocation(LatLng location) {
     const tolerance = 0.0001; // Small tolerance for floating point comparison
     
@@ -824,9 +577,6 @@ for (var s in sosEvents) {
     }
   }
 
-  // ---------- SOS Detail Helpers ----------
-
-  /// Fetch user information by user ID
   Future<ResqUser?> fetchUserById(String userId) async {
     try {
       return await SupabaseService.getUserById(userId);
@@ -836,7 +586,6 @@ for (var s in sosEvents) {
     }
   }
 
-  /// Fetch SOS report location address
   Future<String> fetchSOSAddress(SosEvent sosEvent) async {
     if (sosEvent.locationLat == null || sosEvent.locationLng == null) {
       return 'Lokasi tidak tersedia';
@@ -851,7 +600,6 @@ for (var s in sosEvents) {
     }
   }
 
-  /// Format SOS report time
   String formatSOSReportTime(double? timestamp) {
   if (timestamp == null || timestamp == 0) return '-';
 
@@ -862,7 +610,6 @@ for (var s in sosEvents) {
       "${dateTime.minute.toString().padLeft(2, '0')}:"
       "${dateTime.second.toString().padLeft(2, '0')}";
 
-  // Month names in Indonesian (you can adjust if needed)
   const months = [
     "Januari",
     "Februari",
@@ -883,9 +630,6 @@ for (var s in sosEvents) {
 
   return "$time, $date";
 }
-
-
-  // ---------- Disaster Detail Helpers ----------
 
   Future<String> fetchDisasterAddress(Disaster disaster) async {
     final cacheKey = disaster.disasterId;
@@ -969,9 +713,4 @@ for (var s in sosEvents) {
     }
   }
 }
-
-
-
-// DisasterActionException is now defined in lib/components/disaster_detail_modal.dart
-// Import it from there if needed elsewhere
 

@@ -1,7 +1,5 @@
 import 'package:resqapp/models/supabase_models.dart';
 
-/// Model that combines SOS event data with user information
-/// Used for displaying SOS reports in the list
 class SosReportItem {
   final SosEvent sosEvent;
   final ResqUser? user;
@@ -13,13 +11,10 @@ class SosReportItem {
     this.distanceKm,
   });
 
-  /// Get the username or a default value
   String get username => user?.username ?? 'Unknown User';
 
-  /// Get the phone number or a default value
   String get phoneNumber => user?.phoneNumber ?? 'No phone number';
 
-  /// Get the formatted timestamp
   String get formattedTime {
     if (sosEvent.pressedAt == null) return '-';
     final dateTime = DateTime.fromMillisecondsSinceEpoch(sosEvent.pressedAt!.toInt());
@@ -29,7 +24,6 @@ class SosReportItem {
     return '$hour:$minute:$second';
   }
 
-  /// Get the formatted distance
   String get formattedDistance {
     if (distanceKm == null) return '-';
     return distanceKm!.toStringAsFixed(1);
@@ -57,6 +51,3 @@ class SosReportItem {
     );
   }
 }
-
-
-

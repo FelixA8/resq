@@ -15,8 +15,7 @@ class EvacuationPointDetailModal extends StatelessWidget {
     return reusable.EvacuationPointDetailModal(
       evacuationPoint: evacuationPoint,
       onShowRoute: () {
-        // TODO: Implement show route functionality
-        print('Show route to evacuation point: ${evacuationPoint.evacuationId}');
+        
       },
     );
   }
