@@ -36,8 +36,7 @@ class ResponseTeamMapView extends GetView<ResponseTeamMapViewModel> {
                 minZoom: 5.0,
                 maxZoom: 18.0,
                 interactionOptions: InteractionOptions(
-                  flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
-                  cursorKeyboardRotationOptions: CursorKeyboardRotationOptions()
+                  flags: InteractiveFlag.all,
                 ),
               ),
               children: [
