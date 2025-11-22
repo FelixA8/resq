@@ -1,716 +1,503 @@
 import 'dart:async';
+import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:resqapp/models/supabase_models.dart';
+import 'package:resqapp/pages/responseTeam/responseTeamMap/helpers/response_team_map_helper.dart';
+import 'package:resqapp/pages/responseTeam/responseTeamMap/managers/response_team_map_realtime_manager.dart';
 import 'package:resqapp/service/supabase_service.dart';
 import 'package:resqapp/services/location_helper.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:resqapp/components/disaster_detail_modal.dart';
-import 'package:flutter/services.dart';
-
+import 'package:resqapp/services/distance_calculator.dart' as distance_calc;
 
 class ResponseTeamMapViewModel extends GetxController {
   final String instanceCode;
   final MapController mapController = MapController();
-  final DateFormat _disasterDateFormatter =
-      DateFormat('d MMMM yyyy, HH:mm:ss', 'id_ID');
-  final Map<String, String> _disasterAddressCache = {};
   
-  // Reactive state
-  final Rx<LatLng> currentLocation = LatLng(-6.2088, 106.8456).obs; // Jakarta default
+  final Map<String, String> _addressCache = {};
+  late final ResponseTeamRealtimeManager _realtimeManager;
+
+  final Rx<LatLng> currentLocation = LatLng(-6.2088, 106.8456).obs;
   final RxBool isLoading = false.obs;
   final RxBool hasLocationPermission = false.obs;
-  
+
   final RxList<Disaster> _disasterPointsData = <Disaster>[].obs;
   final RxList<LatLng> disasterPoints = <LatLng>[].obs;
+  
   final RxList<EvacuationPoint> _evacuationPointsData = <EvacuationPoint>[].obs;
   final RxList<LatLng> evacuationPoints = <LatLng>[].obs;
+  
   final RxList<SosEvent> _sosEventsData = <SosEvent>[].obs;
   final RxList<LatLng> sosPoints = <LatLng>[].obs;
 
-  // Realtime subscriptions
-  RealtimeChannel? _evacuationPointsSubscription;
-  RealtimeChannel? _disastersSubscription;
-  RealtimeChannel? _sosEventsSubscription;
+  final RxList<LatLng> routePoints = <LatLng>[].obs;
+  final RxBool isRouteLoading = false.obs;
+  final Rx<SosEvent?> _currentNavigatingSos = Rx<SosEvent?>(null);
+  String? _currentResponseTeamId;
+
+  StreamSubscription<Position>? _positionStreamSubscription;
 
   ResponseTeamMapViewModel({required this.instanceCode});
 
   @override
   void onInit() {
-    _initializeLocation();
-    _initializeData();
-    _subscribeToEvacuationPoints();
-    _subscribeToDisasters();
-    _subscribeToSOSEvents();
     super.onInit();
-    _loadSOSPoints();
-    subscribeToSOSUpdates();
+    _initializeAsync();
   }
 
-  void subscribeToSOSUpdates() {
-  Supabase.instance.client
-      .channel('public:sos_events')
-      .onPostgresChanges(
-        event: PostgresChangeEvent.all,
-        table: 'sos_events',
-        callback: (payload) async {
-          print('🔄 Realtime SOS update received: ${payload.eventType}');
-          final previousCount = sosPoints.length;
+  Future<void> _initializeAsync() async {
+    await _loadCurrentResponseTeamId();
+    await _initializeLocation();
+    _startLocationStream();
+    await _initializeData();
+    _setupRealtimeManager();
+    await _restoreNavigationIfNeeded();
+  }
 
-          await _loadSOSPoints();
-
-          final newCount = sosPoints.length;
-          if (newCount > previousCount) {
-            HapticFeedback.heavyImpact();
-          }
-          update();
-        },
-      )
-      .subscribe();
-}
-
+  Future<void> _loadCurrentResponseTeamId() async {
+    final responseTeam = await SupabaseService.getStoredResponseTeam();
+    _currentResponseTeamId = responseTeam?.responseTeamId;
+  }
 
   @override
   void onClose() {
-    _evacuationPointsSubscription?.unsubscribe();
-    _disastersSubscription?.unsubscribe();
-    _sosEventsSubscription?.unsubscribe();
+    _realtimeManager.dispose();
+    _positionStreamSubscription?.cancel();
     super.onClose();
   }
-  
-  @override void dispose() {
+
+  @override
+  void dispose() {
     mapController.dispose();
     super.dispose();
   }
 
-  void _initializeData() {
-    _loadDisasterPoints();
-    _loadEvacuationPoints();
-    _loadSOSPoints();
+  void _setupRealtimeManager() {
+    _realtimeManager = ResponseTeamRealtimeManager(
+      onEvacuationInsert: _onEvacuationInsert,
+      onEvacuationUpdate: _onEvacuationUpdate,
+      onEvacuationDelete: _onEvacuationDelete,
+      onDisasterInsert: _onDisasterInsert,
+      onDisasterUpdate: _onDisasterUpdate,
+      onDisasterDelete: _onDisasterDelete,
+      onSosInsert: _onSosInsert,
+      onSosUpdate: _onSosUpdate,
+      onSosDelete: _onSosDelete,
+    );
+    _realtimeManager.initSubscriptions();
   }
 
-  void _updateDisasterPointsDisplay() {
-    disasterPoints.value = _disasterPointsData
-        .where((disaster) => disaster.centerLat != null && disaster.centerLng != null)
-        .map((disaster) => LatLng(disaster.centerLat!, disaster.centerLng!))
-        .toList();
+  Future<void> _initializeData() async {
+    _loadDisasterPoints();
+    _loadEvacuationPoints();
+    await _loadSOSPoints();
   }
 
   Future<void> _loadDisasterPoints() async {
     try {
       final disasters = await SupabaseService.getAllDisasters();
-      
       _disasterPointsData.value = disasters;
       _updateDisasterPointsDisplay();
-    } catch (e) {
+    } catch (_) {
       _disasterPointsData.clear();
       _updateDisasterPointsDisplay();
     }
   }
 
-  void _updateEvacuationPointsDisplay() {
-    evacuationPoints.value = _evacuationPointsData
-        .where((point) => point.hasLocation())
-        .map((point) => LatLng(point.locationLat!, point.locationLng!))
-        .toList();
-  }
-
   Future<void> _loadEvacuationPoints() async {
     try {
       final points = await SupabaseService.getEvacuationPoints();
-      
       _evacuationPointsData.value = points;
       _updateEvacuationPointsDisplay();
-
-    } catch (e) {
+    } catch (_) {
       _evacuationPointsData.clear();
       _updateEvacuationPointsDisplay();
     }
-  }
-  
-  /// Subscribe to realtime changes on evacuation_points table
-  void _subscribeToEvacuationPoints() {
-    try {
-      final supabaseClient = Supabase.instance.client;
-      
-      _evacuationPointsSubscription = supabaseClient
-          .channel('evacuation_points_changes')
-          .onPostgresChanges(
-            event: PostgresChangeEvent.all,
-            schema: 'public',
-            table: 'evacuation_points',
-            callback: (payload) {
-              _handleEvacuationPointChange(payload);
-            },
-          )
-          .subscribe();
-    } catch (e) {
-      print('Error setting up realtime subscription: $e');
-    }
-  }
-
-  /// Subscribe to realtime changes on sos_events table
-  void _subscribeToSOSEvents() {
-    try {
-      final supabaseClient = Supabase.instance.client;
-      
-      _sosEventsSubscription = supabaseClient
-          .channel('sos_events_changes')
-          .onPostgresChanges(
-            event: PostgresChangeEvent.all,
-            schema: 'public',
-            table: 'sos_events',
-            callback: (payload) {
-              _handleSOSEventChange(payload);
-            },
-          )
-          .subscribe();
-      
-    } catch (e) {
-      print('Error setting up SOS realtime subscription: $e');
-    }
-  }
-
-  void _handleSOSEventChange(PostgresChangePayload payload) {
-    try {
-      switch (payload.eventType) {
-        case PostgresChangeEvent.insert:
-          _handleSOSEventInsert(payload.newRecord);
-          break;
-        case PostgresChangeEvent.update:
-          _handleSOSEventUpdate(payload.oldRecord, payload.newRecord);
-          break;
-        case PostgresChangeEvent.delete:
-          _handleSOSEventDelete(payload.oldRecord);
-          break;
-        default:
-      }
-    } catch (e) {
-      print('Error handling SOS event change: $e');
-    }
-  }
-
-  void _handleSOSEventInsert(Map<String, dynamic> record) {
-    try {
-      final sosEvent = SosEvent.fromJson(record);
-      
-      if (sosEvent.sosId.isNotEmpty && sosEvent.isActive) {
-        final exists = _sosEventsData.any(
-          (s) => s.sosId == sosEvent.sosId,
-        );
-        
-        if (!exists) {
-          _sosEventsData.add(sosEvent);
-          _updateSOSPointsDisplay();
-        }
-      }
-    } catch (e) {
-      print('Error handling SOS INSERT: $e');
-    }
-  }
-
-  void _handleSOSEventUpdate(
-    Map<String, dynamic> oldRecord,
-    Map<String, dynamic> newRecord,
-  ) {
-    try {
-      final newSosEvent = SosEvent.fromJson(newRecord);
-      
-      if (newSosEvent.sosId.isNotEmpty) {
-        // Find and replace the existing SOS event by ID
-        final index = _sosEventsData.indexWhere(
-          (s) => s.sosId == newSosEvent.sosId,
-        );
-        
-        if (index != -1) {
-          _sosEventsData[index] = newSosEvent;
-          _updateSOSPointsDisplay();
-        } else if (newSosEvent.isActive) {
-          _sosEventsData.add(newSosEvent);
-          _updateSOSPointsDisplay();
-        }
-      }
-    } catch (e) {
-      print('Error handling SOS UPDATE: $e');
-    }
-  }
-
-  /// Handle DELETE event - remove SOS event from map
-  void _handleSOSEventDelete(Map<String, dynamic> record) {
-    try {
-      final sosEvent = SosEvent.fromJson(record);
-      
-      if (sosEvent.sosId.isNotEmpty) {
-        _sosEventsData.removeWhere(
-          (s) => s.sosId == sosEvent.sosId,
-        );
-        _updateSOSPointsDisplay();
-      }
-    } catch (e) {
-      print('Error handling SOS DELETE: $e');
-    }
-  }
-
-  /// Subscribe to realtime changes on disasters table
-  void _subscribeToDisasters() {
-    try {
-      final supabaseClient = Supabase.instance.client;
-      
-      _disastersSubscription = supabaseClient
-          .channel('disasters_changes')
-          .onPostgresChanges(
-            event: PostgresChangeEvent.all,
-            schema: 'public',
-            table: 'disasters',
-            callback: (payload) {
-              print('🔔 Disaster realtime event received: ${payload.eventType}');
-              _handleDisasterChange(payload);
-            },
-          )
-          .subscribe();
-    } catch (e) {
-      print('Error setting up disaster realtime subscription: $e');
-    }
-  }
-
-  /// Handle realtime changes to evacuation points
-  void _handleEvacuationPointChange(PostgresChangePayload payload) {
-    try {
-      switch (payload.eventType) {
-        case PostgresChangeEvent.insert:
-          _handleEvacuationPointInsert(payload.newRecord);
-          break;
-        case PostgresChangeEvent.update:
-          _handleEvacuationPointUpdate(payload.oldRecord, payload.newRecord);
-          break;
-        case PostgresChangeEvent.delete:
-          _handleEvacuationPointDelete(payload.oldRecord);
-          break;
-        default:
-          print('⚠️ Unknown event type: ${payload.eventType}');
-      }
-    } catch (e) {
-      print('❌ Error handling evacuation point change: $e');
-    }
-  }
-
-  /// Handle INSERT event - add new evacuation point to map
-  void _handleEvacuationPointInsert(Map<String, dynamic> record) {
-    try {
-      final point = EvacuationPoint.fromJson(record);
-      
-      if (point.evacuationId != null) {
-        // Avoid duplicates by checking ID
-        final exists = _evacuationPointsData.any(
-          (p) => p.evacuationId == point.evacuationId,
-        );
-        
-        if (!exists) {
-          _evacuationPointsData.add(point);
-          _updateEvacuationPointsDisplay();
-        }
-      }
-    } catch (e) {
-      print('Error handling INSERT: $e');
-    }
-  }
-
-  void _handleEvacuationPointUpdate(
-    Map<String, dynamic> oldRecord,
-    Map<String, dynamic> newRecord,
-  ) {
-    try {
-      final newPoint = EvacuationPoint.fromJson(newRecord);
-      
-      if (newPoint.evacuationId != null) {
-        final index = _evacuationPointsData.indexWhere(
-          (p) => p.evacuationId == newPoint.evacuationId,
-        );
-        
-        if (index != -1) {
-          _evacuationPointsData[index] = newPoint;
-          _updateEvacuationPointsDisplay();
-          print('Updated evacuation point: ${newPoint.evacuationId}');
-        } else {
-          _evacuationPointsData.add(newPoint);
-          _updateEvacuationPointsDisplay();
-        }
-      }
-    } catch (e) {
-      print('Error handling UPDATE: $e');
-    }
-  }
-
-  /// Handle DELETE event - remove evacuation point from map
-  void _handleEvacuationPointDelete(Map<String, dynamic> record) {
-    try {
-      final point = EvacuationPoint.fromJson(record);
-      
-      if (point.evacuationId != null) {
-        _evacuationPointsData.removeWhere(
-          (p) => p.evacuationId == point.evacuationId,
-        );
-        _updateEvacuationPointsDisplay();
-        print('Removed evacuation point: ${point.evacuationId}');
-      }
-    } catch (e) {
-      print('Error handling DELETE: $e');
-    }
-  }
-
-  void _handleDisasterChange(PostgresChangePayload payload) {
-    try {
-      switch (payload.eventType) {
-        case PostgresChangeEvent.insert:
-          _handleDisasterInsert(payload.newRecord);
-          break;
-        case PostgresChangeEvent.update:
-          _handleDisasterUpdate(payload.oldRecord, payload.newRecord);
-          break;
-        case PostgresChangeEvent.delete:
-          _handleDisasterDelete(payload.oldRecord);
-          break;
-        default:
-          print('⚠️ Unknown disaster event type: ${payload.eventType}');
-      }
-    } catch (e) {
-      print('❌ Error handling disaster change: $e');
-    }
-  }
-
-  /// Handle INSERT event - add new disaster to map (only if from today)
-  void _handleDisasterInsert(Map<String, dynamic> record) {
-    try {
-      final disaster = Disaster.fromJson(record);
-      
-      if (disaster.disasterId != null) {
-        
-        // Avoid duplicates by checking ID
-        final exists = _disasterPointsData.any(
-          (d) => d.disasterId == disaster.disasterId,
-        );
-        
-        if (!exists) {
-          _disasterPointsData.add(disaster);
-          _updateDisasterPointsDisplay();
-          print('✅ Added new disaster: ${disaster.disasterId}');
-        }
-      }
-    } catch (e) {
-      print('❌ Error handling disaster INSERT: $e');
-    }
-  }
-
-  /// Handle UPDATE event - update existing disaster (only if from today)
-  void _handleDisasterUpdate(
-    Map<String, dynamic> oldRecord,
-    Map<String, dynamic> newRecord,
-  ) {
-    try {
-      final newDisaster = Disaster.fromJson(newRecord);
-      
-      final index = _disasterPointsData.indexWhere(
-          (d) => d.disasterId == newDisaster.disasterId,
-        );
-        
-        if (index != -1) {
-          _disasterPointsData[index] = newDisaster;
-          _updateDisasterPointsDisplay();
-          print('Updated disaster: ${newDisaster.disasterId}');
-        } else {
-          _disasterPointsData.add(newDisaster);
-          _updateDisasterPointsDisplay();
-          print('Added disaster ${newDisaster.disasterId} - date updated to today');
-        }
-    } catch (e) {
-      print('Error handling disaster UPDATE: $e');
-    }
-  }
-
-  /// Handle DELETE event - remove disaster from map
-  void _handleDisasterDelete(Map<String, dynamic> record) {
-    try {
-      final disaster = Disaster.fromJson(record);
-      
-      if (disaster.disasterId != null) {
-        _disasterPointsData.removeWhere(
-          (d) => d.disasterId == disaster.disasterId,
-        );
-        _updateDisasterPointsDisplay();
-      }
-    } catch (e) {
-      print('Error handling disaster DELETE: $e');
-    }
-  }
-
-  /// Update the display list from the SOS events data list
-  void _updateSOSPointsDisplay() {
-    sosPoints.value = _sosEventsData
-        .where((sos) => sos.hasLocation() && sos.isActive)
-        .map((sos) => LatLng(sos.locationLat!, sos.locationLng!))
-        .toList();
   }
 
   Future<void> _loadSOSPoints() async {
     try {
       final sosEvents = await SupabaseService.getSoSEvents();
-      
-      final activeSOSEvents = sosEvents
-          .where((sos) => sos.isActive)
-          .toList();
-      
+      final activeSOSEvents = sosEvents.where((sos) => sos.isActive).toList();
       _sosEventsData.value = activeSOSEvents;
       _updateSOSPointsDisplay();
-    } catch (e) {
-      print('Error loading SOS events: $e');
+    } catch (_) {
       _sosEventsData.clear();
       _updateSOSPointsDisplay();
     }
   }
 
+
+  Future<void> _restoreRoute(SosEvent sosEvent) async {
+    if (sosEvent.locationLat == null || sosEvent.locationLng == null) {
+      return;
+    }
+
+    _currentNavigatingSos.value = sosEvent;
+
+    isRouteLoading.value = true;
+
+    final start = currentLocation.value;
+    final end = LatLng(sosEvent.locationLat!, sosEvent.locationLng!);
+
+    final points = await ResponseTeamMapHelper.getRoutePolyline(start, end);
+
+    if (points.isNotEmpty) {
+      routePoints.value = points;
+    }
+
+    isRouteLoading.value = false;
+  }
+
   Future<void> _initializeLocation() async {
     try {
       isLoading.value = true;
-      
       LocationResult result = await LocationHelper.initializeLocation();
-      
       currentLocation.value = result.location;
       hasLocationPermission.value = result.hasPermission;
-      
       mapController.move(currentLocation.value, 15.0);
-      
-    } catch (e) {
+    } catch (_) {
       hasLocationPermission.value = false;
     } finally {
       isLoading.value = false;
     }
   }
-  
-  Future<void> _getCurrentLocation() async {
-    if (!hasLocationPermission.value) return;
-    
-    try {
-      isLoading.value = true;
-      LocationResult result = await LocationHelper.getCurrentLocationSilent();
-      
-      if (result.hasPermission) {
-        currentLocation.value = result.location;
-        mapController.move(currentLocation.value, 15.0);
-      }
-    } catch (e) {
-    } finally {
-      isLoading.value = false;
+
+  void _updateDisasterPointsDisplay() {
+    disasterPoints.value = _disasterPointsData
+        .where((d) => d.centerLat != null && d.centerLng != null)
+        .map((d) => LatLng(d.centerLat!, d.centerLng!))
+        .toList();
+  }
+
+  void _updateEvacuationPointsDisplay() {
+    evacuationPoints.value = _evacuationPointsData
+        .where((p) => p.hasLocation())
+        .map((p) => LatLng(p.locationLat!, p.locationLng!))
+        .toList();
+  }
+
+  void _updateSOSPointsDisplay() {
+    sosPoints.value = _sosEventsData
+        .where((s) => s.hasLocation() && s.isActive)
+        .map((s) => LatLng(s.locationLat!, s.locationLng!))
+        .toList();
+  }
+
+  void _onEvacuationInsert(EvacuationPoint point) {
+    if (point.evacuationId == null) return;
+    final exists = _evacuationPointsData.any((p) => p.evacuationId == point.evacuationId);
+    if (!exists) {
+      _evacuationPointsData.add(point);
+      _updateEvacuationPointsDisplay();
     }
+  }
+
+  void _onEvacuationUpdate(EvacuationPoint point) {
+    if (point.evacuationId == null) return;
+    final index = _evacuationPointsData.indexWhere((p) => p.evacuationId == point.evacuationId);
+    if (index != -1) {
+      _evacuationPointsData[index] = point;
+      _updateEvacuationPointsDisplay();
+    } else {
+      _evacuationPointsData.add(point);
+      _updateEvacuationPointsDisplay();
+    }
+  }
+
+  void _onEvacuationDelete(EvacuationPoint point) {
+    if (point.evacuationId == null) return;
+    _evacuationPointsData.removeWhere((p) => p.evacuationId == point.evacuationId);
+    _updateEvacuationPointsDisplay();
+  }
+
+  void _onDisasterInsert(Disaster disaster) {
+    if (disaster.disasterId == null) return;
+    final exists = _disasterPointsData.any((d) => d.disasterId == disaster.disasterId);
+    if (!exists) {
+      _disasterPointsData.add(disaster);
+      _updateDisasterPointsDisplay();
+    }
+  }
+
+  void _onDisasterUpdate(Disaster disaster) {
+    if (disaster.disasterId == null) return;
+    final index = _disasterPointsData.indexWhere((d) => d.disasterId == disaster.disasterId);
+    if (index != -1) {
+      _disasterPointsData[index] = disaster;
+      _updateDisasterPointsDisplay();
+    } else {
+      _disasterPointsData.add(disaster);
+      _updateDisasterPointsDisplay();
+    }
+  }
+
+  void _onDisasterDelete(Disaster disaster) {
+    if (disaster.disasterId == null) return;
+    _disasterPointsData.removeWhere((d) => d.disasterId == disaster.disasterId);
+    _updateDisasterPointsDisplay();
+  }
+
+  void _onSosInsert(SosEvent sos) {
+    if (sos.sosId.isNotEmpty && sos.isActive) {
+      final exists = _sosEventsData.any((s) => s.sosId == sos.sosId);
+      if (!exists) {
+        _sosEventsData.add(sos);
+        _updateSOSPointsDisplay();
+        HapticFeedback.heavyImpact();
+      }
+    }
+  }
+
+  void _onSosUpdate(SosEvent sos) {
+    if (sos.sosId.isEmpty) return;
+    final index = _sosEventsData.indexWhere((s) => s.sosId == sos.sosId);
+    if (index != -1) {
+      _sosEventsData[index] = sos;
+      _updateSOSPointsDisplay();
+    } else if (sos.isActive) {
+      _sosEventsData.add(sos);
+      _updateSOSPointsDisplay();
+      HapticFeedback.heavyImpact();
+    }
+  }
+
+  void _onSosDelete(SosEvent sos) {
+    if (sos.sosId.isEmpty) return;
+    _sosEventsData.removeWhere((s) => s.sosId == sos.sosId);
+    _updateSOSPointsDisplay();
   }
 
   void moveToLocation(LatLng location) {
     mapController.move(location, 16.0);
   }
 
-  void refreshData() {
-    _getCurrentLocation();
-  }
-
-  Future<void> retryLocationRequest() async {
-    await _initializeLocation();
-  }
-
-  Future<void> getQuickLocation() async {
-    await _initializeLocation();
+  Future<void> refreshData() async {
+    if (!hasLocationPermission.value) return;
+    try {
+      isLoading.value = true;
+      LocationResult result = await LocationHelper.getCurrentLocationSilent();
+      if (result.hasPermission) {
+        currentLocation.value = result.location;
+        mapController.move(currentLocation.value, 15.0);
+      }
+    } catch (_) {
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   Disaster? findDisasterByLocation(LatLng location) {
-    const tolerance = 0.0001; // Small tolerance for floating point comparison
-    
-    try {
-      return _disasterPointsData.firstWhere(
-        (disaster) =>
-            disaster.centerLat != null &&
-            disaster.centerLng != null &&
-            (disaster.centerLat! - location.latitude).abs() < tolerance &&
-            (disaster.centerLng! - location.longitude).abs() < tolerance,
-        orElse: () => throw StateError('No disaster found at this location'),
-      );
-    } catch (e) {
-      print('No disaster found at location: ${location.latitude}, ${location.longitude}');
-      return null;
-    }
+    return ResponseTeamMapHelper.findDisasterByLocation(_disasterPointsData, location);
   }
 
   EvacuationPoint? findEvacuationPointByLocation(LatLng location) {
-    const tolerance = 0.0001; // Small tolerance for floating point comparison
-    
+    return ResponseTeamMapHelper.findEvacuationPointByLocation(_evacuationPointsData, location);
+  }
+
+  SosEvent? findSOSByLocation(LatLng location) {
+    return ResponseTeamMapHelper.findSOSByLocation(_sosEventsData, location);
+  }
+
+  SosEvent? findSOSById(String sosId) {
     try {
-      return _evacuationPointsData.firstWhere(
-        (point) =>
-            point.locationLat != null &&
-            point.locationLng != null &&
-            (point.locationLat! - location.latitude).abs() < tolerance &&
-            (point.locationLng! - location.longitude).abs() < tolerance,
-        orElse: () => throw StateError('No evacuation point found at this location'),
-      );
-    } catch (e) {
-      print('⚠️ No evacuation point found at location: ${location.latitude}, ${location.longitude}');
+      final list = _sosEventsData;
+      return list.firstWhere((s) => s.sosId == sosId);
+    } catch (_) {
       return null;
     }
   }
 
-  SosEvent? findSOSByLocation(LatLng location) {
-    const tolerance = 0.0001; // Small tolerance for floating point comparison
-    
-    try {
-      return _sosEventsData.firstWhere(
-        (sos) =>
-            sos.locationLat != null &&
-            sos.locationLng != null &&
-            (sos.locationLat! - location.latitude).abs() < tolerance &&
-            (sos.locationLng! - location.longitude).abs() < tolerance,
-        orElse: () => throw StateError('No SOS event found at this location'),
-      );
-    } catch (e) {
-      print('⚠️ No SOS event found at location: ${location.latitude}, ${location.longitude}');
-      return null;
-    }
-  }
+  int get sosEventsCount => _sosEventsData.length;
 
   Future<ResqUser?> fetchUserById(String userId) async {
     try {
       return await SupabaseService.getUserById(userId);
-    } catch (e) {
-      print('❌ Error fetching user: $e');
+    } catch (_) {
       return null;
     }
   }
 
-  Future<String> fetchSOSAddress(SosEvent sosEvent) async {
-    if (sosEvent.locationLat == null || sosEvent.locationLng == null) {
-      return 'Lokasi tidak tersedia';
-    }
+  Future<String> fetchSOSAddress(SosEvent sosEvent) {
+    return ResponseTeamMapHelper.getAddressFromLocation(
+      sosEvent.locationLat,
+      sosEvent.locationLng,
+      _addressCache,
+      sosEvent.sosId,
+    );
+  }
 
-    try {
-      final location = LatLng(sosEvent.locationLat!, sosEvent.locationLng!);
-      final result = await LocationHelper.getLocationDetails(location);
-      return result.locationDetail;
-    } catch (_) {
-      return 'Lokasi tidak tersedia';
-    }
+  Future<String> fetchDisasterAddress(Disaster disaster) {
+    return ResponseTeamMapHelper.getAddressFromLocation(
+      disaster.centerLat,
+      disaster.centerLng,
+      _addressCache,
+      disaster.disasterId,
+    );
   }
 
   String formatSOSReportTime(double? timestamp) {
-  if (timestamp == null || timestamp == 0) return '-';
-
-  final dateTime = DateTime.fromMillisecondsSinceEpoch(timestamp.toInt());
-
-  final time =
-      "${dateTime.hour.toString().padLeft(2, '0')}:"
-      "${dateTime.minute.toString().padLeft(2, '0')}:"
-      "${dateTime.second.toString().padLeft(2, '0')}";
-
-  const months = [
-    "Januari",
-    "Februari",
-    "Maret",
-    "April",
-    "Mei",
-    "Juni",
-    "Juli",
-    "Agustus",
-    "September",
-    "Oktober",
-    "November",
-    "Desember"
-  ];
-
-  final date =
-      "${dateTime.day} ${months[dateTime.month - 1]} ${dateTime.year}";
-
-  return "$time, $date";
-}
-
-  Future<String> fetchDisasterAddress(Disaster disaster) async {
-    final cacheKey = disaster.disasterId;
-
-    final cachedAddress = _disasterAddressCache[cacheKey];
-    if (cachedAddress != null) {
-      return cachedAddress;
-    }
-
-    if (disaster.centerLat == null || disaster.centerLng == null) {
-      const fallback = 'Lokasi tidak tersedia';
-      _disasterAddressCache[cacheKey] = fallback;
-      return fallback;
-    }
-
-    try {
-      final location = LatLng(disaster.centerLat!, disaster.centerLng!);
-      final result = await LocationHelper.getLocationDetails(location);
-      final address = result.locationDetail;
-      _disasterAddressCache[cacheKey] = address;
-      return address;
-    } catch (_) {
-      const fallback = 'Lokasi tidak tersedia';
-      _disasterAddressCache[cacheKey] = fallback;
-      return fallback;
-    }
+    return ResponseTeamMapHelper.formatSOSReportTime(timestamp);
   }
 
   String formatDisasterDate(double? timestamp) {
-    if (timestamp == null) return 'Tidak tersedia';
-    try {
-      final dateTime =
-          DateTime.fromMillisecondsSinceEpoch(timestamp.toInt()*1000);
-      return '${_disasterDateFormatter.format(dateTime)} WIB';
-    } catch (_) {
-      return 'Tidak tersedia';
-    }
+    return ResponseTeamMapHelper.formatDisasterDate(timestamp);
   }
 
   String formatDisasterMagnitude(double? magnitude) {
-    return magnitude != null
-        ? '${magnitude.toStringAsFixed(2)} SR'
-        : 'Tidak tersedia';
+    return ResponseTeamMapHelper.formatMagnitude(magnitude);
   }
 
   String getTsunamiPotential(double? magnitude) {
-    if (magnitude == null) return 'Tidak Berpotensi';
-    return magnitude >= 7.0 ? 'Berpotensi' : 'Tidak Berpotensi';
+    return ResponseTeamMapHelper.getTsunamiPotential(magnitude);
   }
 
   String formatDisasterDepth(String? depth) {
-    return (depth == null || depth.isEmpty) ? 'Tidak tersedia' : depth;
+    return ResponseTeamMapHelper.formatDepth(depth);
   }
 
-  Future<void> openDisasterShakeMap(Disaster disaster) async {
-    final url = disaster.shakemap;
-    if (url == null || url.isEmpty) {
-      throw const DisasterActionException('Peta guncangan tidak tersedia');
+  Future<void> openDisasterShakeMap(Disaster disaster) {
+    return ResponseTeamMapHelper.launchShakeMap(disaster.shakemap);
+  }
+
+  Future<void> showRouteToSos(SosEvent sosEvent) async {
+    if (sosEvent.locationLat == null || sosEvent.locationLng == null) {
+      Get.snackbar("Error", "Lokasi SOS tidak valid");
+      return;
+    }
+
+    if (_currentResponseTeamId == null) {
+      await _loadCurrentResponseTeamId();
+    }
+
+    if (_currentResponseTeamId == null) {
+      Get.snackbar("Error", "Response team ID tidak ditemukan");
+      return;
+    }
+
+    final success = await SupabaseService.assignSosToTeam(
+      sosId: sosEvent.sosId,
+      responseTeamId: _currentResponseTeamId!,
+    );
+
+    if (!success) {
+      Get.snackbar("Error", "Gagal mengassign SOS");
+      return;
+    }
+
+    _currentNavigatingSos.value = sosEvent;
+    
+    Get.back();
+
+    isRouteLoading.value = true;
+    
+    final start = currentLocation.value;
+    final end = LatLng(sosEvent.locationLat!, sosEvent.locationLng!);
+
+    final points = await ResponseTeamMapHelper.getRoutePolyline(start, end);
+    
+    if (points.isNotEmpty) {
+      routePoints.value = points;
+    } else {
+      Get.snackbar("Info", "Rute tidak ditemukan");
+    }
+    
+    isRouteLoading.value = false;
+  }
+
+  void _startLocationStream() {
+    const LocationSettings locationSettings = LocationSettings(
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 10,
+    );
+
+    _positionStreamSubscription = Geolocator.getPositionStream(locationSettings: locationSettings)
+        .listen((Position position) {
+      
+      final newLocation = LatLng(position.latitude, position.longitude);
+      currentLocation.value = newLocation;
+
+      _checkAndReroute(newLocation);
+    });
+  }
+
+  void _checkAndReroute(LatLng userLocation) {
+    if (_currentNavigatingSos.value == null || routePoints.isEmpty || isRouteLoading.value) {
+      return;
+    }
+    bool isOffRoute = ResponseTeamMapHelper.isUserOffRoute(
+      userLocation, 
+      routePoints, 
+      thresholdMeters: 50
+    );
+
+    if (isOffRoute) {
+      _silentReroute(userLocation, _currentNavigatingSos.value!);
+    }
+  }
+
+  Future<void> _silentReroute(LatLng start, SosEvent destination) async {
+    final end = LatLng(destination.locationLat!, destination.locationLng!);
+    final points = await ResponseTeamMapHelper.getRoutePolyline(start, end);
+
+    if (points.isNotEmpty) {
+      routePoints.value = points;
+    }
+  }
+  
+  void clearRoute() {
+    routePoints.clear();
+    _currentNavigatingSos.value = null;
+  }
+
+  Future<void> cancelRoute(SosEvent sosEvent) async {
+    final success = await SupabaseService.unassignSosFromTeam(sosEvent.sosId);
+    
+    if (success) {
+      clearRoute();
+      Get.back();
+    } else {
+      Get.snackbar("Error", "Gagal membatalkan rute");
+    }
+  }
+
+  bool isCurrentlyNavigatingTo(SosEvent sosEvent) {
+    return _currentNavigatingSos.value?.sosId == sosEvent.sosId;
+  }
+
+  String? getCurrentResponseTeamId() => _currentResponseTeamId;
+
+  double calculateDistanceToSos(SosEvent sosEvent) {
+    if (sosEvent.locationLat == null || sosEvent.locationLng == null) {
+      return 0.0;
+    }
+    return distance_calc.GeoDistanceCalculator.calculateDistance(
+      currentLocation.value,
+      LatLng(sosEvent.locationLat!, sosEvent.locationLng!),
+    );
+  }
+
+  Future<void> _restoreNavigationIfNeeded() async {
+    if (_currentResponseTeamId == null) return;
+    
+    await Future.delayed(const Duration(milliseconds: 500));
+    
+    if (currentLocation.value == LatLng(-6.2088, 106.8456)) {
+      await Future.delayed(const Duration(seconds: 1));
     }
 
     try {
-      final uri = Uri.parse(url);
-      final canOpen = await canLaunchUrl(uri);
-      if (!canOpen) {
-        throw const DisasterActionException(
-            'Tidak dapat membuka peta guncangan');
-      }
-
-      final opened = await launchUrl(
-        uri,
-        mode: LaunchMode.externalApplication,
+      final assignedSos = _sosEventsData.firstWhere(
+        (sos) => sos.responseTeamId == _currentResponseTeamId && 
+                 sos.isActive &&
+                 sos.hasLocation(),
+        orElse: () => SosEvent(sosId: ''),
       );
 
-      if (!opened) {
-        throw const DisasterActionException(
-            'Tidak dapat membuka peta guncangan');
+      if (assignedSos.sosId.isNotEmpty) {
+        await _restoreRoute(assignedSos);
       }
-    } catch (e) {
-      if (e is DisasterActionException) rethrow;
-      throw DisasterActionException('Error: ${e.toString()}');
-    }
+    } catch (_) {}
   }
 }
-

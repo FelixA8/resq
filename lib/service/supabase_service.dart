@@ -313,6 +313,25 @@ class SupabaseService {
     }
   }
 
+  /// Unassign SOS event from response team
+  static Future<bool> unassignSosFromTeam(String sosId) async {
+    try {
+      await _client
+          .from('sos_events')
+          .update({
+            'response_team_id': null,
+            'assigned_at': 0.0,
+          })
+          .eq('sos_id', sosId);
+
+      developer.log('SOS event $sosId unassigned');
+      return true;
+    } catch (e) {
+      developer.log('Error unassigning SOS: $e');
+      return false;
+    }
+  }
+
   /// Resolve SOS event
   static Future<bool> resolveSosEvent(String sosId) async {
     try {

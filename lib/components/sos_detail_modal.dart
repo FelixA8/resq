@@ -9,6 +9,11 @@ class SOSDetailModal extends StatefulWidget {
   final Future<String> Function(SosEvent) onFetchAddress;
   final String Function(double?) formatReportTime;
   final VoidCallback onShowRoute;
+  final bool isNavigating;
+  final double distanceKm;
+  final VoidCallback? onCancelRoute;
+  final String? currentResponseTeamId;
+  final bool isRouteButtonEnabled;
 
   const SOSDetailModal({
     Key? key,
@@ -17,6 +22,11 @@ class SOSDetailModal extends StatefulWidget {
     required this.onFetchAddress,
     required this.formatReportTime,
     required this.onShowRoute,
+    this.isNavigating = false,
+    this.distanceKm = 0.0,
+    this.onCancelRoute,
+    this.currentResponseTeamId,
+    this.isRouteButtonEnabled = true,
   }) : super(key: key);
 
   @override
@@ -37,7 +47,6 @@ class _SOSDetailModalState extends State<SOSDetailModal> {
   }
 
   Future<void> _loadData() async {
-    // Load user info
     if (widget.sosEvent.userId != null) {
       setState(() => _isLoadingUser = true);
       try {
@@ -191,8 +200,49 @@ class _SOSDetailModalState extends State<SOSDetailModal> {
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: ConfirmationButton(
           onPressed: widget.onShowRoute,
-          isEnabled: true,
+          isEnabled: widget.isRouteButtonEnabled,
           text: 'Tunjukkan Rute',
+        ),
+      );
+
+  Widget _buildNavigatingUI() => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '${widget.distanceKm.toStringAsFixed(2)} Km',
+              style: TextStyle(
+                fontFamily: 'SF Pro',
+                fontWeight: FontWeight.w600,
+                fontSize: 24,
+                color: theme.colors.primary,
+              ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: 65,
+              child: ElevatedButton(
+                onPressed: widget.onCancelRoute,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  'Batal',
+                  style: TextStyle(
+                    fontFamily: 'SF Pro',
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       );
 
@@ -235,8 +285,10 @@ class _SOSDetailModalState extends State<SOSDetailModal> {
                       value: _user?.phoneNumber ?? 'Tidak tersedia',
                     ),
                     const SizedBox(height: 30),
-                    // Show Route Button
-                    _buildShowRouteButton(),
+                    if (widget.isNavigating)
+                      _buildNavigatingUI()
+                    else
+                      _buildShowRouteButton(),
                   ],
                 ),
               ),
