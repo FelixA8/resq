@@ -18,7 +18,6 @@ class SOSDetailModal extends StatelessWidget {
     
     return Obx(() {
       final _ = viewModel.sosEventsCount;
-      final currentLocation = viewModel.currentLocation.value;
       final updatedSosEvent = viewModel.findSOSById(sosEvent.sosId) ?? sosEvent;
       
       final isNavigating = viewModel.isCurrentlyNavigatingTo(updatedSosEvent);
