@@ -13,7 +13,7 @@ class SettingsView extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = ResQTheme();
     return ChangeNotifierProvider(
-      create: (_) => SettingsViewModel(),
+      create: (_) => SettingsViewModel()..loadData(),
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(

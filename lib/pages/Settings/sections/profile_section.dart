@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:resqapp/theme/theme_app.dart';
+import '../SettingsViewModel.dart';
 
 class ProfileSection extends StatefulWidget {
   const ProfileSection({Key? key}) : super(key: key);
@@ -11,17 +13,8 @@ class ProfileSection extends StatefulWidget {
 class _ProfileSectionState extends State<ProfileSection> {
   final theme = ResQTheme();
   bool isEditing = false;
-  String username = 'Budiman Setianto';
-  String previousUsername = 'Budiman Setianto';
-  final phone = '+62 81338327789';
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
-
-  @override
-  void initState() {
-    super.initState();
-    _controller.text = username;
-  }
 
   @override
   void dispose() {
@@ -30,7 +23,7 @@ class _ProfileSectionState extends State<ProfileSection> {
     super.dispose();
   }
 
-  void _showSaveConfirmation() async {
+  void _showSaveConfirmation(SettingsViewModel viewModel) async {
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -53,13 +46,13 @@ class _ProfileSectionState extends State<ProfileSection> {
       ),
     );
     if (result == true) {
+      await viewModel.updateUsername(_controller.text);
       setState(() {
-        username = _controller.text;
         isEditing = false;
       });
     } else {
       setState(() {
-        _controller.text = previousUsername;
+        _controller.text = viewModel.user?.username ?? '';
         isEditing = false;
       });
     }
@@ -67,6 +60,15 @@ class _ProfileSectionState extends State<ProfileSection> {
 
   @override
   Widget build(BuildContext context) {
+    final viewModel = Provider.of<SettingsViewModel>(context);
+    final username = viewModel.user?.username ?? 'Loading...';
+    final phone = viewModel.user?.phoneNumber ?? 'Loading...';
+
+    // Initialize controller text if not editing
+    if (!isEditing && _controller.text != username) {
+      _controller.text = username;
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -139,7 +141,7 @@ class _ProfileSectionState extends State<ProfileSection> {
                     minimumSize: Size(0, 35),
                   ),
                   onPressed: () {
-                    _showSaveConfirmation();
+                    _showSaveConfirmation(viewModel);
                   },
                   child: Text(
                     'Save',
@@ -164,7 +166,6 @@ class _ProfileSectionState extends State<ProfileSection> {
                   onPressed: () {
                     setState(() {
                       isEditing = true;
-                      previousUsername = username;
                       _controller.text = username;
                     });
                     Future.delayed(Duration(milliseconds: 100), () {
