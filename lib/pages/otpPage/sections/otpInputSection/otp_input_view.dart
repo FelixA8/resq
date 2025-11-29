@@ -43,6 +43,7 @@ class OTPInputView extends StatelessWidget {
                     autoFocus: index == 0,
                     onChanged:
                         (value) => viewModel.onDigitChanged(index, value),
+                    onBackspace: () => viewModel.onBackspacePrevious(index),
                   ),
                 ),
               ),

@@ -22,6 +22,14 @@ class OTPInputViewModel extends ChangeNotifier {
     }
   }
 
+  void onBackspacePrevious(int index) {
+    if (index > 0) {
+      controllers[index - 1].clear();
+      focusNodes[index - 1].requestFocus();
+    }
+  }
+
+
   void clearInput() {
     for (var controller in controllers) {
       controller.clear();

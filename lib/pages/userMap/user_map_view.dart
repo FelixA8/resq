@@ -203,11 +203,12 @@ class UserMapView extends GetView<UserMapViewModel> {
                               !controller.isLoading.value)
                             Marker(
                               point: controller.currentLocation.value,
-                              width: controller.isNavigating.value ? 70 : 42,
-                              height: controller.isNavigating.value ? 70 : 42,
+                              width: 42,
+                              height: 42,
                               child: controller.isNavigating.value
                                   ? NavigationArrowMarker(
                                       heading: controller.currentHeading.value,
+                                      size: 42,
                                     )
                                   : Container(
                                       decoration: BoxDecoration(

@@ -5,6 +5,7 @@ class OTPInputBox extends StatelessWidget {
   final TextEditingController controller;
   final bool autoFocus;
   final Function(String) onChanged;
+  final VoidCallback? onBackspace;
   final FocusNode focusNode;
 
   const OTPInputBox({
@@ -13,6 +14,7 @@ class OTPInputBox extends StatelessWidget {
     required this.autoFocus,
     required this.onChanged,
     required this.focusNode,
+    this.onBackspace,
   });
 
   @override
@@ -24,24 +26,35 @@ class OTPInputBox extends StatelessWidget {
         border: Border.all(color: Colors.grey),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: TextField(
-        controller: controller,
-        focusNode: focusNode,
-        autofocus: autoFocus,
-        textAlign: TextAlign.center,
-        keyboardType: TextInputType.number,
-        maxLength: 1,
-        style: const TextStyle(fontSize: 24),
-        decoration: const InputDecoration(
-          counterText: '',
-          border: InputBorder.none,
-        ),
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        onChanged: (value) {
-          if (value.length == 1) {
-            onChanged(value);
+      child: KeyboardListener(
+        focusNode: FocusNode(),
+        onKeyEvent: (event) {
+          if (event is KeyDownEvent &&
+              event.logicalKey == LogicalKeyboardKey.backspace &&
+              controller.text.isEmpty &&
+              onBackspace != null) {
+            onBackspace!();
           }
         },
+        child: TextField(
+          controller: controller,
+          focusNode: focusNode,
+          autofocus: autoFocus,
+          textAlign: TextAlign.center,
+          keyboardType: TextInputType.number,
+          maxLength: 1,
+          style: const TextStyle(fontSize: 24),
+          decoration: const InputDecoration(
+            counterText: '',
+            border: InputBorder.none,
+          ),
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          onChanged: (value) {
+            if (value.length == 1) {
+              onChanged(value);
+            }
+          },
+        ),
       ),
     );
   }
