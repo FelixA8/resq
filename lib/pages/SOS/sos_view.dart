@@ -12,69 +12,90 @@ class SOSView extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
-    
+
     final spacing8 = screenHeight * 0.01;
     final spacing12 = screenHeight * 0.015;
     final spacing15 = screenHeight * 0.018;
     final spacing32 = screenHeight * 0.04;
-    
-    final handleBarWidth = (screenWidth * 0.11).clamp(35.0, 45.0);
-    
-    final sosViewModel = Get.put(SOSViewModel(), tag: 'sos_modal');
-    
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(height: spacing12),
-          Container(
-            width: handleBarWidth,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade300,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          SizedBox(height: spacing15),
-          SOSConfirmationSection(),
-          SizedBox(height: spacing8),
-          SOSButtonSection(
-            onPressed: () async {
-              final result = await sosViewModel.handleSOSButtonPress();
-              
-              if (result['success'] == true) {
-                Navigator.of(context).pop();
-                
-                sosViewModel.cleanup();
-                Get.delete<SOSViewModel>(tag: 'sos_modal');
 
-                final sosWaitingViewModel = result['sosWaitingViewModel'];
-                if (sosWaitingViewModel != null) {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => SOSWaitingView(
-                        viewModel: sosWaitingViewModel,
-                      ),
-                    ),
-                  );
-                }
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(result['error'] ?? 'An error occurred'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            },
+    final handleBarWidth = (screenWidth * 0.11).clamp(35.0, 45.0);
+
+    final sosViewModel = Get.put(SOSViewModel(), tag: 'sos_modal');
+
+    // Calculate initial child size based on screen height logic previously in UserMapView
+    // screenHeight < 700 ? 0.5 : 0.45
+    final initialChildSize = screenHeight < 700 ? 0.5 : 0.45;
+
+    return DraggableScrollableSheet(
+      initialChildSize: initialChildSize,
+      minChildSize: 0.3,
+      maxChildSize: initialChildSize,
+      builder: (context, scrollController) {
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
-          SizedBox(height: spacing32),
-        ],
-      ),
+          child: Column(
+            children: [
+              SizedBox(height: spacing12),
+              // Fixed Grabber
+              Container(
+                width: handleBarWidth,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              SizedBox(height: spacing15),
+              // Scrollable Content
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).viewInsets.bottom,
+                  ),
+                  child: Column(
+                    children: [
+                      const SOSConfirmationSection(),
+                      SizedBox(height: spacing8),
+                      SOSButtonSection(
+                        onPressed: () async {
+                          final result = await sosViewModel.handleSOSButtonPress();
+
+                          if (result['success'] == true) {
+                            Navigator.of(context).pop();
+                            sosViewModel.cleanup();
+                            Get.delete<SOSViewModel>(tag: 'sos_modal');
+
+                            final vm = result['sosWaitingViewModel'];
+                            if (vm != null) {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => SOSWaitingView(viewModel: vm),
+                                ),
+                              );
+                            }
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(result['error'] ?? 'An error occurred'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                      SizedBox(height: spacing32),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
