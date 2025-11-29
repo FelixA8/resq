@@ -30,7 +30,7 @@ class UserMapView extends GetView<UserMapViewModel> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'John Doe',
+              'John Doe', // Placeholder, ideally from user profile
               style: TextStyle(
                 fontFamily: 'SF Pro',
                 fontWeight: FontWeight.w500,
@@ -49,7 +49,7 @@ class UserMapView extends GetView<UserMapViewModel> {
                 ),
                 const SizedBox(width: 2),
                 Text(
-                  'Tangerang Selatan',
+                  'Tangerang Selatan', // Placeholder
                   style: TextStyle(
                     fontFamily: 'SF Pro',
                     fontWeight: FontWeight.w400,
@@ -92,7 +92,6 @@ class UserMapView extends GetView<UserMapViewModel> {
                   ),
                 ),
                 const SizedBox(width: 7),
-                // SOS pill (text only, same height as settings)
                 Obx(() {
                   final isSOSActive = controller.isSOSActive;
                   return SizedBox(
@@ -172,10 +171,22 @@ class UserMapView extends GetView<UserMapViewModel> {
                         userAgentPackageName: 'com.example.disaster_map',
                         maxZoom: 19,
                       ),
+                      // Route Layer
+                      PolylineLayer(
+                        polylines: [
+                          if (controller.routePoints.isNotEmpty)
+                            Polyline(
+                              points: controller.routePoints.toList(),
+                              color: Colors.blue,
+                              strokeWidth: 5.0,
+                              borderColor: Colors.blue.withOpacity(0.3),
+                              borderStrokeWidth: 2.0,
+                            ),
+                        ],
+                      ),
                       // User marker layer
                       MarkerLayer(
                         markers: [
-                          // User location marker
                           if (controller.hasLocationPermission.value &&
                               !controller.isLoading.value)
                             Marker(
@@ -207,12 +218,12 @@ class UserMapView extends GetView<UserMapViewModel> {
                             ),
                         ],
                       ),
+                      // Evacuation Points
                       MarkerLayer(
                         markers:
                             controller.evacuationPoints
                                 .map(
                                   (point) {
-                                    // Find the evacuation point data for this point
                                     final evacuationPoint = controller.findEvacuationPointByLocation(point);
                                     return Marker(
                                       point: point,
@@ -226,11 +237,9 @@ class UserMapView extends GetView<UserMapViewModel> {
                                               isScrollControlled: true,
                                               backgroundColor: Colors.transparent,
                                               builder: (modalContext) {
-                                                final screenHeight =
-                                                    MediaQuery.of(context).size.height;
-                                                // Responsive height: adjust based on screen size
-                                                final heightFactor =
-                                                    screenHeight < 700 ? 0.4 : 0.35;
+                                                // Logic to adjust height based on whether we are navigating or just viewing details could go here
+                                                final screenHeight = MediaQuery.of(context).size.height;
+                                                final heightFactor = screenHeight < 700 ? 0.4 : 0.35;
 
                                                 return FractionallySizedBox(
                                                   heightFactor: heightFactor,
@@ -258,12 +267,12 @@ class UserMapView extends GetView<UserMapViewModel> {
                                 )
                                 .toList(),
                       ),
+                      // Disasters
                       MarkerLayer(
                         markers:
                             controller.disasterPoints
                                 .map(
                                   (point) {
-                                    // Find the disaster data for this point
                                     final disaster = controller.findDisasterByLocation(point);
                                     return Marker(
                                       point: point,
@@ -279,7 +288,6 @@ class UserMapView extends GetView<UserMapViewModel> {
                                               builder: (modalContext) {
                                                 final screenHeight =
                                                     MediaQuery.of(context).size.height;
-                                                // Responsive height: adjust based on screen size
                                                 final heightFactor =
                                                     screenHeight < 700 ? 0.6 : 0.5;
 

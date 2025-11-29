@@ -10,7 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
 import 'package:resqapp/components/disaster_detail_modal.dart';
 
-class ResponseTeamMapHelper {
+class MapHelper {
   static final DateFormat _disasterDateFormatter =
       DateFormat('d MMMM yyyy, HH:mm:ss', 'id_ID');
 

@@ -1,11 +1,13 @@
 import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:resqapp/models/supabase_models.dart';
-import 'package:resqapp/pages/responseTeam/responseTeamMap/helpers/response_team_map_helper.dart';
+import 'package:resqapp/helpers/map_helper.dart';
+import 'package:resqapp/pages/responseTeam/responseTeamMap/components/route_warning_dialog.dart';
 import 'package:resqapp/pages/responseTeam/responseTeamMap/managers/response_team_map_realtime_manager.dart';
 import 'package:resqapp/service/supabase_service.dart';
 import 'package:resqapp/services/location_helper.dart';
@@ -33,7 +35,10 @@ class ResponseTeamMapViewModel extends GetxController {
 
   final RxList<LatLng> routePoints = <LatLng>[].obs;
   final RxBool isRouteLoading = false.obs;
+  
   final Rx<SosEvent?> _currentNavigatingSos = Rx<SosEvent?>(null);
+  final Rx<EvacuationPoint?> _currentNavigatingEvacuationPoint = Rx<EvacuationPoint?>(null);
+  
   String? _currentResponseTeamId;
 
   StreamSubscription<Position>? _positionStreamSubscription;
@@ -128,25 +133,20 @@ class ResponseTeamMapViewModel extends GetxController {
     }
   }
 
-
   Future<void> _restoreRoute(SosEvent sosEvent) async {
-    if (sosEvent.locationLat == null || sosEvent.locationLng == null) {
-      return;
-    }
-
+    if (sosEvent.locationLat == null || sosEvent.locationLng == null) return;
+    
     _currentNavigatingSos.value = sosEvent;
-
+    _currentNavigatingEvacuationPoint.value = null;
+    
     isRouteLoading.value = true;
-
+    
     final start = currentLocation.value;
     final end = LatLng(sosEvent.locationLat!, sosEvent.locationLng!);
-
-    final points = await ResponseTeamMapHelper.getRoutePolyline(start, end);
-
-    if (points.isNotEmpty) {
-      routePoints.value = points;
-    }
-
+    
+    final points = await MapHelper.getRoutePolyline(start, end);
+    if (points.isNotEmpty) routePoints.value = points;
+    
     isRouteLoading.value = false;
   }
 
@@ -289,21 +289,20 @@ class ResponseTeamMapViewModel extends GetxController {
   }
 
   Disaster? findDisasterByLocation(LatLng location) {
-    return ResponseTeamMapHelper.findDisasterByLocation(_disasterPointsData, location);
+    return MapHelper.findDisasterByLocation(_disasterPointsData, location);
   }
 
   EvacuationPoint? findEvacuationPointByLocation(LatLng location) {
-    return ResponseTeamMapHelper.findEvacuationPointByLocation(_evacuationPointsData, location);
+    return MapHelper.findEvacuationPointByLocation(_evacuationPointsData, location);
   }
 
   SosEvent? findSOSByLocation(LatLng location) {
-    return ResponseTeamMapHelper.findSOSByLocation(_sosEventsData, location);
+    return MapHelper.findSOSByLocation(_sosEventsData, location);
   }
 
   SosEvent? findSOSById(String sosId) {
     try {
-      final list = _sosEventsData;
-      return list.firstWhere((s) => s.sosId == sosId);
+      return _sosEventsData.firstWhere((s) => s.sosId == sosId);
     } catch (_) {
       return null;
     }
@@ -320,7 +319,7 @@ class ResponseTeamMapViewModel extends GetxController {
   }
 
   Future<String> fetchSOSAddress(SosEvent sosEvent) {
-    return ResponseTeamMapHelper.getAddressFromLocation(
+    return MapHelper.getAddressFromLocation(
       sosEvent.locationLat,
       sosEvent.locationLng,
       _addressCache,
@@ -329,7 +328,7 @@ class ResponseTeamMapViewModel extends GetxController {
   }
 
   Future<String> fetchDisasterAddress(Disaster disaster) {
-    return ResponseTeamMapHelper.getAddressFromLocation(
+    return MapHelper.getAddressFromLocation(
       disaster.centerLat,
       disaster.centerLng,
       _addressCache,
@@ -337,29 +336,12 @@ class ResponseTeamMapViewModel extends GetxController {
     );
   }
 
-  String formatSOSReportTime(double? timestamp) {
-    return ResponseTeamMapHelper.formatSOSReportTime(timestamp);
-  }
-
-  String formatDisasterDate(double? timestamp) {
-    return ResponseTeamMapHelper.formatDisasterDate(timestamp);
-  }
-
-  String formatDisasterMagnitude(double? magnitude) {
-    return ResponseTeamMapHelper.formatMagnitude(magnitude);
-  }
-
-  String getTsunamiPotential(double? magnitude) {
-    return ResponseTeamMapHelper.getTsunamiPotential(magnitude);
-  }
-
-  String formatDisasterDepth(String? depth) {
-    return ResponseTeamMapHelper.formatDepth(depth);
-  }
-
-  Future<void> openDisasterShakeMap(Disaster disaster) {
-    return ResponseTeamMapHelper.launchShakeMap(disaster.shakemap);
-  }
+  String formatSOSReportTime(double? timestamp) => MapHelper.formatSOSReportTime(timestamp);
+  String formatDisasterDate(double? timestamp) => MapHelper.formatDisasterDate(timestamp);
+  String formatDisasterMagnitude(double? magnitude) => MapHelper.formatMagnitude(magnitude);
+  String getTsunamiPotential(double? magnitude) => MapHelper.getTsunamiPotential(magnitude);
+  String formatDisasterDepth(String? depth) => MapHelper.formatDepth(depth);
+  Future<void> openDisasterShakeMap(Disaster disaster) => MapHelper.launchShakeMap(disaster.shakemap);
 
   Future<void> showRouteToSos(SosEvent sosEvent) async {
     if (sosEvent.locationLat == null || sosEvent.locationLng == null) {
@@ -376,6 +358,11 @@ class ResponseTeamMapViewModel extends GetxController {
       return;
     }
 
+    // Clear Evacuation navigation if exists (no warning needed since SOS is higher priority usually)
+    if (_currentNavigatingEvacuationPoint.value != null) {
+      _currentNavigatingEvacuationPoint.value = null;
+    }
+
     final success = await SupabaseService.assignSosToTeam(
       sosId: sosEvent.sosId,
       responseTeamId: _currentResponseTeamId!,
@@ -387,15 +374,19 @@ class ResponseTeamMapViewModel extends GetxController {
     }
 
     _currentNavigatingSos.value = sosEvent;
+    _currentNavigatingEvacuationPoint.value = null;
     
-    Get.back();
+    // Check if we need to close any open dialog/bottomsheet
+    if (Get.isBottomSheetOpen ?? false) {
+      Get.back();
+    }
 
     isRouteLoading.value = true;
     
     final start = currentLocation.value;
     final end = LatLng(sosEvent.locationLat!, sosEvent.locationLng!);
 
-    final points = await ResponseTeamMapHelper.getRoutePolyline(start, end);
+    final points = await MapHelper.getRoutePolyline(start, end);
     
     if (points.isNotEmpty) {
       routePoints.value = points;
@@ -403,6 +394,63 @@ class ResponseTeamMapViewModel extends GetxController {
       Get.snackbar("Info", "Rute tidak ditemukan");
     }
     
+    isRouteLoading.value = false;
+  }
+
+  Future<void> showRouteToEvacuationPoint(EvacuationPoint point) async {
+    if (!point.hasLocation()) {
+      Get.snackbar("Error", "Lokasi Poin Evakuasi tidak valid");
+      return;
+    }
+
+    // Check if currently navigating to SOS
+    if (_currentNavigatingSos.value != null) {
+      RouteWarningDialog.show(onConfirmDelete: () async {
+        Get.back(); // Close dialog
+          
+          // Unassign active SOS
+          final sosId = _currentNavigatingSos.value!.sosId;
+          final success = await SupabaseService.unassignSosFromTeam(sosId);
+          
+          if (success) {
+             // Close the bottom sheet if open
+             if (Get.isBottomSheetOpen ?? false) {
+               Get.back();
+             }
+             
+             _startNavigationToEvacuationPoint(point);
+          } else {
+             Get.snackbar("Error", "Gagal membatalkan rute SOS");
+          }
+      });
+      return;
+    }
+
+    // No conflict, proceed
+    if (Get.isBottomSheetOpen ?? false) {
+      Get.back();
+    }
+    
+    _startNavigationToEvacuationPoint(point);
+  }
+
+  Future<void> _startNavigationToEvacuationPoint(EvacuationPoint point) async {
+    _currentNavigatingEvacuationPoint.value = point;
+    _currentNavigatingSos.value = null;
+
+    isRouteLoading.value = true;
+
+    final start = currentLocation.value;
+    final end = LatLng(point.locationLat!, point.locationLng!);
+
+    final points = await MapHelper.getRoutePolyline(start, end);
+
+    if (points.isNotEmpty) {
+      routePoints.value = points;
+    } else {
+      Get.snackbar("Info", "Rute tidak ditemukan");
+    }
+
     isRouteLoading.value = false;
   }
 
@@ -423,24 +471,29 @@ class ResponseTeamMapViewModel extends GetxController {
   }
 
   void _checkAndReroute(LatLng userLocation) {
-    if (_currentNavigatingSos.value == null || routePoints.isEmpty || isRouteLoading.value) {
+    if ((_currentNavigatingSos.value == null && _currentNavigatingEvacuationPoint.value == null) || 
+        routePoints.isEmpty || 
+        isRouteLoading.value) {
       return;
     }
-    bool isOffRoute = ResponseTeamMapHelper.isUserOffRoute(
+    
+    bool isOffRoute = MapHelper.isUserOffRoute(
       userLocation, 
       routePoints, 
       thresholdMeters: 50
     );
 
     if (isOffRoute) {
-      _silentReroute(userLocation, _currentNavigatingSos.value!);
+      if (_currentNavigatingSos.value != null) {
+        _silentReroute(userLocation, LatLng(_currentNavigatingSos.value!.locationLat!, _currentNavigatingSos.value!.locationLng!));
+      } else if (_currentNavigatingEvacuationPoint.value != null) {
+        _silentReroute(userLocation, LatLng(_currentNavigatingEvacuationPoint.value!.locationLat!, _currentNavigatingEvacuationPoint.value!.locationLng!));
+      }
     }
   }
 
-  Future<void> _silentReroute(LatLng start, SosEvent destination) async {
-    final end = LatLng(destination.locationLat!, destination.locationLng!);
-    final points = await ResponseTeamMapHelper.getRoutePolyline(start, end);
-
+  Future<void> _silentReroute(LatLng start, LatLng end) async {
+    final points = await MapHelper.getRoutePolyline(start, end);
     if (points.isNotEmpty) {
       routePoints.value = points;
     }
@@ -449,11 +502,11 @@ class ResponseTeamMapViewModel extends GetxController {
   void clearRoute() {
     routePoints.clear();
     _currentNavigatingSos.value = null;
+    _currentNavigatingEvacuationPoint.value = null;
   }
 
   Future<void> cancelRoute(SosEvent sosEvent) async {
     final success = await SupabaseService.unassignSosFromTeam(sosEvent.sosId);
-    
     if (success) {
       clearRoute();
       Get.back();
@@ -462,19 +515,34 @@ class ResponseTeamMapViewModel extends GetxController {
     }
   }
 
+  void cancelEvacuationRoute() {
+    clearRoute();
+    Get.back();
+  }
+
   bool isCurrentlyNavigatingTo(SosEvent sosEvent) {
     return _currentNavigatingSos.value?.sosId == sosEvent.sosId;
+  }
+
+  bool isCurrentlyNavigatingToEvacuationPoint(EvacuationPoint point) {
+    return _currentNavigatingEvacuationPoint.value?.evacuationId == point.evacuationId;
   }
 
   String? getCurrentResponseTeamId() => _currentResponseTeamId;
 
   double calculateDistanceToSos(SosEvent sosEvent) {
-    if (sosEvent.locationLat == null || sosEvent.locationLng == null) {
-      return 0.0;
-    }
+    if (!sosEvent.hasLocation()) return 0.0;
     return distance_calc.GeoDistanceCalculator.calculateDistance(
       currentLocation.value,
       LatLng(sosEvent.locationLat!, sosEvent.locationLng!),
+    );
+  }
+
+  double calculateDistanceToEvacuationPoint(EvacuationPoint point) {
+    if (!point.hasLocation()) return 0.0;
+    return distance_calc.GeoDistanceCalculator.calculateDistance(
+      currentLocation.value,
+      LatLng(point.locationLat!, point.locationLng!),
     );
   }
 
@@ -483,10 +551,6 @@ class ResponseTeamMapViewModel extends GetxController {
     
     await Future.delayed(const Duration(milliseconds: 500));
     
-    if (currentLocation.value == LatLng(-6.2088, 106.8456)) {
-      await Future.delayed(const Duration(seconds: 1));
-    }
-
     try {
       final assignedSos = _sosEventsData.firstWhere(
         (sos) => sos.responseTeamId == _currentResponseTeamId && 
