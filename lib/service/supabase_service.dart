@@ -253,12 +253,9 @@ class SupabaseService {
         .map((json) => SosEvent.fromJson(json))
         .toList();
 
-    print('Active SOS count: ${events.length}');
-
     return events;
   } catch (e) {
     print('Error getting SOS events: $e');
-    print('IIIIIIIIIIUIIUIUIIIIIUIIUIIUIIU got an error');
     return [];
   }
 }
@@ -321,6 +318,7 @@ class SupabaseService {
           .update({
             'response_team_id': null,
             'assigned_at': 0.0,
+            'is_current': false,
           })
           .eq('sos_id', sosId);
 
@@ -347,6 +345,22 @@ class SupabaseService {
       return true;
     } catch (e) {
       developer.log('Error resolving SOS: $e');
+      return false;
+    }
+  }
+
+  /// Complete SOS event (set is_current to false)
+  static Future<bool> completeSosEvent(String sosId) async {
+    try {
+      await _client
+          .from('sos_events')
+          .update({'is_current': false})
+          .eq('sos_id', sosId);
+
+      developer.log('SOS event $sosId completed');
+      return true;
+    } catch (e) {
+      developer.log('Error completing SOS: $e');
       return false;
     }
   }
