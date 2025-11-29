@@ -7,6 +7,9 @@ import 'package:resqapp/pages/userMap/components/radiant_marker.dart';
 import 'package:resqapp/pages/responseTeam/responseTeamMap/components/disaster_detail_modal.dart';
 import 'package:resqapp/pages/responseTeam/responseTeamMap/components/evacuation_point_detail_modal.dart';
 import 'package:resqapp/pages/responseTeam/responseTeamMap/components/sos_detail_modal.dart';
+import 'package:resqapp/pages/responseTeam/responseTeamMap/components/navigation_arrow_marker.dart';
+import 'package:resqapp/pages/responseTeam/responseTeamMap/components/navigation_banner.dart';
+import 'package:latlong2/latlong.dart';
 
 class ResponseTeamMapView extends GetView<ResponseTeamMapViewModel> {
   final String instanceCode;
@@ -29,7 +32,7 @@ class ResponseTeamMapView extends GetView<ResponseTeamMapViewModel> {
         return Stack(
           children: [
             FlutterMap(
-              mapController: controller.mapController,
+              mapController: controller.mapController.mapController,
               options: MapOptions(
                 initialCenter: controller.currentLocation.value,
                 initialZoom: 13.0,
@@ -38,6 +41,12 @@ class ResponseTeamMapView extends GetView<ResponseTeamMapViewModel> {
                 interactionOptions: InteractionOptions(
                   flags: InteractiveFlag.all,
                 ),
+                onMapEvent: (MapEvent event) {
+                  if (event is MapEventMoveEnd ||
+                      event is MapEventFlingAnimationEnd) {
+                    controller.onMapMoved();
+                  }
+                },
               ),
               children: [
                 TileLayer(
@@ -47,10 +56,20 @@ class ResponseTeamMapView extends GetView<ResponseTeamMapViewModel> {
                 ),
                 PolylineLayer(
                   polylines: [
-                    if (controller.routePoints.isNotEmpty)
+                    if (controller.isNavigating.value &&
+                        controller.remainingRoutePoints.isNotEmpty)
+                      Polyline(
+                        points: controller.remainingRoutePoints.toList(),
+                        color: const Color(0xFF4285F4),
+                        strokeWidth: 6.0,
+                        borderColor: const Color(0xFF1967D2),
+                        borderStrokeWidth: 2.0,
+                      )
+                    else if (!controller.isNavigating.value &&
+                        controller.routePoints.isNotEmpty)
                       Polyline(
                         points: controller.routePoints.toList(),
-                        color: Colors.blue, // Navigation blue color
+                        color: Colors.blue,
                         strokeWidth: 5.0,
                         borderColor: Colors.blue.withOpacity(0.3),
                         borderStrokeWidth: 2.0,
@@ -60,32 +79,40 @@ class ResponseTeamMapView extends GetView<ResponseTeamMapViewModel> {
                 // User location marker layer
                 MarkerLayer(
                   markers: [
-                    // User location marker
                     if (controller.hasLocationPermission.value &&
                         !controller.isLoading.value)
                       Marker(
                         point: controller.currentLocation.value,
                         width: 42,
                         height: 42,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.blue,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 3),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.blue.withOpacity(0.3),
-                                blurRadius: 8,
-                                spreadRadius: 2,
-                              ),
-                            ],
-                          ),
-                          child: Icon(
-                            Icons.my_location,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
+                        child:
+                            controller.isNavigating.value
+                                ? NavigationArrowMarker(
+                                  heading: controller.currentHeading.value,
+                                  size: 42,
+                                )
+                                : Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: 3,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.blue.withOpacity(0.3),
+                                        blurRadius: 8,
+                                        spreadRadius: 2,
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Icon(
+                                    Icons.my_location,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
                       ),
                   ],
                 ),
@@ -215,7 +242,7 @@ class ResponseTeamMapView extends GetView<ResponseTeamMapViewModel> {
                                       return FractionallySizedBox(
                                         heightFactor: heightFactor,
                                         child: SOSDetailModal(
-                                          sosEvent: sosEvent
+                                          sosEvent: sosEvent,
                                         ),
                                       );
                                     },
@@ -240,6 +267,16 @@ class ResponseTeamMapView extends GetView<ResponseTeamMapViewModel> {
                   );
                 }),
               ],
+            ),
+
+            // Navigation Banner
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                child: NavigationBanner(),
+              ),
             ),
 
             if (controller.isLoading.value)
