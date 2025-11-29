@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 
 class SOSWaitingHeaderSection extends StatelessWidget {
-  const SOSWaitingHeaderSection({Key? key}) : super(key: key);
+  final bool isResponseTeamAssigned;
+  
+  const SOSWaitingHeaderSection({
+    Key? key,
+    this.isResponseTeamAssigned = false,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +22,9 @@ class SOSWaitingHeaderSection extends StatelessWidget {
         Expanded(
           child: Center(
             child: Text(
-              'Menunggu bala bantuan',
+              isResponseTeamAssigned
+                  ? 'Bala bantuan sedang menuju ketempat anda'
+                  : 'Menunggu bala bantuan',
               style: TextStyle(
                 color: Theme.of(context).primaryColor,
                 fontWeight: FontWeight.bold,

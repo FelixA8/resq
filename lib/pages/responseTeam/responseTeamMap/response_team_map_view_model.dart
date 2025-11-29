@@ -833,7 +833,7 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
   }
 
   Future<void> completeNavigation() async {
-    await SupabaseService.unassignSosFromTeam(_currentNavigatingSos.value!.sosId);
+    await SupabaseService.deleteSosEventById(_currentNavigatingSos.value!.sosId);
     clearRoute();
 
     if (Get.isBottomSheetOpen ?? false) {
@@ -907,6 +907,7 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
   }
 
   Future<void> cancelRoute(SosEvent sosEvent) async {
+    await SupabaseService.unassignSosFromTeam(_currentNavigatingSos.value!.sosId);
     clearRoute();
     Get.back();
   }

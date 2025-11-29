@@ -15,8 +15,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:resqapp/helpers/map_helper.dart';
 import 'package:resqapp/services/distance_calculator.dart' as distance_calc;
+import 'package:geocoding/geocoding.dart';
 
 class UserMapViewModel extends GetxController {
+  final Rx<ResqUser?> _currentUser = Rx(null);
+  ResqUser? get currentUser => _currentUser.value;
+
   final MapController mapController = MapController();
   final Map<String, String> _disasterAddressCache = {};
   
@@ -40,6 +44,9 @@ class UserMapViewModel extends GetxController {
   
   static const String _kSavedEvacuationId = 'saved_evacuation_point_id';
 
+  // User location address
+  final RxString currentAddress = 'Loading...'.obs;
+
   StreamSubscription<Position>? _positionStreamSubscription;
   
   bool get isSOSActive => _isSOSActive.value;
@@ -59,6 +66,10 @@ class UserMapViewModel extends GetxController {
     _subscribeToEvacuationPoints();
     _subscribeToDisasters();
     _restoreNavigationState();
+
+    _loadUserData();
+    _loadDisasterPoints();
+    _loadEvacuationPoints();
   }
 
   @override
@@ -67,6 +78,20 @@ class UserMapViewModel extends GetxController {
     _evacuationPointsSubscription?.unsubscribe();
     _disastersSubscription?.unsubscribe();
     super.onClose();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('userId');
+
+      if (userId != null) {
+        final user = await SupabaseService.getUserById(userId);
+        _currentUser.value = user;
+      }
+    } catch (e) {
+      developer.log('Error loading user data: $e');
+    }
   }
 
   Future<void> _restoreNavigationState() async {
@@ -103,6 +128,7 @@ class UserMapViewModel extends GetxController {
         .listen((Position position) {
       final newLocation = LatLng(position.latitude, position.longitude);
       currentLocation.value = newLocation;
+      _updateAddress(newLocation);
       _checkAndReroute(newLocation);
     });
   }
@@ -363,10 +389,44 @@ class UserMapViewModel extends GetxController {
       currentLocation.value = result.location;
       hasLocationPermission.value = result.hasPermission;
       mapController.move(currentLocation.value, 15.0);
+      _updateAddress(currentLocation.value);
     } catch (e) {
       hasLocationPermission.value = false;
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  Future<void> _updateAddress(LatLng location) async {
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        location.latitude,
+        location.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks[0];
+        String address = '';
+        
+        // Priority: locality (district) > subLocality (neighborhood) > subAdministrativeArea (city)
+        if (place.locality != null && place.locality!.isNotEmpty) {
+          address = place.locality!;
+        } else if (place.subLocality != null && place.subLocality!.isNotEmpty) {
+          address = place.subLocality!;
+        } else if (place.subAdministrativeArea != null && place.subAdministrativeArea!.isNotEmpty) {
+          address = place.subAdministrativeArea!;
+        }
+        
+        if (address.isEmpty) {
+          address = 'Unknown Location';
+        }
+
+        currentAddress.value = address;
+        developer.log('User Location: ${place.street}, ${place.subLocality}, ${place.locality}, ${place.subAdministrativeArea}, ${place.administrativeArea}');
+      }
+    } catch (e) {
+      developer.log('Error getting address: $e');
+      currentAddress.value = 'Location Unavailable';
     }
   }
 

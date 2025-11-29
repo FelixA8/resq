@@ -169,6 +169,39 @@ class SupabaseService {
       return false;
     }
   }
+  
+  static Future<bool> upsertContact(Contact contact) async {
+    try {
+      // Delete existing contact with same name for this user
+      await _client
+          .from('contacts')
+          .delete()
+          .eq('user_id', contact.userId)
+          .eq('contact_name', contact.contactName);
+
+      // Insert new/updated contact
+      await _client.from('contacts').insert(contact.toJson());
+      return true;
+    } catch (e) {
+      developer.log('Error upserting contact: $e');
+      return false;
+    }
+  }
+
+  /// Delete emergency contact
+  static Future<bool> deleteContact(String userId, String contactName) async {
+    try {
+      await _client
+          .from('contacts')
+          .delete()
+          .eq('user_id', userId)
+          .eq('contact_name', contactName);
+      return true;
+    } catch (e) {
+      developer.log('Error deleting contact: $e');
+      return false;
+    }
+  }
 
   // ==================== Disasters ====================
 
@@ -318,7 +351,6 @@ class SupabaseService {
           .update({
             'response_team_id': null,
             'assigned_at': 0.0,
-            'is_current': false,
           })
           .eq('sos_id', sosId);
 
