@@ -29,15 +29,19 @@ class UserMapView extends GetView<UserMapViewModel> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              'John Doe', // Placeholder, ideally from user profile
-              style: TextStyle(
-                fontFamily: 'SF Pro',
-                fontWeight: FontWeight.w500,
-                fontSize: 18,
-                color: Colors.black,
-              ),
-            ),
+            Obx(() {
+              final user = controller.currentUser;
+              final username = user?.username ?? 'Guest';
+              return Text(
+                username,
+                style: TextStyle(
+                  fontFamily: 'SF Pro',
+                  fontWeight: FontWeight.w500,
+                  fontSize: 18,
+                  color: Colors.black,
+                ),
+              );
+            }),
             const SizedBox(height: 4),
             Row(
               mainAxisSize: MainAxisSize.min,
@@ -48,15 +52,15 @@ class UserMapView extends GetView<UserMapViewModel> {
                   height: 14,
                 ),
                 const SizedBox(width: 2),
-                Text(
-                  'Tangerang Selatan', // Placeholder
+                Obx(() => Text(
+                  controller.currentAddress.value,
                   style: TextStyle(
                     fontFamily: 'SF Pro',
                     fontWeight: FontWeight.w400,
                     fontSize: 13,
                     color: theme.colors.primary,
                   ),
-                ),
+                )),
               ],
             ),
           ],
