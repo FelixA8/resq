@@ -119,15 +119,7 @@ class UserMapView extends GetView<UserMapViewModel> {
                                   isScrollControlled: true,
                                   backgroundColor: Colors.transparent,
                                   builder: (modalContext) {
-                                    final screenHeight =
-                                        MediaQuery.of(context).size.height;
-                                    final heightFactor =
-                                        screenHeight < 700 ? 0.5 : 0.45;
-
-                                    return FractionallySizedBox(
-                                      heightFactor: heightFactor,
-                                      child: SOSView(),
-                                    );
+                                    return SOSView();
                                   },
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.vertical(
