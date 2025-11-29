@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 
 class SOSWaitingIllustrationSection extends StatelessWidget {
-  const SOSWaitingIllustrationSection({Key? key}) : super(key: key);
+  final bool isResponseTeamAssigned;
+  
+  const SOSWaitingIllustrationSection({
+    Key? key,
+    this.isResponseTeamAssigned = false,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -13,7 +18,9 @@ class SOSWaitingIllustrationSection extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
       child: Image.asset(
-        'assets/images/illustrations/sos-running.png',
+        isResponseTeamAssigned
+            ? 'assets/images/illustrations/sos-rescuing.png'
+            : 'assets/images/illustrations/sos-running.png',
         height: illustrationHeight,
         width: double.infinity,
         fit: BoxFit.contain,

@@ -15,8 +15,17 @@ class SOSWaitingTimerSection extends StatelessWidget {
     
     return Consumer<SOSWaitingViewModel>(
       builder: (context, viewModel, child) {
+        // Change color to #F1C8C8 when response team is assigned
+        final circleColor = viewModel.isResponseTeamAssigned
+            ? Color(0xFFF1C8C8)
+            : theme.colors.primary;
+
+        final textColor = viewModel.isResponseTeamAssigned
+            ? theme.colors.primary
+            : Colors.white;
+        
         return RadiantCircleButton(
-          mainColor: theme.colors.primary,
+          mainColor: circleColor,
           child: FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
@@ -25,7 +34,7 @@ class SOSWaitingTimerSection extends StatelessWidget {
                 fontFamily: 'SF Pro',
                 fontWeight: FontWeight.w900,
                 fontSize: responsiveFontSize.clamp(24.0, 32.0),
-                color: Colors.white,
+                color: textColor,
               ),
             ),
           ),
