@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
 import 'package:resqapp/pages/userMap/components/radiant_marker.dart';
+import 'package:resqapp/pages/userMap/components/navigation_arrow_marker.dart';
+import 'package:resqapp/pages/userMap/components/navigation_banner.dart';
 import 'package:resqapp/pages/userMap/user_map_view_model.dart';
 import 'package:resqapp/theme/theme_app.dart';
 import 'package:resqapp/pages/SOS/sos_view.dart';
@@ -153,16 +155,22 @@ class UserMapView extends GetView<UserMapViewModel> {
         return Column(
           children: [
             SOSActiveBanner(),
+            NavigationBanner(),
             Expanded(
               child: Stack(
                 children: [
                   FlutterMap(
-                    mapController: controller.mapController,
+                    mapController: controller.mapController.mapController,
                     options: MapOptions(
                       initialCenter: controller.currentLocation.value,
                       initialZoom: 13.0,
                       minZoom: 5.0,
                       maxZoom: 18.0,
+                      onPositionChanged: (position, hasGesture) {
+                        if (hasGesture) {
+                          controller.onMapMoved();
+                        }
+                      },
                       interactionOptions: InteractionOptions(
                         flags:
                             InteractiveFlag.all & ~InteractiveFlag.rotate,
@@ -195,30 +203,34 @@ class UserMapView extends GetView<UserMapViewModel> {
                               !controller.isLoading.value)
                             Marker(
                               point: controller.currentLocation.value,
-                              width: 42,
-                              height: 42,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.blue,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Colors.white,
-                                    width: 3,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.blue.withOpacity(0.3),
-                                      blurRadius: 8,
-                                      spreadRadius: 2,
+                              width: controller.isNavigating.value ? 70 : 42,
+                              height: controller.isNavigating.value ? 70 : 42,
+                              child: controller.isNavigating.value
+                                  ? NavigationArrowMarker(
+                                      heading: controller.currentHeading.value,
+                                    )
+                                  : Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.blue,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Colors.white,
+                                          width: 3,
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.blue.withOpacity(0.3),
+                                            blurRadius: 8,
+                                            spreadRadius: 2,
+                                          ),
+                                        ],
+                                      ),
+                                      child: Icon(
+                                        Icons.my_location,
+                                        color: Colors.white,
+                                        size: 20,
+                                      ),
                                     ),
-                                  ],
-                                ),
-                                child: Icon(
-                                  Icons.my_location,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                              ),
                             ),
                         ],
                       ),

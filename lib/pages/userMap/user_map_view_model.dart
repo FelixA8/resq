@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'dart:math' as math;
+import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_animations/flutter_map_animations.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -11,17 +14,18 @@ import 'package:resqapp/models/supabase_models.dart';
 import 'package:resqapp/service/supabase_service.dart';
 import 'package:resqapp/services/location_helper.dart';
 import 'package:resqapp/pages/SOSWaiting/sos_waiting_view_model.dart';
+import 'package:resqapp/pages/userMap/extensions/map_animation_config.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:resqapp/helpers/map_helper.dart';
 import 'package:resqapp/services/distance_calculator.dart' as distance_calc;
 import 'package:geocoding/geocoding.dart';
 
-class UserMapViewModel extends GetxController {
+class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
   final Rx<ResqUser?> _currentUser = Rx(null);
   ResqUser? get currentUser => _currentUser.value;
 
-  final MapController mapController = MapController();
+  late final AnimatedMapController mapController;
   final Map<String, String> _disasterAddressCache = {};
   
   final Rx<LatLng> currentLocation = LatLng(-6.2088, 106.8456).obs; 
@@ -56,9 +60,34 @@ class UserMapViewModel extends GetxController {
   RealtimeChannel? _evacuationPointsSubscription;
   RealtimeChannel? _disastersSubscription;
 
+  // Enhanced Navigation State
+  final RxBool isNavigating = false.obs;
+  final RxDouble currentHeading = 0.0.obs;
+  final RxBool isMapCentering = true.obs;
+  final RxDouble distanceToDestination = 0.0.obs;
+  final Rx<LatLng?> navigationDestination = Rx<LatLng?>(null);
+  final RxInt currentRouteSegment = 0.obs;
+  final RxList<LatLng> remainingRoutePoints = <LatLng>[].obs;
+  
+  // Navigation Instructions
+  final RxString currentInstruction = ''.obs;
+  final RxDouble distanceToNextTurn = 0.0.obs;
+  final RxString turnType = ''.obs; // 'left', 'right', 'straight', etc.
+  List<RouteStep> _routeSteps = [];
+  int _currentStepIndex = 0;
+  
+  // Arrival State
+  final RxBool hasArrived = false.obs;
+  
+  Timer? _idleTimer;
+  Timer? _arrivalCheckTimer;
+  bool _hasShownArrivalNotification = false;
+  LatLng? _lastLocation;
+
   @override
   void onInit() {
     super.onInit();
+    mapController = AnimatedMapController(vsync: this);
     _initializeLocation();
     _startLocationStream();
     _initializeData();
@@ -77,6 +106,9 @@ class UserMapViewModel extends GetxController {
     _positionStreamSubscription?.cancel();
     _evacuationPointsSubscription?.unsubscribe();
     _disastersSubscription?.unsubscribe();
+    _idleTimer?.cancel();
+    _arrivalCheckTimer?.cancel();
+    mapController.dispose();
     super.onClose();
   }
 
@@ -127,8 +159,28 @@ class UserMapViewModel extends GetxController {
     _positionStreamSubscription = Geolocator.getPositionStream(locationSettings: locationSettings)
         .listen((Position position) {
       final newLocation = LatLng(position.latitude, position.longitude);
+      
+      // Update heading/bearing for arrow rotation
+      if (_lastLocation != null && isNavigating.value) {
+        final heading = _calculateHeading(_lastLocation!, newLocation);
+        if (heading >= 0) {
+          currentHeading.value = heading;
+        }
+      }
+
+      _lastLocation = newLocation;
       currentLocation.value = newLocation;
       _updateAddress(newLocation);
+      
+      if (isNavigating.value) {
+        _updateNavigationState(newLocation);
+        
+        // Auto-center if enabled
+        if (isMapCentering.value) {
+          _centerOnUserLocation(animate: true);
+        }
+      }
+      
       _checkAndReroute(newLocation);
     });
   }
@@ -388,7 +440,12 @@ class UserMapViewModel extends GetxController {
       LocationResult result = await LocationHelper.initializeLocation();
       currentLocation.value = result.location;
       hasLocationPermission.value = result.hasPermission;
-      mapController.move(currentLocation.value, 15.0);
+      await mapController.animateTo(
+        dest: currentLocation.value,
+        zoom: MapAnimationConfig.initialZoom,
+        curve: MapAnimationConfig.defaultCurve,
+        duration: MapAnimationConfig.initialCenterDuration,
+      );
       _updateAddress(currentLocation.value);
     } catch (e) {
       hasLocationPermission.value = false;
@@ -431,7 +488,12 @@ class UserMapViewModel extends GetxController {
   }
 
   void moveToLocation(LatLng location) {
-    mapController.move(location, 16.0);
+    mapController.animateTo(
+      dest: location,
+      zoom: MapAnimationConfig.manualLocationZoom,
+      curve: MapAnimationConfig.defaultCurve,
+      duration: MapAnimationConfig.userTriggeredDuration,
+    );
   }
 
   Disaster? findDisasterByLocation(LatLng location) {
@@ -479,10 +541,33 @@ class UserMapViewModel extends GetxController {
     final end = LatLng(point.locationLat!, point.locationLng!);
 
     try {
-      final points = await MapHelper.getRoutePolyline(start, end);
+      final routeData = await MapHelper.getRouteWithInstructions(start, end);
 
-      if (points.isNotEmpty) {
-        routePoints.value = points;
+      if (routeData != null && routeData.polyline.isNotEmpty) {
+        routePoints.value = routeData.polyline;
+        remainingRoutePoints.value = routeData.polyline;
+        
+        // Store route steps for navigation instructions
+        _routeSteps = routeData.steps;
+        _currentStepIndex = 0;
+        _updateNavigationInstructions();
+        
+        // Initialize navigation state
+        isNavigating.value = true;
+        navigationDestination.value = end;
+        currentRouteSegment.value = 0;
+        _hasShownArrivalNotification = false;
+        isMapCentering.value = true;
+
+        final distance = distance_calc.GeoDistanceCalculator.calculateDistance(
+          currentLocation.value,
+          navigationDestination.value!,
+        );
+        
+        distanceToDestination.value = distance;
+        
+        // Center on user location with animation
+        _centerOnUserLocation(animate: true);
       } else {
         Get.snackbar("Info", "Rute tidak ditemukan");
       }
@@ -495,7 +580,26 @@ class UserMapViewModel extends GetxController {
 
   void clearRoute() {
     routePoints.clear();
+    remainingRoutePoints.clear();
     _currentNavigatingEvacuationPoint.value = null;
+    
+    isNavigating.value = false;
+    isMapCentering.value = true;
+    navigationDestination.value = null;
+    currentRouteSegment.value = 0;
+    distanceToDestination.value = 0.0;
+    currentHeading.value = 0.0;
+    _hasShownArrivalNotification = false;
+    hasArrived.value = false;
+    
+    currentInstruction.value = '';
+    distanceToNextTurn.value = 0.0;
+    turnType.value = '';
+    _routeSteps = [];
+    _currentStepIndex = 0;
+    
+    _idleTimer?.cancel();
+    _arrivalCheckTimer?.cancel();
   }
 
   Future<void> cancelEvacuationRoute() async {
@@ -537,10 +641,235 @@ class UserMapViewModel extends GetxController {
   }
 
   Future<void> _silentReroute(LatLng start, LatLng end) async {
-    final points = await MapHelper.getRoutePolyline(start, end);
-    if (points.isNotEmpty) {
-      routePoints.value = points;
+    final routeData = await MapHelper.getRouteWithInstructions(start, end);
+    if (routeData != null && routeData.polyline.isNotEmpty) {
+      routePoints.value = routeData.polyline;
+      remainingRoutePoints.value = routeData.polyline;
+      
+      _routeSteps = routeData.steps;
+      _currentStepIndex = 0;
+      
+      currentRouteSegment.value = 0;
+      
+      navigationDestination.value = end;
+      
+      _updateNavigationInstructions();
     }
+  }
+
+  double _calculateHeading(LatLng from, LatLng to) {
+    final lat1 = from.latitude * math.pi / 180;
+    final lat2 = to.latitude * math.pi / 180;
+    final dLon = (to.longitude - from.longitude) * math.pi / 180;
+
+    final y = math.sin(dLon) * math.cos(lat2);
+    final x = math.cos(lat1) * math.sin(lat2) -
+        math.sin(lat1) * math.cos(lat2) * math.cos(dLon);
+
+    final bearing = math.atan2(y, x) * 180 / math.pi;
+    return (bearing + 360) % 360;
+  }
+
+  void _updateNavigationState(LatLng userLocation) {
+    if (navigationDestination.value == null) {
+      if (_currentNavigatingEvacuationPoint.value != null && 
+          _currentNavigatingEvacuationPoint.value!.hasLocation()) {
+        navigationDestination.value = LatLng(
+          _currentNavigatingEvacuationPoint.value!.locationLat!,
+          _currentNavigatingEvacuationPoint.value!.locationLng!,
+        );
+      } else {
+        return; // No valid destination
+      }
+    }
+
+    final distance = distance_calc.GeoDistanceCalculator.calculateDistance(
+      userLocation,
+      navigationDestination.value!,
+    );
+    
+    distanceToDestination.value = distance;
+
+    _updateRouteProgress(userLocation);
+    _updateNavigationInstructions();
+
+    _checkArrival(distance);
+  }
+
+  void _updateRouteProgress(LatLng userLocation) {
+    if (routePoints.isEmpty) return;
+
+    // Find nearest point on route
+    int nearestIndex = 0;
+    double minDistance = double.infinity;
+
+    for (int i = 0; i < routePoints.length; i++) {
+      final distance = distance_calc.GeoDistanceCalculator.calculateDistance(
+        userLocation,
+        routePoints[i],
+      );
+      if (distance < minDistance) {
+        minDistance = distance;
+        nearestIndex = i;
+      }
+    }
+
+    // Update current segment and remaining route
+    if (nearestIndex != currentRouteSegment.value) {
+      currentRouteSegment.value = nearestIndex;
+      
+      // Update remaining route points (from current position to end)
+      if (nearestIndex < routePoints.length) {
+        remainingRoutePoints.value = routePoints.sublist(nearestIndex);
+      }
+    }
+  }
+
+  void _updateNavigationInstructions() {
+    if (_routeSteps.isEmpty || currentLocation.value == null) {
+      currentInstruction.value = '';
+      distanceToNextTurn.value = 0.0;
+      turnType.value = '';
+      return;
+    }
+
+    // Find the next step based on current location
+    for (int i = _currentStepIndex; i < _routeSteps.length; i++) {
+      final step = _routeSteps[i];
+      final distanceToStep = distance_calc.GeoDistanceCalculator.calculateDistance(
+        currentLocation.value,
+        step.location,
+      );
+
+      // If we're close to this step's location (within 50m), move to next step
+      if (distanceToStep < 0.05 && i < _routeSteps.length - 1) {
+        _currentStepIndex = i + 1;
+        continue;
+      }
+
+      // This is our current step
+      _currentStepIndex = i;
+      distanceToNextTurn.value = distanceToStep * 1000; // Convert km to meters
+      
+      // Set turn type based on maneuver modifier
+      final modifier = step.maneuverModifier?.toLowerCase() ?? '';
+      if (modifier.contains('left')) {
+        turnType.value = 'left';
+      } else if (modifier.contains('right')) {
+        turnType.value = 'right';
+      } else if (modifier.contains('straight') || modifier.contains('uturn')) {
+        turnType.value = 'straight';
+      } else {
+        turnType.value = 'straight'; // Default
+      }
+      
+      // Format instruction text
+      final distanceText = _formatDistance(distanceToStep * 1000);
+      final direction = _getDirectionText(modifier);
+      currentInstruction.value = '$distanceText $direction';
+      
+      break;
+    }
+  }
+
+  String _formatDistance(double meters) {
+    if (meters < 1000) {
+      return '${meters.round()}m';
+    } else {
+      return '${(meters / 1000).toStringAsFixed(1)} km';
+    }
+  }
+
+  String _getDirectionText(String modifier) {
+    if (modifier.contains('left')) {
+      return 'belok kiri';
+    } else if (modifier.contains('right')) {
+      return 'belok kanan';
+    } else if (modifier.contains('straight')) {
+      return 'lurus';
+    } else if (modifier.contains('uturn')) {
+      return 'putar balik';
+    } else {
+      return 'lanjutkan';
+    }
+  }
+
+  void _checkArrival(double distanceKm) {
+    const double arrivalThresholdKm = 0.10; // 100 meters
+    
+    // Set arrival state when within 100m radius
+    if (distanceKm <= arrivalThresholdKm) {
+      hasArrived.value = true;
+      
+      // Show notification only once
+      if (!_hasShownArrivalNotification) {
+        _hasShownArrivalNotification = true;
+        _onArrival();
+      }
+    } else {
+      hasArrived.value = false;
+    }
+  }
+
+  void _onArrival() {
+    HapticFeedback.heavyImpact();
+  }
+
+  Future<void> completeNavigation() async {
+    clearRoute();
+    
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_kSavedEvacuationId);
+
+    if (Get.isBottomSheetOpen ?? false) {
+      Get.back();
+    }
+  }
+
+  void _centerOnUserLocation({bool animate = true}) {
+    if (!isNavigating.value || !isMapCentering.value) return;
+    
+    mapController.animateTo(
+      dest: currentLocation.value,
+      zoom: MapAnimationConfig.navigationZoom,
+      curve: MapAnimationConfig.defaultCurve,
+      duration: MapAnimationConfig.autoCenterDuration,
+    );
+  }
+
+  void onMapMoved() {
+    _idleTimer?.cancel();
+    if (!isNavigating.value) return;
+    
+    if (isMapCentering.value) {
+      isMapCentering.value = false;
+    }
+    
+    final mapCenter = mapController.mapController.camera.center;
+    
+    final distanceFromUser = distance_calc.GeoDistanceCalculator.calculateDistance(
+      mapCenter,
+      currentLocation.value,
+    );
+    
+    const double proximityThresholdKm = 2;
+
+    if (distanceFromUser < proximityThresholdKm) {
+      _resetIdleTimer();
+    }
+  }
+
+  void _resetIdleTimer() {
+    _idleTimer = Timer(const Duration(seconds: 3), () {
+      if (isNavigating.value && !isMapCentering.value) {
+        _enableAutoCentering();
+      }
+    });
+  }
+
+  void _enableAutoCentering() {
+    isMapCentering.value = true;
+    _centerOnUserLocation(animate: true);
   }
 
   void startSOS() {
