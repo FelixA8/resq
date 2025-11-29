@@ -7,6 +7,7 @@ import 'models/otp_model.dart';
 import '../../service/supabase_service.dart';
 import '../../models/supabase_models.dart';
 import '../../services/sms_service.dart';
+import '../../services/zenziva_service.dart';
 
 enum ViewState { otpInput, usernameInput, authenticated }
 
@@ -90,6 +91,12 @@ class OTPViewModel extends ChangeNotifier {
           otpCode: _generatedOtpCode!,
         );
 
+        // Send WhatsApp OTP via Zenziva (Disabled to save costs)
+        // final whatsappSent = await ZenzivaService.sendOtpWhatsapp(
+        //   phoneNumber: phoneNumber,
+        //   otpCode: _generatedOtpCode!,
+        // );
+
         if (smsSent) {
           _errorMessage = '';
         } else {
@@ -142,7 +149,9 @@ class OTPViewModel extends ChangeNotifier {
       if (isValid) {
         _otpModel = _otpModel?.copyWith(otpCode: code);
 
-        final existingUser = await SupabaseService.getUserByPhone(_otpModel!.phoneNumber);
+        final existingUser = await SupabaseService.getUserByPhone(
+          _otpModel!.phoneNumber,
+        );
         if (existingUser != null) {
           this.userId = existingUser.userId;
           _otpModel = _otpModel?.copyWith(username: existingUser.username);
