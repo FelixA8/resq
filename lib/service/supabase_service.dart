@@ -169,16 +169,7 @@ class SupabaseService {
       return false;
     }
   }
-
-  /// Upsert emergency contact (insert or update)
-  /// We use user_id and contact_name as the unique constraint if possible,
-  /// but since the table definition in the prompt image shows (user_id, contact_name, phone_number)
-  /// and no explicit unique constraint on (user_id, contact_name), we might rely on the logic
-  /// that we will delete and re-insert or try to update based on user_id and contact_name.
-  /// However, standard upsert requires a unique constraint.
-  /// Given the schema: contacts(user_id, contact_name, phone_number)
-  /// We will try to delete the existing contact with that name for that user first, then insert.
-  /// This is a safe way to "upsert" without a unique index on (user_id, contact_name).
+  
   static Future<bool> upsertContact(Contact contact) async {
     try {
       // Delete existing contact with same name for this user
@@ -193,6 +184,21 @@ class SupabaseService {
       return true;
     } catch (e) {
       developer.log('Error upserting contact: $e');
+      return false;
+    }
+  }
+
+  /// Delete emergency contact
+  static Future<bool> deleteContact(String userId, String contactName) async {
+    try {
+      await _client
+          .from('contacts')
+          .delete()
+          .eq('user_id', userId)
+          .eq('contact_name', contactName);
+      return true;
+    } catch (e) {
+      developer.log('Error deleting contact: $e');
       return false;
     }
   }

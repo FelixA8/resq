@@ -65,22 +65,12 @@ class SettingsViewModel extends ChangeNotifier {
     final contactName = 'Contact ${index + 1}';
     
     if (number == null || number.isEmpty) {
-       // If number is null/empty, we might want to delete it? 
-       // For now, let's just update it to null or handle deletion if needed.
-       // The current UI logic seems to just set it.
-       // If we want to "delete", we can use the same upsert logic or a delete method.
-       // But the UI sends a valid number or null.
-       // If it's null, we probably want to delete the contact entry.
-       // Let's assume we delete if null.
-       // But wait, upsertContact deletes then inserts. If we pass null phone, it might be weird.
-       // Actually, let's just not support "deleting" via null in this simple pass unless requested.
-       // But the UI allows clearing? The UI code shows: phoneNumbers[index] = newNumber.isEmpty ? null : newNumber;
-       // So yes, it can be null.
-       
-       // If it is null, we should delete the contact from DB.
-       // We need a deleteContact method or just use upsert with null? 
-       // The Contact model allows null phoneNumber.
-       // Let's stick to upserting with null or the new number.
+      final success = await SupabaseService.deleteContact(user!.userId, contactName);
+      if (success) {
+        contactNumbers[index] = null;
+        notifyListeners();
+      }
+      return;
     }
 
     final contact = Contact(
