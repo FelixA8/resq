@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:resqapp/theme/theme_app.dart';
+import '../SettingsViewModel.dart';
 
 class EmergencyContactsSection extends StatefulWidget {
   const EmergencyContactsSection({Key? key}) : super(key: key);
@@ -11,11 +13,6 @@ class EmergencyContactsSection extends StatefulWidget {
 
 class _EmergencyContactsSectionState extends State<EmergencyContactsSection> {
   final theme = ResQTheme();
-  final List<String?> phoneNumbers = [
-    '+62 83789237758',
-    null,
-    null,
-  ];
   final List<bool> isEditing = [false, false, false];
   final List<TextEditingController> controllers = [
     TextEditingController(),
@@ -41,6 +38,9 @@ class _EmergencyContactsSectionState extends State<EmergencyContactsSection> {
 
   @override
   Widget build(BuildContext context) {
+    final viewModel = Provider.of<SettingsViewModel>(context);
+    final phoneNumbers = viewModel.contactNumbers;
+    
     final phoneIcons = [
       'assets/images/icons/phone-one.png',
       'assets/images/icons/phone-two.png',
@@ -195,8 +195,8 @@ class _EmergencyContactsSectionState extends State<EmergencyContactsSection> {
                                   ),
                                 );
                                 if (result == true) {
+                                  await viewModel.updateContact(index, newNumber.isEmpty ? null : newNumber);
                                   setState(() {
-                                    phoneNumbers[index] = newNumber.isEmpty ? null : newNumber;
                                     isEditing[index] = false;
                                   });
                                 } else {
