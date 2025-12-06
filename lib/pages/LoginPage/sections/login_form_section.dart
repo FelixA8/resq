@@ -13,7 +13,7 @@ class LoginFormSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final viewModel = Provider.of<LoginPageViewModel>(context);
     const theme = ResQTheme();
-    
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: theme.padding.lm),
       child: Column(
@@ -102,8 +102,8 @@ class LoginFormSection extends StatelessWidget {
           const SizedBox(height: 28),
           SizedBox(
             child: ConfirmationButton(
-              onPressed: () => viewModel.handleSendOTP(context),
-              isEnabled: true, // Set to true or use your logic
+              onPressed: () => viewModel.navigateToOTPPage(context),
+              isEnabled: true,
               text: 'Kirim OTP',
             ),
           ),

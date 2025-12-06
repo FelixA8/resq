@@ -10,7 +10,7 @@ class LoginPageViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void handleSendOTP(BuildContext context) {
+  void navigateToOTPPage(BuildContext context) {
     if (phoneController.text.isNotEmpty) {
       Navigator.pushNamed(
         context,

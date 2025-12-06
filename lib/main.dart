@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:developer' as developer;
 
-import 'package:resqapp/pages/responseLoginPage/response_login_page_view.dart';
 import 'package:resqapp/pages/settings/SettingsView.dart';
 import 'package:resqapp/pages/otpPage/otp_view.dart';
 import 'package:resqapp/pages/userMap/user_map_view.dart';
@@ -59,10 +58,6 @@ class MyApp extends StatelessWidget {
           },
         ),
         GetPage(name: '/usermapview', page: () => UserMapView()),
-        GetPage(
-          name: '/responseLogin',
-          page: () => const ResponseLoginPageView(),
-        ),
       ],
 
       //Old Routing Method
@@ -76,7 +71,6 @@ class MyApp extends StatelessWidget {
         '/usermapview': (context) {
           return UserMapView();
         },
-        '/responseLogin': (context) => const ResponseLoginPageView(),
         '/settings': (context) => const SettingsView(),
       },
     );
