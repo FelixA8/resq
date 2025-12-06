@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -29,16 +31,20 @@ class OTPInputBox extends StatelessWidget {
         focusNode: focusNode,
         autofocus: autoFocus,
         textAlign: TextAlign.center,
-        keyboardType: TextInputType.number,
+        keyboardType:
+            Platform.isIOS
+                ? const TextInputType.numberWithOptions(
+                  signed: true,
+                  decimal: true,
+                )
+                : TextInputType.number,
         maxLength: 1,
         style: const TextStyle(fontSize: 24),
         decoration: const InputDecoration(
           counterText: '',
           border: InputBorder.none,
         ),
-        inputFormatters: [
-          FilteringTextInputFormatter.digitsOnly,
-        ],
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
         onChanged: (value) {
           if (value.length == 1) {
             onChanged(value);

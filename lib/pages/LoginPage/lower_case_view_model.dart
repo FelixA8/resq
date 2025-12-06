@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 class LoginPageViewModel extends ChangeNotifier {
   final TextEditingController phoneController = TextEditingController();
   bool isResponseTeam = false;
+  final FocusNode phoneFocus = FocusNode();
 
   void toggleResponseTeam() {
     isResponseTeam = !isResponseTeam;
@@ -32,6 +33,7 @@ class LoginPageViewModel extends ChangeNotifier {
   @override
   void dispose() {
     phoneController.dispose();
+    phoneFocus.dispose();
     super.dispose();
   }
 }

@@ -100,7 +100,7 @@ class ResponseTeamDashboardView
                                 ),
                                 TextButton(
                                   onPressed:
-                                      () => Navigator.of(context).pop(true),
+                                      () => controller.logout(),
                                   child: Text('Konfirmasi'),
                                 ),
                               ],

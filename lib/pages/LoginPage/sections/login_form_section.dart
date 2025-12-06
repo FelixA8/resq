@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:resqapp/pages/loginPage/lower_case_view_model.dart';
@@ -60,7 +62,15 @@ class LoginFormSection extends StatelessWidget {
                   child: Center(
                     child: TextField(
                       controller: viewModel.phoneController,
-                      keyboardType: TextInputType.phone,
+                      keyboardType:
+                          Platform.isIOS
+                              ? const TextInputType.numberWithOptions(
+                                signed: true,
+                                decimal: true,
+                              )
+                              : TextInputType.number,
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => FocusScope.of(context).unfocus(),
                       style: TextStyle(
                         fontFamily: 'SF Pro',
                         fontWeight: FontWeight.w500,
