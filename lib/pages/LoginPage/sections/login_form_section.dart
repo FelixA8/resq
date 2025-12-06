@@ -13,6 +13,7 @@ class LoginFormSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final viewModel = Provider.of<LoginPageViewModel>(context);
     const theme = ResQTheme();
+    
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: theme.padding.lm),
       child: Column(

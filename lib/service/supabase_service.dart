@@ -429,6 +429,7 @@ class SupabaseService {
       final response = await _client
           .from('sos_events')
           .select()
+          .eq('is_current', true)
           .order('pressed_at', ascending: false)
           .range(offset, offset + limit - 1);
 
