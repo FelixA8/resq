@@ -183,12 +183,12 @@ class UserMapView extends GetView<UserMapViewModel> {
                         userAgentPackageName: 'com.example.disaster_map',
                         maxZoom: 19,
                       ),
-                      // Route Layer
+                      // Route Layer - Shows remaining route
                       PolylineLayer(
                         polylines: [
-                          if (controller.routePoints.isNotEmpty)
+                          if (controller.remainingRoutePoints.isNotEmpty)
                             Polyline(
-                              points: controller.routePoints.toList(),
+                              points: controller.remainingRoutePoints.toList(),
                               color: Colors.blue,
                               strokeWidth: 5.0,
                               borderColor: Colors.blue.withOpacity(0.3),

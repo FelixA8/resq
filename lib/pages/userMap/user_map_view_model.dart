@@ -751,13 +751,24 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
       _currentStepIndex = i;
       distanceToNextTurn.value = distanceToStep * 1000; // Convert km to meters
       
-      // Set turn type based on maneuver modifier
+      // Set turn type based on maneuver type and modifier
+      final maneuverType = step.maneuverType.toLowerCase();
       final modifier = step.maneuverModifier?.toLowerCase() ?? '';
-      if (modifier.contains('left')) {
+      
+      // Handle U-turns specifically
+      if (modifier == 'uturn' || maneuverType == 'uturn') {
+        turnType.value = 'uturn';
+      }
+      // Handle roundabouts
+      else if (maneuverType.contains('roundabout') || maneuverType == 'rotary') {
+        turnType.value = 'roundabout';
+      }
+      // Handle regular turns
+      else if (modifier.contains('left')) {
         turnType.value = 'left';
       } else if (modifier.contains('right')) {
         turnType.value = 'right';
-      } else if (modifier.contains('straight') || modifier.contains('uturn')) {
+      } else if (modifier.contains('straight') || maneuverType == 'continue') {
         turnType.value = 'straight';
       } else {
         turnType.value = 'straight'; // Default
@@ -765,7 +776,7 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
       
       // Format instruction text
       final distanceText = _formatDistance(distanceToStep * 1000);
-      final direction = _getDirectionText(modifier);
+      final direction = _getDirectionText(maneuverType, modifier);
       currentInstruction.value = '$distanceText $direction';
       
       break;
@@ -780,15 +791,38 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
     }
   }
 
-  String _getDirectionText(String modifier) {
-    if (modifier.contains('left')) {
+  String _getDirectionText(String maneuverType, String modifier) {
+    // Handle U-turns first
+    if (modifier == 'uturn' || maneuverType == 'uturn') {
+      return 'putar balik';
+    }
+    
+    // Handle roundabouts
+    if (maneuverType.contains('roundabout') || maneuverType == 'rotary') {
+      if (modifier.contains('left')) {
+        return 'keluar bundaran ke kiri';
+      } else if (modifier.contains('right')) {
+        return 'keluar bundaran ke kanan';
+      } else {
+        return 'masuk bundaran';
+      }
+    }
+    
+    // Handle regular turns
+    if (modifier.contains('slight left')) {
+      return 'belok kiri sedikit';
+    } else if (modifier.contains('sharp left')) {
+      return 'belok kiri tajam';
+    } else if (modifier.contains('left')) {
       return 'belok kiri';
+    } else if (modifier.contains('slight right')) {
+      return 'belok kanan sedikit';
+    } else if (modifier.contains('sharp right')) {
+      return 'belok kanan tajam';
     } else if (modifier.contains('right')) {
       return 'belok kanan';
-    } else if (modifier.contains('straight')) {
+    } else if (modifier.contains('straight') || maneuverType == 'continue') {
       return 'lurus';
-    } else if (modifier.contains('uturn')) {
-      return 'putar balik';
     } else {
       return 'lanjutkan';
     }
