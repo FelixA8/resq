@@ -734,8 +734,11 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
     if (nearestIndex != currentRouteSegment.value) {
       currentRouteSegment.value = nearestIndex;
       
-      // Update remaining route points (from current position to end)
-      if (nearestIndex < routePoints.length) {
+      // If user is at or past the last point, clear the remaining route
+      if (nearestIndex >= routePoints.length - 1) {
+        remainingRoutePoints.clear();
+      } else {
+        // Update remaining route points (from current position to end)
         remainingRoutePoints.value = routePoints.sublist(nearestIndex);
       }
     }

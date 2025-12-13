@@ -190,6 +190,12 @@ class NavigationBanner extends StatelessWidget {
       case 'straight':
         iconData = Icons.arrow_upward;
         break;
+      case 'uturn':
+        iconData = Icons.u_turn_left;
+        break;
+      case 'roundabout':
+        iconData = Icons.roundabout_left;
+        break;
       default:
         iconData = Icons.navigation;
     }

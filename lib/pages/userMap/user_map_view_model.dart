@@ -27,32 +27,34 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
 
   late final AnimatedMapController mapController;
   final Map<String, String> _disasterAddressCache = {};
-  
-  final Rx<LatLng> currentLocation = LatLng(-6.2088, 106.8456).obs; 
+
+  final Rx<LatLng> currentLocation = LatLng(-6.2088, 106.8456).obs;
   final RxBool isLoading = false.obs;
   final RxBool hasLocationPermission = false.obs;
-  
+
   final RxList<Disaster> _disasterPointsData = <Disaster>[].obs;
   final RxList<LatLng> disasterPoints = <LatLng>[].obs;
-  
+
   final RxList<EvacuationPoint> _evacuationPointsData = <EvacuationPoint>[].obs;
   final RxList<LatLng> evacuationPoints = <LatLng>[].obs;
-  
-  final Rx<SOSWaitingViewModel?> _sosWaitingViewModel = Rx<SOSWaitingViewModel?>(null);
+
+  final Rx<SOSWaitingViewModel?> _sosWaitingViewModel =
+      Rx<SOSWaitingViewModel?>(null);
   final RxBool _isSOSActive = false.obs;
   final Rx<SosEvent?> _activeSosEvent = Rx<SosEvent?>(null);
 
   final RxList<LatLng> routePoints = <LatLng>[].obs;
   final RxBool isRouteLoading = false.obs;
-  final Rx<EvacuationPoint?> _currentNavigatingEvacuationPoint = Rx<EvacuationPoint?>(null);
-  
+  final Rx<EvacuationPoint?> _currentNavigatingEvacuationPoint =
+      Rx<EvacuationPoint?>(null);
+
   static const String _kSavedEvacuationId = 'saved_evacuation_point_id';
 
   // User location address
   final RxString currentAddress = 'Loading...'.obs;
 
   StreamSubscription<Position>? _positionStreamSubscription;
-  
+
   bool get isSOSActive => _isSOSActive.value;
   SOSWaitingViewModel? get sosWaitingViewModel => _sosWaitingViewModel.value;
   SosEvent? get activeSosEvent => _activeSosEvent.value;
@@ -68,17 +70,17 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
   final Rx<LatLng?> navigationDestination = Rx<LatLng?>(null);
   final RxInt currentRouteSegment = 0.obs;
   final RxList<LatLng> remainingRoutePoints = <LatLng>[].obs;
-  
+
   // Navigation Instructions
   final RxString currentInstruction = ''.obs;
   final RxDouble distanceToNextTurn = 0.0.obs;
   final RxString turnType = ''.obs; // 'left', 'right', 'straight', etc.
   List<RouteStep> _routeSteps = [];
   int _currentStepIndex = 0;
-  
+
   // Arrival State
   final RxBool hasArrived = false.obs;
-  
+
   Timer? _idleTimer;
   Timer? _arrivalCheckTimer;
   bool _hasShownArrivalNotification = false;
@@ -130,10 +132,10 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
     try {
       final prefs = await SharedPreferences.getInstance();
       final savedId = prefs.getString(_kSavedEvacuationId);
-      
+
       if (savedId != null) {
         final point = await SupabaseService.getEvacuationPointById(savedId);
-        
+
         if (point != null) {
           showRouteToEvacuationPoint(point, saveState: false);
         } else {
@@ -152,14 +154,15 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
 
   void _startLocationStream() {
     const LocationSettings locationSettings = LocationSettings(
-      accuracy: LocationAccuracy.high,
-      distanceFilter: 10,
+      accuracy: LocationAccuracy.bestForNavigation,
+      distanceFilter: 0,
     );
 
-    _positionStreamSubscription = Geolocator.getPositionStream(locationSettings: locationSettings)
-        .listen((Position position) {
+    _positionStreamSubscription = Geolocator.getPositionStream(
+      locationSettings: locationSettings,
+    ).listen((Position position) {
       final newLocation = LatLng(position.latitude, position.longitude);
-      
+
       // Update heading/bearing for arrow rotation
       if (_lastLocation != null && isNavigating.value) {
         final heading = _calculateHeading(_lastLocation!, newLocation);
@@ -171,16 +174,16 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
       _lastLocation = newLocation;
       currentLocation.value = newLocation;
       _updateAddress(newLocation);
-      
+
       if (isNavigating.value) {
         _updateNavigationState(newLocation);
-        
+
         // Auto-center if enabled
         if (isMapCentering.value) {
           _centerOnUserLocation(animate: true);
         }
       }
-      
+
       _checkAndReroute(newLocation);
     });
   }
@@ -197,7 +200,7 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
       if (sosEvent != null) {
         _activeSosEvent.value = sosEvent;
         _isSOSActive.value = true;
-        
+
         if (_sosWaitingViewModel.value == null) {
           _sosWaitingViewModel.value = SOSWaitingViewModel(
             pressedAtMillis: sosEvent.pressedAt,
@@ -210,13 +213,18 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
   }
 
   void _updateDisasterPointsDisplay() {
-    final validDisasters = _disasterPointsData
-        .where((disaster) => disaster.centerLat != null && disaster.centerLng != null)
-        .toList();
-    
-    disasterPoints.value = validDisasters
-        .map((disaster) => LatLng(disaster.centerLat!, disaster.centerLng!))
-        .toList();
+    final validDisasters =
+        _disasterPointsData
+            .where(
+              (disaster) =>
+                  disaster.centerLat != null && disaster.centerLng != null,
+            )
+            .toList();
+
+    disasterPoints.value =
+        validDisasters
+            .map((disaster) => LatLng(disaster.centerLat!, disaster.centerLng!))
+            .toList();
   }
 
   Future<void> _loadDisasterPoints() async {
@@ -231,10 +239,11 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
   }
 
   void _updateEvacuationPointsDisplay() {
-    evacuationPoints.value = _evacuationPointsData
-        .where((point) => point.hasLocation())
-        .map((point) => LatLng(point.locationLat!, point.locationLng!))
-        .toList();
+    evacuationPoints.value =
+        _evacuationPointsData
+            .where((point) => point.hasLocation())
+            .map((point) => LatLng(point.locationLat!, point.locationLng!))
+            .toList();
   }
 
   Future<void> _loadEvacuationPoints() async {
@@ -251,17 +260,18 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
   void _subscribeToEvacuationPoints() {
     try {
       final supabaseClient = Supabase.instance.client;
-      _evacuationPointsSubscription = supabaseClient
-          .channel('evacuation_points_changes_user')
-          .onPostgresChanges(
-            event: PostgresChangeEvent.all,
-            schema: 'public',
-            table: 'evacuation_points',
-            callback: (payload) {
-              _handleEvacuationPointChange(payload);
-            },
-          )
-          .subscribe();
+      _evacuationPointsSubscription =
+          supabaseClient
+              .channel('evacuation_points_changes_user')
+              .onPostgresChanges(
+                event: PostgresChangeEvent.all,
+                schema: 'public',
+                table: 'evacuation_points',
+                callback: (payload) {
+                  _handleEvacuationPointChange(payload);
+                },
+              )
+              .subscribe();
     } catch (e) {
       developer.log('Error setting up realtime subscription: $e');
     }
@@ -270,17 +280,18 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
   void _subscribeToDisasters() {
     try {
       final supabaseClient = Supabase.instance.client;
-      _disastersSubscription = supabaseClient
-          .channel('disasters_changes_user')
-          .onPostgresChanges(
-            event: PostgresChangeEvent.all,
-            schema: 'public',
-            table: 'disasters',
-            callback: (payload) {
-              _handleDisasterChange(payload);
-            },
-          )
-          .subscribe();
+      _disastersSubscription =
+          supabaseClient
+              .channel('disasters_changes_user')
+              .onPostgresChanges(
+                event: PostgresChangeEvent.all,
+                schema: 'public',
+                table: 'disasters',
+                callback: (payload) {
+                  _handleDisasterChange(payload);
+                },
+              )
+              .subscribe();
     } catch (e) {
       developer.log('Error setting up disaster realtime subscription: $e');
     }
@@ -309,7 +320,9 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
     try {
       final point = EvacuationPoint.fromJson(record);
       if (point.evacuationId != null) {
-        final exists = _evacuationPointsData.any((p) => p.evacuationId == point.evacuationId);
+        final exists = _evacuationPointsData.any(
+          (p) => p.evacuationId == point.evacuationId,
+        );
         if (!exists) {
           _evacuationPointsData.add(point);
           _updateEvacuationPointsDisplay();
@@ -320,11 +333,16 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
     }
   }
 
-  void _handleEvacuationPointUpdate(Map<String, dynamic> oldRecord, Map<String, dynamic> newRecord) {
+  void _handleEvacuationPointUpdate(
+    Map<String, dynamic> oldRecord,
+    Map<String, dynamic> newRecord,
+  ) {
     try {
       final newPoint = EvacuationPoint.fromJson(newRecord);
       if (newPoint.evacuationId != null) {
-        final index = _evacuationPointsData.indexWhere((p) => p.evacuationId == newPoint.evacuationId);
+        final index = _evacuationPointsData.indexWhere(
+          (p) => p.evacuationId == newPoint.evacuationId,
+        );
         if (index != -1) {
           _evacuationPointsData[index] = newPoint;
           _updateEvacuationPointsDisplay();
@@ -342,7 +360,9 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
     try {
       final point = EvacuationPoint.fromJson(record);
       if (point.evacuationId != null) {
-        _evacuationPointsData.removeWhere((p) => p.evacuationId == point.evacuationId);
+        _evacuationPointsData.removeWhere(
+          (p) => p.evacuationId == point.evacuationId,
+        );
         _updateEvacuationPointsDisplay();
       }
     } catch (e) {
@@ -372,9 +392,13 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
   bool _isDisasterFromToday(Disaster disaster) {
     if (disaster.occurredAt == null) return false;
     try {
-      final disasterDate = DateTime.fromMillisecondsSinceEpoch(disaster.occurredAt!.toInt()*1000);
+      final disasterDate = DateTime.fromMillisecondsSinceEpoch(
+        disaster.occurredAt!.toInt() * 1000,
+      );
       final now = DateTime.now();
-      return disasterDate.year == now.year && disasterDate.month == now.month && disasterDate.day == now.day;
+      return disasterDate.year == now.year &&
+          disasterDate.month == now.month &&
+          disasterDate.day == now.day;
     } catch (e) {
       return false;
     }
@@ -385,7 +409,9 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
       final disaster = Disaster.fromJson(record);
       if (disaster.disasterId != null) {
         if (!_isDisasterFromToday(disaster)) return;
-        final exists = _disasterPointsData.any((d) => d.disasterId == disaster.disasterId);
+        final exists = _disasterPointsData.any(
+          (d) => d.disasterId == disaster.disasterId,
+        );
         if (!exists) {
           _disasterPointsData.add(disaster);
           _updateDisasterPointsDisplay();
@@ -396,19 +422,26 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
     }
   }
 
-  void _handleDisasterUpdate(Map<String, dynamic> oldRecord, Map<String, dynamic> newRecord) {
+  void _handleDisasterUpdate(
+    Map<String, dynamic> oldRecord,
+    Map<String, dynamic> newRecord,
+  ) {
     try {
       final newDisaster = Disaster.fromJson(newRecord);
       if (newDisaster.disasterId != null) {
         if (!_isDisasterFromToday(newDisaster)) {
-          final index = _disasterPointsData.indexWhere((d) => d.disasterId == newDisaster.disasterId);
+          final index = _disasterPointsData.indexWhere(
+            (d) => d.disasterId == newDisaster.disasterId,
+          );
           if (index != -1) {
             _disasterPointsData.removeAt(index);
             _updateDisasterPointsDisplay();
           }
           return;
         }
-        final index = _disasterPointsData.indexWhere((d) => d.disasterId == newDisaster.disasterId);
+        final index = _disasterPointsData.indexWhere(
+          (d) => d.disasterId == newDisaster.disasterId,
+        );
         if (index != -1) {
           _disasterPointsData[index] = newDisaster;
           _updateDisasterPointsDisplay();
@@ -426,7 +459,9 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
     try {
       final disaster = Disaster.fromJson(record);
       if (disaster.disasterId != null) {
-        _disasterPointsData.removeWhere((d) => d.disasterId == disaster.disasterId);
+        _disasterPointsData.removeWhere(
+          (d) => d.disasterId == disaster.disasterId,
+        );
         _updateDisasterPointsDisplay();
       }
     } catch (e) {
@@ -464,22 +499,25 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks[0];
         String address = '';
-        
+
         // Priority: locality (district) > subLocality (neighborhood) > subAdministrativeArea (city)
         if (place.locality != null && place.locality!.isNotEmpty) {
           address = place.locality!;
         } else if (place.subLocality != null && place.subLocality!.isNotEmpty) {
           address = place.subLocality!;
-        } else if (place.subAdministrativeArea != null && place.subAdministrativeArea!.isNotEmpty) {
+        } else if (place.subAdministrativeArea != null &&
+            place.subAdministrativeArea!.isNotEmpty) {
           address = place.subAdministrativeArea!;
         }
-        
+
         if (address.isEmpty) {
           address = 'Unknown Location';
         }
 
         currentAddress.value = address;
-        developer.log('User Location: ${place.street}, ${place.subLocality}, ${place.locality}, ${place.subAdministrativeArea}, ${place.administrativeArea}');
+        developer.log(
+          'User Location: ${place.street}, ${place.subLocality}, ${place.locality}, ${place.subAdministrativeArea}, ${place.administrativeArea}',
+        );
       }
     } catch (e) {
       developer.log('Error getting address: $e');
@@ -501,7 +539,10 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
   }
 
   EvacuationPoint? findEvacuationPointByLocation(LatLng location) {
-    return MapHelper.findEvacuationPointByLocation(_evacuationPointsData, location);
+    return MapHelper.findEvacuationPointByLocation(
+      _evacuationPointsData,
+      location,
+    );
   }
 
   Future<String> fetchDisasterAddress(Disaster disaster) {
@@ -513,13 +554,20 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
     );
   }
 
-  String formatDisasterDate(double? timestamp) => MapHelper.formatDisasterDate(timestamp);
-  String formatDisasterMagnitude(double? magnitude) => MapHelper.formatMagnitude(magnitude);
-  String getTsunamiPotential(double? magnitude) => MapHelper.getTsunamiPotential(magnitude);
+  String formatDisasterDate(double? timestamp) =>
+      MapHelper.formatDisasterDate(timestamp);
+  String formatDisasterMagnitude(double? magnitude) =>
+      MapHelper.formatMagnitude(magnitude);
+  String getTsunamiPotential(double? magnitude) =>
+      MapHelper.getTsunamiPotential(magnitude);
   String formatDisasterDepth(String? depth) => MapHelper.formatDepth(depth);
-  Future<void> openDisasterShakeMap(Disaster disaster) => MapHelper.launchShakeMap(disaster.shakemap);
+  Future<void> openDisasterShakeMap(Disaster disaster) =>
+      MapHelper.launchShakeMap(disaster.shakemap);
 
-  Future<void> showRouteToEvacuationPoint(EvacuationPoint point, {bool saveState = true}) async {
+  Future<void> showRouteToEvacuationPoint(
+    EvacuationPoint point, {
+    bool saveState = true,
+  }) async {
     if (!point.hasLocation()) {
       Get.snackbar("Error", "Lokasi Poin Evakuasi tidak valid");
       return;
@@ -546,12 +594,12 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
       if (routeData != null && routeData.polyline.isNotEmpty) {
         routePoints.value = routeData.polyline;
         remainingRoutePoints.value = routeData.polyline;
-        
+
         // Store route steps for navigation instructions
         _routeSteps = routeData.steps;
         _currentStepIndex = 0;
         _updateNavigationInstructions();
-        
+
         // Initialize navigation state
         isNavigating.value = true;
         navigationDestination.value = end;
@@ -563,9 +611,9 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
           currentLocation.value,
           navigationDestination.value!,
         );
-        
+
         distanceToDestination.value = distance;
-        
+
         // Center on user location with animation
         _centerOnUserLocation(animate: true);
       } else {
@@ -582,7 +630,7 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
     routePoints.clear();
     remainingRoutePoints.clear();
     _currentNavigatingEvacuationPoint.value = null;
-    
+
     isNavigating.value = false;
     isMapCentering.value = true;
     navigationDestination.value = null;
@@ -591,13 +639,13 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
     currentHeading.value = 0.0;
     _hasShownArrivalNotification = false;
     hasArrived.value = false;
-    
+
     currentInstruction.value = '';
     distanceToNextTurn.value = 0.0;
     turnType.value = '';
     _routeSteps = [];
     _currentStepIndex = 0;
-    
+
     _idleTimer?.cancel();
     _arrivalCheckTimer?.cancel();
   }
@@ -605,12 +653,13 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
   Future<void> cancelEvacuationRoute() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_kSavedEvacuationId);
-    
+
     clearRoute();
   }
 
   bool isCurrentlyNavigatingToEvacuationPoint(EvacuationPoint point) {
-    return _currentNavigatingEvacuationPoint.value?.evacuationId == point.evacuationId;
+    return _currentNavigatingEvacuationPoint.value?.evacuationId ==
+        point.evacuationId;
   }
 
   double calculateDistanceToEvacuationPoint(EvacuationPoint point) {
@@ -622,20 +671,25 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
   }
 
   void _checkAndReroute(LatLng userLocation) {
-    if (_currentNavigatingEvacuationPoint.value == null || routePoints.isEmpty || isRouteLoading.value) {
+    if (_currentNavigatingEvacuationPoint.value == null ||
+        routePoints.isEmpty ||
+        isRouteLoading.value) {
       return;
     }
 
     bool isOffRoute = MapHelper.isUserOffRoute(
       userLocation,
       routePoints,
-      thresholdMeters: 50
+      thresholdMeters: 50,
     );
 
     if (isOffRoute) {
       final dest = _currentNavigatingEvacuationPoint.value!;
       if (dest.hasLocation()) {
-        _silentReroute(userLocation, LatLng(dest.locationLat!, dest.locationLng!));
+        _silentReroute(
+          userLocation,
+          LatLng(dest.locationLat!, dest.locationLng!),
+        );
       }
     }
   }
@@ -645,14 +699,14 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
     if (routeData != null && routeData.polyline.isNotEmpty) {
       routePoints.value = routeData.polyline;
       remainingRoutePoints.value = routeData.polyline;
-      
+
       _routeSteps = routeData.steps;
       _currentStepIndex = 0;
-      
+
       currentRouteSegment.value = 0;
-      
+
       navigationDestination.value = end;
-      
+
       _updateNavigationInstructions();
     }
   }
@@ -663,7 +717,8 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
     final dLon = (to.longitude - from.longitude) * math.pi / 180;
 
     final y = math.sin(dLon) * math.cos(lat2);
-    final x = math.cos(lat1) * math.sin(lat2) -
+    final x =
+        math.cos(lat1) * math.sin(lat2) -
         math.sin(lat1) * math.cos(lat2) * math.cos(dLon);
 
     final bearing = math.atan2(y, x) * 180 / math.pi;
@@ -672,7 +727,7 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
 
   void _updateNavigationState(LatLng userLocation) {
     if (navigationDestination.value == null) {
-      if (_currentNavigatingEvacuationPoint.value != null && 
+      if (_currentNavigatingEvacuationPoint.value != null &&
           _currentNavigatingEvacuationPoint.value!.hasLocation()) {
         navigationDestination.value = LatLng(
           _currentNavigatingEvacuationPoint.value!.locationLat!,
@@ -687,7 +742,7 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
       userLocation,
       navigationDestination.value!,
     );
-    
+
     distanceToDestination.value = distance;
 
     _updateRouteProgress(userLocation);
@@ -717,9 +772,12 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
     // Update current segment and remaining route
     if (nearestIndex != currentRouteSegment.value) {
       currentRouteSegment.value = nearestIndex;
-      
-      // Update remaining route points (from current position to end)
-      if (nearestIndex < routePoints.length) {
+
+      // If user is at or past the last point, clear the remaining route
+      if (nearestIndex >= routePoints.length - 1) {
+        remainingRoutePoints.clear();
+      } else {
+        // Update remaining route points (from current position to end)
         remainingRoutePoints.value = routePoints.sublist(nearestIndex);
       }
     }
@@ -736,7 +794,8 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
     // Find the next step based on current location
     for (int i = _currentStepIndex; i < _routeSteps.length; i++) {
       final step = _routeSteps[i];
-      final distanceToStep = distance_calc.GeoDistanceCalculator.calculateDistance(
+      final distanceToStep = distance_calc
+          .GeoDistanceCalculator.calculateDistance(
         currentLocation.value,
         step.location,
       );
@@ -750,17 +809,18 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
       // This is our current step
       _currentStepIndex = i;
       distanceToNextTurn.value = distanceToStep * 1000; // Convert km to meters
-      
+
       // Set turn type based on maneuver type and modifier
       final maneuverType = step.maneuverType.toLowerCase();
       final modifier = step.maneuverModifier?.toLowerCase() ?? '';
-      
+
       // Handle U-turns specifically
       if (modifier == 'uturn' || maneuverType == 'uturn') {
         turnType.value = 'uturn';
       }
       // Handle roundabouts
-      else if (maneuverType.contains('roundabout') || maneuverType == 'rotary') {
+      else if (maneuverType.contains('roundabout') ||
+          maneuverType == 'rotary') {
         turnType.value = 'roundabout';
       }
       // Handle regular turns
@@ -773,12 +833,12 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
       } else {
         turnType.value = 'straight'; // Default
       }
-      
+
       // Format instruction text
       final distanceText = _formatDistance(distanceToStep * 1000);
       final direction = _getDirectionText(maneuverType, modifier);
       currentInstruction.value = '$distanceText $direction';
-      
+
       break;
     }
   }
@@ -796,7 +856,7 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
     if (modifier == 'uturn' || maneuverType == 'uturn') {
       return 'putar balik';
     }
-    
+
     // Handle roundabouts
     if (maneuverType.contains('roundabout') || maneuverType == 'rotary') {
       if (modifier.contains('left')) {
@@ -807,7 +867,7 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
         return 'masuk bundaran';
       }
     }
-    
+
     // Handle regular turns
     if (modifier.contains('slight left')) {
       return 'belok kiri sedikit';
@@ -830,11 +890,11 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
 
   void _checkArrival(double distanceKm) {
     const double arrivalThresholdKm = 0.10; // 100 meters
-    
+
     // Set arrival state when within 100m radius
     if (distanceKm <= arrivalThresholdKm) {
       hasArrived.value = true;
-      
+
       // Show notification only once
       if (!_hasShownArrivalNotification) {
         _hasShownArrivalNotification = true;
@@ -851,7 +911,7 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
 
   Future<void> completeNavigation() async {
     clearRoute();
-    
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_kSavedEvacuationId);
 
@@ -862,7 +922,7 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
 
   void _centerOnUserLocation({bool animate = true}) {
     if (!isNavigating.value || !isMapCentering.value) return;
-    
+
     mapController.animateTo(
       dest: currentLocation.value,
       zoom: MapAnimationConfig.navigationZoom,
@@ -874,18 +934,19 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
   void onMapMoved() {
     _idleTimer?.cancel();
     if (!isNavigating.value) return;
-    
+
     if (isMapCentering.value) {
       isMapCentering.value = false;
     }
-    
+
     final mapCenter = mapController.mapController.camera.center;
-    
-    final distanceFromUser = distance_calc.GeoDistanceCalculator.calculateDistance(
+
+    final distanceFromUser = distance_calc
+        .GeoDistanceCalculator.calculateDistance(
       mapCenter,
       currentLocation.value,
     );
-    
+
     const double proximityThresholdKm = 2;
 
     if (distanceFromUser < proximityThresholdKm) {
@@ -914,14 +975,14 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
       );
     }
   }
-  
+
   void stopSOS() {
     _isSOSActive.value = false;
     _sosWaitingViewModel.value?.dispose();
     _sosWaitingViewModel.value = null;
     _activeSosEvent.value = null;
   }
-  
+
   void updateActiveSosEvent(SosEvent sosEvent) {
     _activeSosEvent.value = sosEvent;
   }
