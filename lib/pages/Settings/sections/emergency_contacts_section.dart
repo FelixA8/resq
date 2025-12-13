@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -8,7 +10,8 @@ class EmergencyContactsSection extends StatefulWidget {
   const EmergencyContactsSection({Key? key}) : super(key: key);
 
   @override
-  State<EmergencyContactsSection> createState() => _EmergencyContactsSectionState();
+  State<EmergencyContactsSection> createState() =>
+      _EmergencyContactsSectionState();
 }
 
 class _EmergencyContactsSectionState extends State<EmergencyContactsSection> {
@@ -19,11 +22,7 @@ class _EmergencyContactsSectionState extends State<EmergencyContactsSection> {
     TextEditingController(),
     TextEditingController(),
   ];
-  final List<FocusNode> focusNodes = [
-    FocusNode(),
-    FocusNode(),
-    FocusNode(),
-  ];
+  final List<FocusNode> focusNodes = [FocusNode(), FocusNode(), FocusNode()];
 
   @override
   void dispose() {
@@ -40,7 +39,7 @@ class _EmergencyContactsSectionState extends State<EmergencyContactsSection> {
   Widget build(BuildContext context) {
     final viewModel = Provider.of<SettingsViewModel>(context);
     final phoneNumbers = viewModel.contactNumbers;
-    
+
     final phoneIcons = [
       'assets/images/icons/phone-one.png',
       'assets/images/icons/phone-two.png',
@@ -87,12 +86,15 @@ class _EmergencyContactsSectionState extends State<EmergencyContactsSection> {
                   ],
                 ),
                 child: SizedBox(
-                  height: 60, // Consistent height for both states
+                  height: 60,
                   child: Row(
                     children: [
                       if (!isEdit)
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 16,
+                          ),
                           child: Row(
                             children: [
                               Image.asset(
@@ -111,137 +113,197 @@ class _EmergencyContactsSectionState extends State<EmergencyContactsSection> {
                         ),
                       Expanded(
                         child: Padding(
-                          padding: EdgeInsets.only(left: isEdit ? 16 : 2, right: 2),
-                          child: isEdit
-                              ? TextField(
-                                  controller: controllers[index],
-                                  focusNode: focusNodes[index],
-                                  style: TextStyle(
-                                    fontFamily: 'SF Pro',
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 15,
-                                    color: theme.colors.primary, // Use theme primary color
+                          padding: EdgeInsets.only(
+                            left: isEdit ? 16 : 2,
+                            right: 2,
+                          ),
+                          child:
+                              isEdit
+                                  ? TextField(
+                                    controller: controllers[index],
+                                    focusNode: focusNodes[index],
+                                    style: TextStyle(
+                                      fontFamily: 'SF Pro',
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 15,
+                                      color:
+                                          theme
+                                              .colors
+                                              .primary,
+                                    ),
+                                    decoration: InputDecoration(
+                                      border: InputBorder.none,
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.zero,
+                                      hintText:
+                                          '',
+                                    ),
+                                    keyboardType:
+                                        Platform.isIOS
+                                            ? const TextInputType.numberWithOptions(
+                                              signed: true,
+                                              decimal: true,
+                                            )
+                                            : TextInputType.number,
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.digitsOnly,
+                                    ],
+                                    cursorColor:
+                                        theme
+                                            .colors
+                                            .primary,
+                                    onTap: () {
+                                      controllers[index].selection =
+                                          TextSelection.fromPosition(
+                                            TextPosition(
+                                              offset:
+                                                  controllers[index]
+                                                      .text
+                                                      .length,
+                                            ),
+                                          );
+                                    },
+                                  )
+                                  : Text(
+                                    isFilled
+                                        ? phoneNumbers[index]!
+                                        : 'Tambahkan Nomor Telepon',
+                                    style: TextStyle(
+                                      fontFamily: 'SF Pro',
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 15,
+                                      color:
+                                          isFilled
+                                              ? Colors.black
+                                              : Color(0xFF9E9E9E),
+                                    ),
                                   ),
-                                  decoration: InputDecoration(
-                                    border: InputBorder.none,
-                                    isDense: true,
-                                    contentPadding: EdgeInsets.zero,
-                                    hintText: '', // No placeholder when editing
-                                  ),
-                                  keyboardType: TextInputType.phone,
-                                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                                  cursorColor: theme.colors.primary, // Use theme primary color
-                                  onTap: () {
-                                    controllers[index].selection = TextSelection.fromPosition(
-                                      TextPosition(offset: controllers[index].text.length),
-                                    );
-                                  },
-                                )
-                              : Text(
-                                  isFilled ? phoneNumbers[index]! : 'Tambahkan Nomor Telepon',
-                                  style: TextStyle(
-                                    fontFamily: 'SF Pro',
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 15,
-                                    color: isFilled ? Colors.black : Color(0xFF9E9E9E),
-                                  ),
-                                ),
                         ),
                       ),
                       isEdit
                           ? TextButton(
-                              style: TextButton.styleFrom(
-                                backgroundColor: theme.colors.primary, // Use theme primary color
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                padding: EdgeInsets.symmetric(horizontal: 18, vertical: 1),
-                                minimumSize: Size(0, 35),
+                            style: TextButton.styleFrom(
+                              backgroundColor:
+                                  theme
+                                      .colors
+                                      .primary, // Use theme primary color
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
                               ),
-                              onPressed: () async {
-                                String newNumber = controllers[index].text;
-                                bool isValid = newNumber.length >= 10 && newNumber.startsWith('08');
-                                if (!isValid) {
-                                  showDialog(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                      title: Text('Nomor tidak valid'),
-                                      content: Text('Nomor telepon harus dimulai dengan 08 dengan minimal 10 digit.'),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 18,
+                                vertical: 1,
+                              ),
+                              minimumSize: Size(0, 35),
+                            ),
+                            onPressed: () async {
+                              String newNumber = controllers[index].text;
+                              bool isValid =
+                                  newNumber.length >= 10 &&
+                                  newNumber.startsWith('08');
+                              if (!isValid) {
+                                showDialog(
+                                  context: context,
+                                  builder:
+                                      (context) => AlertDialog(
+                                        title: Text('Nomor tidak valid'),
+                                        content: Text(
+                                          'Nomor telepon harus dimulai dengan 08 dengan minimal 10 digit.',
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed:
+                                                () =>
+                                                    Navigator.of(context).pop(),
+                                            child: Text('OK'),
+                                          ),
+                                        ],
+                                      ),
+                                );
+                                return;
+                              }
+                              final result = await showDialog<bool>(
+                                context: context,
+                                builder:
+                                    (context) => AlertDialog(
+                                      title: Text('Konfirmasi Perubahan'),
+                                      content: Text(
+                                        'Simpan nomor telepon baru?',
+                                      ),
                                       actions: [
                                         TextButton(
-                                          onPressed: () => Navigator.of(context).pop(),
-                                          child: Text('OK'),
+                                          onPressed:
+                                              () => Navigator.of(
+                                                context,
+                                              ).pop(false),
+                                          child: Text('Batal'),
+                                        ),
+                                        TextButton(
+                                          onPressed:
+                                              () => Navigator.of(
+                                                context,
+                                              ).pop(true),
+                                          child: Text('Konfirmasi'),
                                         ),
                                       ],
                                     ),
-                                  );
-                                  return;
+                              );
+                              if (result == true) {
+                                await viewModel.updateContact(
+                                  index,
+                                  newNumber.isEmpty ? null : newNumber,
+                                );
+                                setState(() {
+                                  isEditing[index] = false;
+                                });
+                              } else {
+                                setState(() {
+                                  controllers[index].text =
+                                      phoneNumbers[index] ?? '';
+                                  isEditing[index] = false;
+                                });
+                              }
+                            },
+                            child: Text(
+                              'Simpan',
+                              style: TextStyle(
+                                fontFamily: 'SF Pro',
+                                fontWeight: FontWeight.w500,
+                                fontSize: 15,
+                                color: Colors.white,
+                              ),
+                            ),
+                          )
+                          : IconButton(
+                            icon: Image.asset(
+                              'assets/images/icons/edit.png',
+                              width: 22,
+                              height: 22,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                for (int i = 0; i < isEditing.length; i++) {
+                                  isEditing[i] = false;
                                 }
-                                final result = await showDialog<bool>(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    title: Text('Konfirmasi Perubahan'),
-                                    content: Text('Simpan nomor telepon baru?'),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.of(context).pop(false),
-                                        child: Text('Batal'),
-                                      ),
-                                      TextButton(
-                                        onPressed: () => Navigator.of(context).pop(true),
-                                        child: Text('Konfirmasi'),
-                                      ),
-                                    ],
+                                isEditing[index] = true;
+                                if (phoneNumbers[index] == null) {
+                                  controllers[index].text = '';
+                                } else {
+                                  controllers[index].text =
+                                      phoneNumbers[index]!;
+                                }
+                              });
+                              Future.delayed(Duration(milliseconds: 100), () {
+                                focusNodes[index].requestFocus();
+                                controllers[index]
+                                    .selection = TextSelection.fromPosition(
+                                  TextPosition(
+                                    offset: controllers[index].text.length,
                                   ),
                                 );
-                                if (result == true) {
-                                  await viewModel.updateContact(index, newNumber.isEmpty ? null : newNumber);
-                                  setState(() {
-                                    isEditing[index] = false;
-                                  });
-                                } else {
-                                  setState(() {
-                                    controllers[index].text = phoneNumbers[index] ?? '';
-                                    isEditing[index] = false;
-                                  });
-                                }
-                              },
-                              child: Text(
-                                'Simpan',
-                                style: TextStyle(
-                                  fontFamily: 'SF Pro',
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 15,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            )
-                          : IconButton(
-                              icon: Image.asset(
-                                'assets/images/icons/edit.png',
-                                width: 22,
-                                height: 22,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  for (int i = 0; i < isEditing.length; i++) {
-                                    isEditing[i] = false;
-                                  }
-                                  isEditing[index] = true;
-                                  if (phoneNumbers[index] == null) {
-                                    controllers[index].text = '';
-                                  } else {
-                                    controllers[index].text = phoneNumbers[index]!;
-                                  }
-                                });
-                                Future.delayed(Duration(milliseconds: 100), () {
-                                  focusNodes[index].requestFocus();
-                                  controllers[index].selection = TextSelection.fromPosition(
-                                    TextPosition(offset: controllers[index].text.length),
-                                  );
-                                });
-                              },
-                            ),
+                              });
+                            },
+                          ),
                     ],
                   ),
                 ),
