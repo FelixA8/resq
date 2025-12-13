@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:developer' as developer;
 
-import 'package:resqapp/pages/settings/SettingsView.dart';
+import 'package:resqapp/pages/settings/settings_view.dart';
 import 'package:resqapp/pages/otpPage/otp_view.dart';
 import 'package:resqapp/pages/userMap/user_map_view.dart';
 import 'package:resqapp/pages/splash/splash_screen.dart';

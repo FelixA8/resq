@@ -8,7 +8,7 @@ class ConfirmationButtonView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ConfirmationButtonViewModel>(
+    return Consumer<OTPConfirmationButtonViewModel>(
       builder: (context, viewModel, child) {
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 24),
