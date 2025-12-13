@@ -16,6 +16,8 @@ import 'package:resqapp/pages/responseTeam/responseTeamMap/extensions/map_animat
 import 'package:resqapp/service/supabase_service.dart';
 import 'package:resqapp/services/location_helper.dart';
 import 'package:resqapp/services/distance_calculator.dart' as distance_calc;
+import 'package:geocoding/geocoding.dart';
+import 'dart:developer' as developer;
 
 class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStateMixin {
   final String instanceCode;
@@ -27,6 +29,9 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
   final Rx<LatLng> currentLocation = LatLng(-6.2088, 106.8456).obs;
   final RxBool isLoading = false.obs;
   final RxBool hasLocationPermission = false.obs;
+
+  // Response team location address
+  final RxString currentAddress = 'Loading...'.obs;
 
   final RxList<Disaster> _disasterPointsData = <Disaster>[].obs;
   final RxList<LatLng> disasterPoints = <LatLng>[].obs;
@@ -222,6 +227,7 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
         curve: MapAnimationConfig.defaultCurve,
         duration: MapAnimationConfig.initialCenterDuration,
       );
+      _updateAddress(currentLocation.value);
     } catch (_) {
       hasLocationPermission.value = false;
     } finally {
@@ -249,6 +255,43 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
         .map((s) => LatLng(s.locationLat!, s.locationLng!))
         .toList();
   }
+
+  Future<void> _updateAddress(LatLng location) async {
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        location.latitude,
+        location.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks[0];
+        String address = '';
+
+        // Priority: locality (district) > subLocality (neighborhood) > subAdministrativeArea (city)
+        if (place.locality != null && place.locality!.isNotEmpty) {
+          address = place.locality!;
+        } else if (place.subLocality != null && place.subLocality!.isNotEmpty) {
+          address = place.subLocality!;
+        } else if (place.subAdministrativeArea != null &&
+            place.subAdministrativeArea!.isNotEmpty) {
+          address = place.subAdministrativeArea!;
+        }
+
+        if (address.isEmpty) {
+          address = 'Unknown Location';
+        }
+
+        currentAddress.value = address;
+        developer.log(
+          'Response Team Location: ${place.street}, ${place.subLocality}, ${place.locality}, ${place.subAdministrativeArea}, ${place.administrativeArea}',
+        );
+      }
+    } catch (e) {
+      developer.log('Error getting address: $e');
+      currentAddress.value = 'Location Unavailable';
+    }
+  }
+
 
   void _onEvacuationInsert(EvacuationPoint point) {
     if (point.evacuationId == null) return;
@@ -653,6 +696,7 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
 
       _lastLocation = newLocation;
       currentLocation.value = newLocation;
+      _updateAddress(newLocation);
 
       if (isNavigating.value) {
         _updateNavigationState(newLocation);

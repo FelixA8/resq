@@ -50,15 +50,15 @@ class ResponseTeamDashboardView
                   height: 14,
                 ),
                 const SizedBox(width: 2),
-                Text(
-                  'Tangerang Selatan',
+                Obx(() => Text(
+                  controller.currentAddress.value,
                   style: TextStyle(
                     fontFamily: 'SF Pro',
                     fontWeight: FontWeight.w400,
                     fontSize: 13,
                     color: theme.colors.primary,
                   ),
-                ),
+                )),
               ],
             ),
           ],
