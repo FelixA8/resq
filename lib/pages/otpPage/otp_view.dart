@@ -56,7 +56,7 @@ class OTPScreen extends StatelessWidget {
             ChangeNotifierProvider(
               create:
                   (context) =>
-                      ConfirmationButtonViewModel()
+                      OTPConfirmationButtonViewModel()
                         ..setOTPViewModel(otpViewModel),
             ),
           ],

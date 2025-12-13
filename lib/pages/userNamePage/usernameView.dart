@@ -47,7 +47,7 @@ class UsernameScreen extends StatelessWidget {
                 ChangeNotifierProvider(
                   create:
                       (context) =>
-                          ConfirmationButtonViewModel()
+                          UsernameConfirmationButtonViewModel()
                             ..setUsernameViewModel(mainViewModel),
                 ),
               ],

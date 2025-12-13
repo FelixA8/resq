@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:resqapp/pages/userMap/user_map_view.dart';
 import '../../usernameViewModel.dart';
+import 'package:get/get.dart';
 
-class ConfirmationButtonViewModel extends ChangeNotifier {
+class UsernameConfirmationButtonViewModel extends ChangeNotifier {
   bool _isEnabled = false;
   UsernameViewModel? _usernameViewModel;
 
@@ -48,10 +49,6 @@ class ConfirmationButtonViewModel extends ChangeNotifier {
     if (_isEnabled && _usernameViewModel != null) {
       _usernameViewModel!.saveUsername().then((success) {
         if (success && context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Username saved successfully!')),
-          );
-
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(

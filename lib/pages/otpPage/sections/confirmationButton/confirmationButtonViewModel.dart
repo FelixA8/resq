@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:resqapp/pages/userMap/user_map_view.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../otp_view_model.dart';
 
-class ConfirmationButtonViewModel extends ChangeNotifier {
+class OTPConfirmationButtonViewModel extends ChangeNotifier {
   bool _isEnabled = false;
   OTPViewModel? _otpViewModel;
 
@@ -48,20 +48,7 @@ class ConfirmationButtonViewModel extends ChangeNotifier {
   void handleConfirm(BuildContext context) {
     if (_isEnabled && _otpViewModel != null) {
       _otpViewModel!.saveUsername().then((success) async {
-        final prefs = await SharedPreferences.getInstance();
-        bool isSaved = await prefs.setString('userId', _otpViewModel!.userId);
-
-        if (isSaved) {
-          print('✅ userId successfully saved to SharedPreferences: ${_otpViewModel!.userId}');
-        } else {
-          print('❌ Failed to save userId to SharedPreferences.');
-        }
-
         if (success && context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Username saved successfully!')),
-          );
-
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => const UserMapView()),
