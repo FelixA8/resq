@@ -592,9 +592,6 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
       final routeData = await MapHelper.getRouteWithInstructions(start, end);
 
       if (routeData != null && routeData.polyline.isNotEmpty) {
-        routePoints.value = routeData.polyline;
-        remainingRoutePoints.value = routeData.polyline;
-
         // Store route steps for navigation instructions
         _routeSteps = routeData.steps;
         _currentStepIndex = 0;
@@ -613,6 +610,12 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
         );
 
         distanceToDestination.value = distance;
+
+        // Defer route points update to next frame to prevent overlap with current location icon rendering
+        await Future.delayed(const Duration(milliseconds: 100));
+
+        routePoints.value = routeData.polyline;
+        remainingRoutePoints.value = routeData.polyline;
 
         // Center on user location with animation
         _centerOnUserLocation(animate: true);
