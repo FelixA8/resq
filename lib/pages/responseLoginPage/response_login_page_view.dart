@@ -1,0 +1,67 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:resqapp/pages/responseLoginPage/component/response_login_back_button.dart';
+import 'package:resqapp/pages/responseLoginPage/component/response_login_logo.dart';
+import 'response_login_page_view_model.dart';
+import 'sections/response_login_form_section.dart';
+
+class ResponseLoginPageView extends GetView<ResponseLoginPageViewModel> {
+  const ResponseLoginPageView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    if (!Get.isRegistered<ResponseLoginPageViewModel>()) {
+      Get.put(ResponseLoginPageViewModel(), permanent: false);
+    }
+
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    child: Column(
+                      children: [
+                        const ResponseLoginBackButton(),
+
+                        SizedBox(height: screenHeight * 0.10),
+                        const ResponseLoginLogo(),
+                        const Spacer(),
+
+                        // Illustration
+                        Padding(
+                          padding: const EdgeInsets.only(top: 24.0, bottom: 0.0),
+                          child: SizedBox(
+                            height: screenHeight * 0.11, // slightly smaller
+                            child: Image.asset(
+                              'assets/images/illustrations/response-team.png',
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        ),
+
+                         // 👈 pushes the form section down like before
+
+                        const ResponseLoginFormSection(),
+
+                        const SizedBox(height: 32),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}

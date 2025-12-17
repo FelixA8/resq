@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:resqapp/pages/SOSWaiting/sos_waiting_view_model.dart';
 import 'package:resqapp/pages/userMap/user_map_view_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:resqapp/service/supabase_service.dart';
@@ -127,9 +128,9 @@ class SettingsViewModel extends GetxController {
 
   Future<void> logoutUser() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('userId');
+    await prefs.clear();
 
-    Get.delete<UserMapViewModel>(force: true);
+    Get.deleteAll(force: true);
     Get.offAllNamed('/login');
   }
 }
