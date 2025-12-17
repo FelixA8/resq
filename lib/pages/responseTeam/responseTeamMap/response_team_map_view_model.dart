@@ -811,7 +811,7 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
 
       // This is our current step
       _currentStepIndex = i;
-      distanceToNextTurn.value = distanceToStep * 1000; // Convert km to meters
+      distanceToNextTurn.value = distanceToStep * 1000;
       
       // Set turn type based on maneuver type and modifier
       final maneuverType = step.maneuverType.toLowerCase();
@@ -891,7 +891,7 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
   }
 
   void _checkArrival(double distanceKm) {
-    const double arrivalThresholdKm = 0.10; // 30 meters
+    const double arrivalThresholdKm = 0.40; // 30 meters
     
     // Set arrival state when within 30m radius
     if (distanceKm <= arrivalThresholdKm) {
