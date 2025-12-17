@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:resqapp/pages/responseLoginPage/response_login_page_view.dart';
+import 'package:resqapp/pages/responseLoginPage/sections/response_login_form_section.dart';
 import 'dart:developer' as developer;
 
 import 'package:resqapp/pages/settings/settings_view.dart';
@@ -60,9 +62,10 @@ class MyApp extends StatelessWidget {
         GetPage(name: '/usermapview', page: () => UserMapView()),
       ],
 
-      //Old Routing Method
+      //Old Routing Method (Still need /login, hence do not delete)
       routes: {
         '/login': (context) => const LoginPageView(),
+        '/responseLogin': (context) => const ResponseLoginPageView(),
         '/otpView': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as Map?;
           final phone = args?['phone'] ?? '';

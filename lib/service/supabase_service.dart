@@ -708,7 +708,7 @@ class SupabaseService {
     );
 
     final miliEpoch = startOfDay.millisecondsSinceEpoch;
-    final timestamp = (miliEpoch/1000).round();
+    final timestamp = (miliEpoch / 1000).round();
 
     return timestamp;
   }
