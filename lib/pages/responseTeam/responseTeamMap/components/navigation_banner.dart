@@ -32,7 +32,7 @@ class NavigationBanner extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.green.shade600,
+        color: theme.colors.primary,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -60,7 +60,7 @@ class NavigationBanner extends StatelessWidget {
             ),
             child: Icon(
               Icons.check_circle,
-              color: Colors.green.shade600,
+              color: theme.colors.primary,
               size: 32,
             ),
           ),
@@ -72,7 +72,7 @@ class NavigationBanner extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'You have arrived',
+                  'Kamu telah sampai',
                   style: TextStyle(
                     fontFamily: 'SF Pro',
                     fontWeight: FontWeight.w700,
@@ -99,7 +99,7 @@ class NavigationBanner extends StatelessWidget {
             onPressed: () => controller.completeNavigation(),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,
-              foregroundColor: Colors.green.shade600,
+              foregroundColor: theme.colors.primary,
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -107,7 +107,7 @@ class NavigationBanner extends StatelessWidget {
               elevation: 2,
             ),
             child: Text(
-              'Finish',
+              'Selesai',
               style: TextStyle(
                 fontFamily: 'SF Pro',
                 fontWeight: FontWeight.w700,
