@@ -54,15 +54,17 @@ class UserMapView extends GetView<UserMapViewModel> {
                   height: 14,
                 ),
                 const SizedBox(width: 2),
-                Obx(() => Text(
-                  controller.currentAddress.value,
-                  style: TextStyle(
-                    fontFamily: 'SF Pro',
-                    fontWeight: FontWeight.w400,
-                    fontSize: 13,
-                    color: theme.colors.primary,
+                Obx(
+                  () => Text(
+                    controller.currentAddress.value,
+                    style: TextStyle(
+                      fontFamily: 'SF Pro',
+                      fontWeight: FontWeight.w400,
+                      fontSize: 13,
+                      color: theme.colors.primary,
+                    ),
                   ),
-                )),
+                ),
               ],
             ),
           ],
@@ -123,6 +125,8 @@ class UserMapView extends GetView<UserMapViewModel> {
                                 showModalBottomSheet(
                                   context: context,
                                   isScrollControlled: true,
+                                  isDismissible: true,
+                                  enableDrag: true,
                                   backgroundColor: Colors.transparent,
                                   builder: (modalContext) {
                                     return SOSView();
@@ -172,8 +176,7 @@ class UserMapView extends GetView<UserMapViewModel> {
                         }
                       },
                       interactionOptions: InteractionOptions(
-                        flags:
-                            InteractiveFlag.all & ~InteractiveFlag.rotate,
+                        flags: InteractiveFlag.all,
                       ),
                     ),
                     children: [
@@ -238,104 +241,104 @@ class UserMapView extends GetView<UserMapViewModel> {
                       // Evacuation Points
                       MarkerLayer(
                         markers:
-                            controller.evacuationPoints
-                                .map(
-                                  (point) {
-                                    final evacuationPoint = controller.findEvacuationPointByLocation(point);
-                                    return Marker(
-                                      point: point,
-                                      width: 42,
-                                      height: 42,
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          if (evacuationPoint != null) {
-                                            showModalBottomSheet(
-                                              context: context,
-                                              isScrollControlled: true,
-                                              backgroundColor: Colors.transparent,
-                                              builder: (modalContext) {
-                                                // Logic to adjust height based on whether we are navigating or just viewing details could go here
-                                                final screenHeight = MediaQuery.of(context).size.height;
-                                                final heightFactor = screenHeight < 700 ? 0.4 : 0.35;
+                            controller.evacuationPoints.map((point) {
+                              final evacuationPoint = controller
+                                  .findEvacuationPointByLocation(point);
+                              return Marker(
+                                point: point,
+                                width: 42,
+                                height: 42,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    if (evacuationPoint != null) {
+                                      showModalBottomSheet(
+                                        context: context,
+                                        isScrollControlled: true,
+                                        backgroundColor: Colors.transparent,
+                                        builder: (modalContext) {
+                                          // Logic to adjust height based on whether we are navigating or just viewing details could go here
+                                          final screenHeight =
+                                              MediaQuery.of(
+                                                context,
+                                              ).size.height;
+                                          final heightFactor =
+                                              screenHeight < 700 ? 0.4 : 0.35;
 
-                                                return FractionallySizedBox(
-                                                  heightFactor: heightFactor,
-                                                  child: EvacuationPointDetailModal(
-                                                    evacuationPoint: evacuationPoint,
-                                                  ),
-                                                );
-                                              },
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.vertical(
-                                                  top: Radius.circular(24),
-                                                ),
-                                              ),
-                                            );
-                                          }
+                                          return FractionallySizedBox(
+                                            heightFactor: heightFactor,
+                                            child: EvacuationPointDetailModal(
+                                              evacuationPoint: evacuationPoint,
+                                            ),
+                                          );
                                         },
-                                        child: Image.asset(
-                                          'assets/images/icons/map-evacuation-point.png',
-                                          width: 42,
-                                          height: 42,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.vertical(
+                                            top: Radius.circular(24),
+                                          ),
                                         ),
-                                      ),
-                                    );
+                                      );
+                                    }
                                   },
-                                )
-                                .toList(),
+                                  child: Image.asset(
+                                    'assets/images/icons/map-evacuation-point.png',
+                                    width: 42,
+                                    height: 42,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
                       ),
                       // Disasters
                       MarkerLayer(
                         markers:
-                            controller.disasterPoints
-                                .map(
-                                  (point) {
-                                    final disaster = controller.findDisasterByLocation(point);
-                                    return Marker(
-                                      point: point,
-                                      width: 42,
-                                      height: 42,
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          if (disaster != null) {
-                                            showModalBottomSheet(
-                                              context: context,
-                                              isScrollControlled: true,
-                                              backgroundColor: Colors.transparent,
-                                              builder: (modalContext) {
-                                                final screenHeight =
-                                                    MediaQuery.of(context).size.height;
-                                                final heightFactor =
-                                                    screenHeight < 700 ? 0.6 : 0.5;
+                            controller.disasterPoints.map((point) {
+                              final disaster = controller
+                                  .findDisasterByLocation(point);
+                              return Marker(
+                                point: point,
+                                width: 42,
+                                height: 42,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    if (disaster != null) {
+                                      showModalBottomSheet(
+                                        context: context,
+                                        isScrollControlled: true,
+                                        backgroundColor: Colors.transparent,
+                                        builder: (modalContext) {
+                                          final screenHeight =
+                                              MediaQuery.of(
+                                                context,
+                                              ).size.height;
+                                          final heightFactor =
+                                              screenHeight < 700 ? 0.6 : 0.5;
 
-                                                return FractionallySizedBox(
-                                                  heightFactor: heightFactor,
-                                                  child: DisasterDetailModal(
-                                                    disaster: disaster,
-                                                  ),
-                                                );
-                                              },
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.vertical(
-                                                  top: Radius.circular(24),
-                                                ),
-                                              ),
-                                            );
-                                          }
+                                          return FractionallySizedBox(
+                                            heightFactor: heightFactor,
+                                            child: DisasterDetailModal(
+                                              disaster: disaster,
+                                            ),
+                                          );
                                         },
-                                        child: RadiantMarker(
-                                          color: Colors.redAccent,
-                                          child: Image.asset(
-                                            'assets/images/icons/map-disaster-earthquake.png',
-                                            width: 42,
-                                            height: 42,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.vertical(
+                                            top: Radius.circular(24),
                                           ),
                                         ),
-                                      ),
-                                    );
+                                      );
+                                    }
                                   },
-                                )
-                                .toList(),
+                                  child: RadiantMarker(
+                                    color: Colors.redAccent,
+                                    child: Image.asset(
+                                      'assets/images/icons/map-disaster-earthquake.png',
+                                      width: 42,
+                                      height: 42,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
                       ),
                     ],
                   ),
@@ -363,8 +366,9 @@ class UserMapView extends GetView<UserMapViewModel> {
               FloatingActionButton(
                 heroTag: 'location',
                 onPressed:
-                    () =>
-                        controller.moveToLocation(controller.currentLocation.value),
+                    () => controller.moveToLocation(
+                      controller.currentLocation.value,
+                    ),
                 backgroundColor: Colors.white,
                 foregroundColor: Colors.blue,
                 child: Icon(Icons.my_location),

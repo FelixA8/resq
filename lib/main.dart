@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:resqapp/pages/responseLoginPage/response_login_page_view.dart';
+import 'package:resqapp/pages/responseLoginPage/sections/response_login_form_section.dart';
 import 'dart:developer' as developer;
 
-import 'package:resqapp/pages/responseLoginPage/response_login_page_view.dart';
-import 'package:resqapp/pages/settings/SettingsView.dart';
+import 'package:resqapp/pages/settings/settings_view.dart';
 import 'package:resqapp/pages/otpPage/otp_view.dart';
 import 'package:resqapp/pages/userMap/user_map_view.dart';
 import 'package:resqapp/pages/splash/splash_screen.dart';
@@ -59,15 +60,12 @@ class MyApp extends StatelessWidget {
           },
         ),
         GetPage(name: '/usermapview', page: () => UserMapView()),
-        GetPage(
-          name: '/responseLogin',
-          page: () => const ResponseLoginPageView(),
-        ),
       ],
 
-      //Old Routing Method
+      //Old Routing Method (Still need /login, hence do not delete)
       routes: {
         '/login': (context) => const LoginPageView(),
+        '/responseLogin': (context) => const ResponseLoginPageView(),
         '/otpView': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as Map?;
           final phone = args?['phone'] ?? '';
@@ -76,7 +74,6 @@ class MyApp extends StatelessWidget {
         '/usermapview': (context) {
           return UserMapView();
         },
-        '/responseLogin': (context) => const ResponseLoginPageView(),
         '/settings': (context) => const SettingsView(),
       },
     );

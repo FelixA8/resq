@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -26,8 +28,10 @@ class OTPInputBox extends StatelessWidget {
         border: Border.all(color: Colors.grey),
         borderRadius: BorderRadius.circular(8),
       ),
+      // 1. Keep the KeyboardListener for backspace detection
       child: KeyboardListener(
-        focusNode: FocusNode(),
+        // Use the passed-in focusNode so it listens to the correct field
+        focusNode: focusNode, 
         onKeyEvent: (event) {
           if (event is KeyDownEvent &&
               event.logicalKey == LogicalKeyboardKey.backspace &&
@@ -41,7 +45,13 @@ class OTPInputBox extends StatelessWidget {
           focusNode: focusNode,
           autofocus: autoFocus,
           textAlign: TextAlign.center,
-          keyboardType: TextInputType.number,
+          // 2. Incorporate the iOS-specific keyboard fix
+          keyboardType: Platform.isIOS
+              ? const TextInputType.numberWithOptions(
+                  signed: true,
+                  decimal: true,
+                )
+              : TextInputType.number,
           maxLength: 1,
           style: const TextStyle(fontSize: 24),
           decoration: const InputDecoration(

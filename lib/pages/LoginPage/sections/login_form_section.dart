@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:resqapp/pages/loginPage/lower_case_view_model.dart';
@@ -11,6 +13,7 @@ class LoginFormSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final viewModel = Provider.of<LoginPageViewModel>(context);
     const theme = ResQTheme();
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: theme.padding.lm),
       child: Column(
@@ -60,7 +63,15 @@ class LoginFormSection extends StatelessWidget {
                   child: Center(
                     child: TextField(
                       controller: viewModel.phoneController,
-                      keyboardType: TextInputType.phone,
+                      keyboardType:
+                          Platform.isIOS
+                              ? const TextInputType.numberWithOptions(
+                                signed: true,
+                                decimal: true,
+                              )
+                              : TextInputType.number,
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => FocusScope.of(context).unfocus(),
                       style: TextStyle(
                         fontFamily: 'SF Pro',
                         fontWeight: FontWeight.w500,
@@ -91,8 +102,8 @@ class LoginFormSection extends StatelessWidget {
           const SizedBox(height: 28),
           SizedBox(
             child: ConfirmationButton(
-              onPressed: () => viewModel.handleSendOTP(context),
-              isEnabled: true, // Set to true or use your logic
+              onPressed: () => viewModel.navigateToOTPPage(context),
+              isEnabled: true,
               text: 'Kirim OTP',
             ),
           ),
