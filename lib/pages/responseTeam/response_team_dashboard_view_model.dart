@@ -23,7 +23,6 @@ class ResponseTeamDashboardViewModel extends GetxController {
     }
     return 'Loading...'.obs;
   }
-}
 
   void logout() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();

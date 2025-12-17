@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -28,24 +27,21 @@ class OTPInputBox extends StatelessWidget {
         border: Border.all(color: Colors.grey),
         borderRadius: BorderRadius.circular(8),
       ),
-      // 1. Keep the KeyboardListener for backspace detection
-      child: KeyboardListener(
-        // Use the passed-in focusNode so it listens to the correct field
-        focusNode: focusNode, 
-        onKeyEvent: (event) {
-          if (event is KeyDownEvent &&
-              event.logicalKey == LogicalKeyboardKey.backspace &&
-              controller.text.isEmpty &&
-              onBackspace != null) {
-            onBackspace!();
-          }
+      // We use CallbackShortcuts or RawKeyboardListener to catch backspace
+      // without interfering with the TextField's focusNode.
+      child: CallbackShortcuts(
+        bindings: <ShortcutActivator, VoidCallback>{
+          const SingleActivator(LogicalKeyboardKey.backspace): () {
+            if (controller.text.isEmpty && onBackspace != null) {
+              onBackspace!();
+            }
+          },
         },
         child: TextField(
           controller: controller,
-          focusNode: focusNode,
+          focusNode: focusNode, // Re-attached so auto-navigation works
           autofocus: autoFocus,
           textAlign: TextAlign.center,
-          // 2. Incorporate the iOS-specific keyboard fix
           keyboardType: Platform.isIOS
               ? const TextInputType.numberWithOptions(
                   signed: true,
@@ -60,7 +56,8 @@ class OTPInputBox extends StatelessWidget {
           ),
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           onChanged: (value) {
-            if (value.length == 1) {
+            // This handles moving FORWARD
+            if (value.isNotEmpty) {
               onChanged(value);
             }
           },
