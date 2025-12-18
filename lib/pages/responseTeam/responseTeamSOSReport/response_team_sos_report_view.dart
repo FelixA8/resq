@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:resqapp/theme/theme_app.dart';
+import 'package:resqapp/pages/responseTeam/responseTeamSOSReport/components/sos_centered_info_text.dart';
 import 'response_team_sos_report_view_model.dart';
 import 'components/title_section.dart';
 import 'components/sos_report_card.dart';
@@ -11,7 +11,6 @@ class ResponseTeamSOSReportView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final viewModel = Get.put(ResponseTeamSOSReportViewModel());
-    final theme = ResQTheme();
 
     return Column(
       children: [
@@ -23,48 +22,21 @@ class ResponseTeamSOSReportView extends StatelessWidget {
             }
 
             if (viewModel.errorMessage.value != null) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      viewModel.errorMessage.value!,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: theme.font.semibold,
-                        fontFamily: 'SF Pro',
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Coba lagi',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: theme.font.semibold,
-                        fontFamily: 'SF Pro',
-                      ),
-                    ),
-                  ],
-                ),
+              return SosCenteredInfoText(
+                text:
+                    viewModel.errorMessage.value ??
+                    "Terjadi error, silahkan coba beberapa saat lagi.",
               );
             }
 
             if (viewModel.sosReports.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 16),
-                    Text(
-                      'Tidak ditemukan SOS, Silahkan coba lagi',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: theme.font.semibold,
-                        fontFamily: 'SF Pro',
-                      ),
-                    ),
-                  ],
+              return RefreshIndicator(
+                child: SosCenteredInfoText(
+                  text: 'Belum ada laporan SOS saat ini.',
                 ),
+                onRefresh: () async {
+                  viewModel.refreshReports();
+                },
               );
             }
 
@@ -77,7 +49,6 @@ class ResponseTeamSOSReportView extends StatelessWidget {
                     viewModel.sosReports.length +
                     (viewModel.hasMoreData.value ? 1 : 0),
                 itemBuilder: (context, index) {
-                  // Show loading indicator at the bottom
                   if (index == viewModel.sosReports.length) {
                     return viewModel.isLoadingMore.value
                         ? const Padding(

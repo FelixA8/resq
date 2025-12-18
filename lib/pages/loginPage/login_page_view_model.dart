@@ -1,32 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:resqapp/theme/theme_app.dart';
 
 class LoginPageViewModel extends ChangeNotifier {
   final TextEditingController phoneController = TextEditingController();
   bool isResponseTeam = false;
   final FocusNode phoneFocus = FocusNode();
+  final theme = ResQTheme();
+
+  String? phoneError;
 
   void toggleResponseTeam() {
     isResponseTeam = !isResponseTeam;
     notifyListeners();
   }
 
-  void navigateToOTPPage(BuildContext context) {
-    if (phoneController.text.isNotEmpty) {
+  void validate(BuildContext context) {
+    final phone = phoneController.text;
+    final isNumeric = RegExp(r'^[0-9]+$').hasMatch(phone);
+
+    if (phone.isNotEmpty && isNumeric && phone.length >= 12 && phone.length <= 15) {
+      phoneError = null;
+      notifyListeners();
       Navigator.pushNamed(
         context,
         '/otpView',
         arguments: {
-          'phone': phoneController.text,
+          'phone': phone,
           'isResponseTeam': isResponseTeam,
         },
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a phone number'),
-          backgroundColor: Color(0xFFB71C1C),
-        ),
-      );
+      phoneError = 'Nomor telepon harus numerik dan 12 - 15 angka';
+      notifyListeners();
     }
   }
 

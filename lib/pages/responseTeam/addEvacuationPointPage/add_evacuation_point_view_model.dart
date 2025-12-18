@@ -208,7 +208,7 @@ class AddEvacuationPointViewModel extends GetxController {
           print('Error: Failed to update evacuation point');
           Get.snackbar(
             'Error',
-            'Failed to update evacuation point',
+            'Gagal memperbarui poin evakuasi',
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: Colors.red,
             colorText: Colors.white,
@@ -233,7 +233,7 @@ class AddEvacuationPointViewModel extends GetxController {
           print('Error: Failed to add evacuation point - result is null');
           Get.snackbar(
             'Error',
-            'Failed to add evacuation point',
+            'Gagal menambahkan poin evakuasi',
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: Colors.red,
             colorText: Colors.white,
@@ -244,7 +244,7 @@ class AddEvacuationPointViewModel extends GetxController {
       print('Exception in onConfirmPressed: $e');
       Get.snackbar(
         'Error',
-        'An error occurred: ${e.toString()}',
+        '${e.toString()}',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
