@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:resqapp/pages/loginPage/lower_case_view_model.dart';
+import 'package:resqapp/pages/loginPage/login_page_view_model.dart';
 import '../../../theme/theme_app.dart';
 import '../../../components/confirmation_button.dart';
 
@@ -19,90 +19,111 @@ class LoginFormSection extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          Row(
+          Stack(
+            clipBehavior: Clip.none,
             children: [
-              Container(
-                width: 67,
-                height: 51,
-                decoration: BoxDecoration(
-                  color: theme.colors.neutral.low,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.only(right: 4),
-                      child: Image.asset(
-                        'assets/images/icons/indonesian-flag.png',
-                        width: 18,
-                        height: 12,
-                        fit: BoxFit.contain,
-                      ),
+              Row(
+                children: [
+                  Container(
+                    width: 67,
+                    height: 51,
+                    decoration: BoxDecoration(
+                      color: theme.colors.neutral.low,
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    Text(
-                      '+62',
-                      style: TextStyle(
-                        fontFamily: 'SF Pro',
-                        fontWeight: FontWeight.w500,
-                        fontSize: theme.text.m,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(width: 8),
-              Expanded(
-                child: Container(
-                  height: 51,
-                  decoration: BoxDecoration(
-                    color: Color(0xFFD9D9D9),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Center(
-                    child: TextField(
-                      controller: viewModel.phoneController,
-                      keyboardType:
-                          Platform.isIOS
-                              ? const TextInputType.numberWithOptions(
-                                signed: true,
-                                decimal: true,
-                              )
-                              : TextInputType.number,
-                      textInputAction: TextInputAction.done,
-                      onSubmitted: (_) => FocusScope.of(context).unfocus(),
-                      style: TextStyle(
-                        fontFamily: 'SF Pro',
-                        fontWeight: FontWeight.w500,
-                        fontSize: theme.text.m,
-                        color: Colors.black,
-                      ),
-                      textAlignVertical: TextAlignVertical.center,
-                      decoration: InputDecoration(
-                        hintText: 'Nomor telepon',
-                        hintStyle: TextStyle(
-                          fontFamily: 'SF Pro',
-                          fontWeight: FontWeight.w500,
-                          fontSize: 15,
-                          color: theme.colors.neutral.med,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.only(right: 4),
+                          child: Image.asset(
+                            'assets/images/icons/indonesian-flag.png',
+                            width: 18,
+                            height: 12,
+                            fit: BoxFit.contain,
+                          ),
                         ),
-                        border: InputBorder.none,
-                        isCollapsed: true,
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: theme.padding.m,
+                        Text(
+                          '+62',
+                          style: TextStyle(
+                            fontFamily: 'SF Pro',
+                            fontWeight: FontWeight.w500,
+                            fontSize: theme.text.m,
+                            color: Colors.black,
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
-                ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Container(
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: Color(0xFFD9D9D9),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Center(
+                        child: TextField(
+                          controller: viewModel.phoneController,
+                          keyboardType:
+                              Platform.isIOS
+                                  ? const TextInputType.numberWithOptions(
+                                    signed: true,
+                                    decimal: true,
+                                  )
+                                  : TextInputType.number,
+                          textInputAction: TextInputAction.done,
+                          onSubmitted: (_) => FocusScope.of(context).unfocus(),
+                          style: TextStyle(
+                            fontFamily: 'SF Pro',
+                            fontWeight: FontWeight.w500,
+                            fontSize: theme.text.m,
+                            color: Colors.black,
+                          ),
+                          textAlignVertical: TextAlignVertical.center,
+                          decoration: InputDecoration(
+                            hintText: 'Nomor telepon',
+                            hintStyle: TextStyle(
+                              fontFamily: 'SF Pro',
+                              fontWeight: FontWeight.w500,
+                              fontSize: 15,
+                              color: theme.colors.neutral.med,
+                            ),
+                            border: InputBorder.none,
+                            isCollapsed: true,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: theme.padding.m,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
+              if (viewModel.phoneError != null)
+                Positioned(
+                  top: 55,
+                  left: 75,
+                  right: 0,
+                  child: Text(
+                    viewModel.phoneError!,
+                    style: TextStyle(
+                      fontFamily: 'SF Pro',
+                      fontWeight: FontWeight.w400,
+                      fontSize: 12,
+                      color: theme.colors.primary,
+                    ),
+                  ),
+                ),
             ],
           ),
+            
           const SizedBox(height: 28),
           SizedBox(
             child: ConfirmationButton(
-              onPressed: () => viewModel.navigateToOTPPage(context),
+              onPressed: () => viewModel.validate(context),
               isEnabled: true,
               text: 'Kirim OTP',
             ),

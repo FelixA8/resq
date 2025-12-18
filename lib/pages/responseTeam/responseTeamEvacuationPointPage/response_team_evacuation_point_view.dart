@@ -7,40 +7,36 @@ import 'package:get/get.dart';
 
 class ResponseTeamEvacuationPointView extends StatelessWidget {
   final String? instanceCode;
-  
-  const ResponseTeamEvacuationPointView({
-    super.key,
-    this.instanceCode,
-  });
+
+  const ResponseTeamEvacuationPointView({super.key, this.instanceCode});
 
   @override
   Widget build(BuildContext context) {
     const theme = ResQTheme();
-    
+
     if (!Get.isRegistered<ResponseTeamEvacuationPointViewModel>()) {
-      Get.put(ResponseTeamEvacuationPointViewModel(
-        instanceCode: instanceCode ?? 'Unit305'
-      ));
+      Get.put(
+        ResponseTeamEvacuationPointViewModel(
+          instanceCode: instanceCode ?? 'Unit305',
+        ),
+      );
     }
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: Column(
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: theme.padding.m),
-                      child: EvacuationHeaderView(),
-                    ),
-                    EvacuationListView(),
-                  ],
+    return SafeArea(
+      child: Column(
+        children: [
+          Expanded(
+            child: Column(
+              children: [
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: theme.padding.m),
+                  child: EvacuationHeaderView(),
                 ),
+                EvacuationListView(),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

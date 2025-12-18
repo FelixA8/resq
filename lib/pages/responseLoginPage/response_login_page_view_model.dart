@@ -11,8 +11,8 @@ class ResponseLoginPageViewModel extends GetxController {
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
 
-  bool get isFormValid => 
-      codeController.text.trim().isNotEmpty && 
+  bool get isFormValid =>
+      codeController.text.trim().isNotEmpty &&
       passwordController.text.isNotEmpty;
 
   Future<void> handleLogin() async {
@@ -34,11 +34,9 @@ class ResponseLoginPageViewModel extends GetxController {
         isLoading.value = false;
         return;
       }
-      
+
       await _saveInstanceCode(code);
-      
-      _showSuccessSnackbar('Berhasil masuk sebagai response team');
-      
+
       Get.off(() => ResponseTeamDashboardView(instanceCode: code));
     } catch (e) {
       _showErrorSnackbar('Terjadi kesalahan saat masuk. Silakan coba lagi.');
@@ -57,16 +55,6 @@ class ResponseLoginPageViewModel extends GetxController {
       colorText: Colors.white,
       snackPosition: SnackPosition.BOTTOM,
       duration: const Duration(seconds: 3),
-    );
-  }
-
-  /// Show success snackbar
-  void _showSuccessSnackbar(String message) {
-    Get.snackbar(
-      'Berhasil',
-      message,
-      snackPosition: SnackPosition.BOTTOM,
-      duration: const Duration(seconds: 2),
     );
   }
 
