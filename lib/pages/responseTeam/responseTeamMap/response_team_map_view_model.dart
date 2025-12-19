@@ -16,6 +16,8 @@ import 'package:resqapp/pages/responseTeam/responseTeamMap/extensions/map_animat
 import 'package:resqapp/service/supabase_service.dart';
 import 'package:resqapp/services/location_helper.dart';
 import 'package:resqapp/services/distance_calculator.dart' as distance_calc;
+import 'package:geocoding/geocoding.dart';
+import 'dart:developer' as developer;
 
 class ResponseTeamMapViewModel extends GetxController
     with GetTickerProviderStateMixin {
@@ -29,6 +31,9 @@ class ResponseTeamMapViewModel extends GetxController
   final Rx<LatLng> currentLocation = LatLng(-6.2088, 106.8456).obs;
   final RxBool isLoading = false.obs;
   final RxBool hasLocationPermission = false.obs;
+
+  // Response team location address
+  final RxString currentAddress = 'Loading...'.obs;
 
   final RxList<Disaster> _disasterPointsData = <Disaster>[].obs;
   final RxList<LatLng> disasterPoints = <LatLng>[].obs;
@@ -224,6 +229,7 @@ class ResponseTeamMapViewModel extends GetxController
         curve: MapAnimationConfig.defaultCurve,
         duration: MapAnimationConfig.initialCenterDuration,
       );
+      _updateAddress(currentLocation.value);
     } catch (_) {
       hasLocationPermission.value = false;
     } finally {
@@ -254,6 +260,43 @@ class ResponseTeamMapViewModel extends GetxController
             .map((s) => LatLng(s.locationLat!, s.locationLng!))
             .toList();
   }
+
+  Future<void> _updateAddress(LatLng location) async {
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        location.latitude,
+        location.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks[0];
+        String address = '';
+
+        // Priority: locality (district) > subLocality (neighborhood) > subAdministrativeArea (city)
+        if (place.locality != null && place.locality!.isNotEmpty) {
+          address = place.locality!;
+        } else if (place.subLocality != null && place.subLocality!.isNotEmpty) {
+          address = place.subLocality!;
+        } else if (place.subAdministrativeArea != null &&
+            place.subAdministrativeArea!.isNotEmpty) {
+          address = place.subAdministrativeArea!;
+        }
+
+        if (address.isEmpty) {
+          address = 'Unknown Location';
+        }
+
+        currentAddress.value = address;
+        developer.log(
+          'Response Team Location: ${place.street}, ${place.subLocality}, ${place.locality}, ${place.subAdministrativeArea}, ${place.administrativeArea}',
+        );
+      }
+    } catch (e) {
+      developer.log('Error getting address: $e');
+      currentAddress.value = 'Location Unavailable';
+    }
+  }
+
 
   void _onEvacuationInsert(EvacuationPoint point) {
     if (point.evacuationId == null) return;
@@ -733,6 +776,7 @@ class ResponseTeamMapViewModel extends GetxController
 
       _lastLocation = newLocation;
       currentLocation.value = newLocation;
+      _updateAddress(newLocation);
 
       if (isNavigating.value) {
         _updateNavigationState(newLocation);
@@ -815,9 +859,12 @@ class ResponseTeamMapViewModel extends GetxController
     // Update current segment and remaining route
     if (nearestIndex != currentRouteSegment.value) {
       currentRouteSegment.value = nearestIndex;
-
-      // Update remaining route points (from current position to end)
-      if (nearestIndex < routePoints.length) {
+      
+      // If user is at or past the last point, clear the remaining route
+      if (nearestIndex >= routePoints.length - 1) {
+        remainingRoutePoints.clear();
+      } else {
+        // Update remaining route points (from current position to end)
         remainingRoutePoints.value = routePoints.sublist(nearestIndex);
       }
     }
@@ -849,14 +896,25 @@ class ResponseTeamMapViewModel extends GetxController
       // This is our current step
       _currentStepIndex = i;
       distanceToNextTurn.value = distanceToStep * 1000;
-
-      // Set turn type based on maneuver modifier
+      
+      // Set turn type based on maneuver type and modifier
+      final maneuverType = step.maneuverType.toLowerCase();
       final modifier = step.maneuverModifier?.toLowerCase() ?? '';
-      if (modifier.contains('left')) {
+      
+      // Handle U-turns specifically
+      if (modifier == 'uturn' || maneuverType == 'uturn') {
+        turnType.value = 'uturn';
+      }
+      // Handle roundabouts
+      else if (maneuverType.contains('roundabout') || maneuverType == 'rotary') {
+        turnType.value = 'roundabout';
+      }
+      // Handle regular turns
+      else if (modifier.contains('left')) {
         turnType.value = 'left';
       } else if (modifier.contains('right')) {
         turnType.value = 'right';
-      } else if (modifier.contains('straight') || modifier.contains('uturn')) {
+      } else if (modifier.contains('straight') || maneuverType == 'continue') {
         turnType.value = 'straight';
       } else {
         turnType.value = 'straight'; // Default
@@ -864,7 +922,7 @@ class ResponseTeamMapViewModel extends GetxController
 
       // Format instruction text
       final distanceText = _formatDistance(distanceToStep * 1000);
-      final direction = _getDirectionText(modifier);
+      final direction = _getDirectionText(maneuverType, modifier);
       currentInstruction.value = '$distanceText $direction';
 
       break;
@@ -879,15 +937,38 @@ class ResponseTeamMapViewModel extends GetxController
     }
   }
 
-  String _getDirectionText(String modifier) {
-    if (modifier.contains('left')) {
+  String _getDirectionText(String maneuverType, String modifier) {
+    // Handle U-turns first
+    if (modifier == 'uturn' || maneuverType == 'uturn') {
+      return 'putar balik';
+    }
+    
+    // Handle roundabouts
+    if (maneuverType.contains('roundabout') || maneuverType == 'rotary') {
+      if (modifier.contains('left')) {
+        return 'keluar bundaran ke kiri';
+      } else if (modifier.contains('right')) {
+        return 'keluar bundaran ke kanan';
+      } else {
+        return 'masuk bundaran';
+      }
+    }
+    
+    // Handle regular turns
+    if (modifier.contains('slight left')) {
+      return 'belok kiri sedikit';
+    } else if (modifier.contains('sharp left')) {
+      return 'belok kiri tajam';
+    } else if (modifier.contains('left')) {
       return 'belok kiri';
+    } else if (modifier.contains('slight right')) {
+      return 'belok kanan sedikit';
+    } else if (modifier.contains('sharp right')) {
+      return 'belok kanan tajam';
     } else if (modifier.contains('right')) {
       return 'belok kanan';
-    } else if (modifier.contains('straight')) {
+    } else if (modifier.contains('straight') || maneuverType == 'continue') {
       return 'lurus';
-    } else if (modifier.contains('uturn')) {
-      return 'putar balik';
     } else {
       return 'lanjutkan';
     }
