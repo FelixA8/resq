@@ -22,8 +22,10 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:resqapp/helpers/map_helper.dart';
 import 'package:resqapp/services/distance_calculator.dart' as distance_calc;
 import 'package:geocoding/geocoding.dart';
+import 'package:resqapp/pages/userMap/components/location_disabled_dialog.dart';
 
-class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
+class UserMapViewModel extends GetxController
+    with GetTickerProviderStateMixin, WidgetsBindingObserver {
   final Rx<ResqUser?> _currentUser = Rx(null);
   ResqUser? get currentUser => _currentUser.value;
   final theme = ResQTheme();
@@ -44,7 +46,7 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
   final Rx<SOSWaitingViewModel?> _sosWaitingViewModel =
       Rx<SOSWaitingViewModel?>(null);
   final RxBool _isSOSActive = false.obs;
-  final RxBool isSosButtonEnabled = false.obs;
+  final RxBool isLocationServiceEnabled = false.obs;
   final Rx<SosEvent?> _activeSosEvent = Rx<SosEvent?>(null);
 
   final RxList<LatLng> routePoints = <LatLng>[].obs;
@@ -94,6 +96,7 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
   void onInit() {
     super.onInit();
     mapController = AnimatedMapController(vsync: this);
+    WidgetsBinding.instance.addObserver(this);
     _initializeLocation();
     _startLocationStream();
     _initializeData();
@@ -109,13 +112,53 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
 
   @override
   void onClose() {
+    WidgetsBinding.instance.removeObserver(this);
     _positionStreamSubscription?.cancel();
     _evacuationPointsSubscription?.unsubscribe();
     _disastersSubscription?.unsubscribe();
     _idleTimer?.cancel();
     _arrivalCheckTimer?.cancel();
+
     mapController.dispose();
     super.onClose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      refreshLocationStatus();
+    }
+  }
+
+  Future<bool> refreshLocationStatus() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    LocationPermission permission = await Geolocator.checkPermission();
+
+    bool isPermissionGranted = permission == LocationPermission.always ||
+        permission == LocationPermission.whileInUse;
+
+    if (serviceEnabled && isPermissionGranted) {
+      isLocationServiceEnabled.value = true;
+      _initializeLocation(); 
+      return true;
+    } else {
+      isLocationServiceEnabled.value = false;
+      _showLocationDisabledDialog();
+      return false;
+    }
+  }
+
+  void _showLocationDisabledDialog() {
+    if (Get.isDialogOpen ?? false) return;
+
+    Get.dialog(
+      LocationDisabledDialog(
+        onRetry: () async {
+            return await refreshLocationStatus();
+        },
+      ),
+      barrierDismissible: false,
+    );
   }
 
   Future<void> _loadUserData() async {
@@ -479,8 +522,12 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
       LocationResult result = await LocationHelper.initializeLocation();
       currentLocation.value = result.location;
       hasLocationPermission.value = result.hasPermission;
-      isSosButtonEnabled.value = result.hasPermission;
+      hasLocationPermission.value = result.hasPermission;
+      isLocationServiceEnabled.value = result.hasPermission;
       
+      if (!result.hasPermission) {
+         _showLocationDisabledDialog();
+      }
       await mapController.animateTo(
         dest: currentLocation.value,
         zoom: MapAnimationConfig.initialZoom,
@@ -490,7 +537,9 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
       _updateAddress(currentLocation.value);
     } catch (e) {
       hasLocationPermission.value = false;
-      isSosButtonEnabled.value = false;
+      hasLocationPermission.value = false;
+      isLocationServiceEnabled.value = false;
+      _showLocationDisabledDialog();
     } finally {
       isLoading.value = false;
     }
