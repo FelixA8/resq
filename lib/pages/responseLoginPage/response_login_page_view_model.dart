@@ -53,8 +53,9 @@ class ResponseLoginPageViewModel extends GetxController {
       message,
       backgroundColor: const Color(0xFFB71C1C),
       colorText: Colors.white,
+      animationDuration: Duration(milliseconds: 500),
+      duration: Duration(seconds: 2),
       snackPosition: SnackPosition.BOTTOM,
-      duration: const Duration(seconds: 3),
     );
   }
 

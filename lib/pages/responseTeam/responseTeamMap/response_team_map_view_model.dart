@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map_animations/flutter_map_animations.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:resqapp/theme/theme_app.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:resqapp/models/supabase_models.dart';
 import 'package:resqapp/helpers/map_helper.dart';
@@ -15,10 +17,12 @@ import 'package:resqapp/service/supabase_service.dart';
 import 'package:resqapp/services/location_helper.dart';
 import 'package:resqapp/services/distance_calculator.dart' as distance_calc;
 
-class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStateMixin {
+class ResponseTeamMapViewModel extends GetxController
+    with GetTickerProviderStateMixin {
   final String instanceCode;
   late final AnimatedMapController mapController;
-  
+  final theme = ResQTheme();
+
   final Map<String, String> _addressCache = {};
   late final ResponseTeamRealtimeManager _realtimeManager;
 
@@ -28,19 +32,20 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
 
   final RxList<Disaster> _disasterPointsData = <Disaster>[].obs;
   final RxList<LatLng> disasterPoints = <LatLng>[].obs;
-  
+
   final RxList<EvacuationPoint> _evacuationPointsData = <EvacuationPoint>[].obs;
   final RxList<LatLng> evacuationPoints = <LatLng>[].obs;
-  
+
   final RxList<SosEvent> _sosEventsData = <SosEvent>[].obs;
   final RxList<LatLng> sosPoints = <LatLng>[].obs;
 
   final RxList<LatLng> routePoints = <LatLng>[].obs;
   final RxBool isRouteLoading = false.obs;
-  
+
   final Rx<SosEvent?> _currentNavigatingSos = Rx<SosEvent?>(null);
-  final Rx<EvacuationPoint?> _currentNavigatingEvacuationPoint = Rx<EvacuationPoint?>(null);
-  
+  final Rx<EvacuationPoint?> _currentNavigatingEvacuationPoint =
+      Rx<EvacuationPoint?>(null);
+
   String? _currentResponseTeamId;
 
   StreamSubscription<Position>? _positionStreamSubscription;
@@ -53,17 +58,17 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
   final Rx<LatLng?> navigationDestination = Rx<LatLng?>(null);
   final RxInt currentRouteSegment = 0.obs;
   final RxList<LatLng> remainingRoutePoints = <LatLng>[].obs;
-  
+
   // Navigation Instructions
   final RxString currentInstruction = ''.obs;
   final RxDouble distanceToNextTurn = 0.0.obs;
   final RxString turnType = ''.obs; // 'left', 'right', 'straight', etc.
   List<RouteStep> _routeSteps = [];
   int _currentStepIndex = 0;
-  
+
   // Arrival State
   final RxBool hasArrived = false.obs;
-  
+
   Timer? _idleTimer;
   Timer? _arrivalCheckTimer;
   bool _hasShownArrivalNotification = false;
@@ -85,7 +90,6 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
     await _restoreNavigationIfNeeded();
     _startLocationStream();
     _setupRealtimeManager();
-   
   }
 
   Future<void> _loadCurrentResponseTeamId() async {
@@ -167,21 +171,21 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
 
   Future<void> _restoreRoute(SosEvent sosEvent) async {
     if (sosEvent.locationLat == null || sosEvent.locationLng == null) return;
-    
+
     _currentNavigatingSos.value = sosEvent;
     _currentNavigatingEvacuationPoint.value = null;
-    
+
     isRouteLoading.value = true;
-    
+
     final start = currentLocation.value;
     final end = LatLng(sosEvent.locationLat!, sosEvent.locationLng!);
-    
+
     // Set navigation destination first
     navigationDestination.value = end;
 
     print("SOS EVENt:");
     print(sosEvent);
-    
+
     final routeData = await MapHelper.getRouteWithInstructions(start, end);
     if (routeData != null && routeData.polyline.isNotEmpty) {
       // Set navigation state before updating route points
@@ -189,22 +193,22 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
       currentRouteSegment.value = 0;
       _hasShownArrivalNotification = false;
       isMapCentering.value = true;
-      
+
       // Store route steps for navigation instructions
       _routeSteps = routeData.steps;
       _currentStepIndex = 0;
       _updateNavigationInstructions();
-      
+
       // Defer route points update to next frame to prevent overlap with current location icon rendering
       await Future.delayed(const Duration(milliseconds: 100));
-      
+
       routePoints.value = routeData.polyline;
       remainingRoutePoints.value = routeData.polyline;
-      
+
       // Center on user location after route is set
       _centerOnUserLocation(animate: true);
     }
-    
+
     isRouteLoading.value = false;
   }
 
@@ -228,29 +232,34 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
   }
 
   void _updateDisasterPointsDisplay() {
-    disasterPoints.value = _disasterPointsData
-        .where((d) => d.centerLat != null && d.centerLng != null)
-        .map((d) => LatLng(d.centerLat!, d.centerLng!))
-        .toList();
+    disasterPoints.value =
+        _disasterPointsData
+            .where((d) => d.centerLat != null && d.centerLng != null)
+            .map((d) => LatLng(d.centerLat!, d.centerLng!))
+            .toList();
   }
 
   void _updateEvacuationPointsDisplay() {
-    evacuationPoints.value = _evacuationPointsData
-        .where((p) => p.hasLocation())
-        .map((p) => LatLng(p.locationLat!, p.locationLng!))
-        .toList();
+    evacuationPoints.value =
+        _evacuationPointsData
+            .where((p) => p.hasLocation())
+            .map((p) => LatLng(p.locationLat!, p.locationLng!))
+            .toList();
   }
 
   void _updateSOSPointsDisplay() {
-    sosPoints.value = _sosEventsData
-        .where((s) => s.hasLocation() && s.isActive)
-        .map((s) => LatLng(s.locationLat!, s.locationLng!))
-        .toList();
+    sosPoints.value =
+        _sosEventsData
+            .where((s) => s.hasLocation() && s.isActive)
+            .map((s) => LatLng(s.locationLat!, s.locationLng!))
+            .toList();
   }
 
   void _onEvacuationInsert(EvacuationPoint point) {
     if (point.evacuationId == null) return;
-    final exists = _evacuationPointsData.any((p) => p.evacuationId == point.evacuationId);
+    final exists = _evacuationPointsData.any(
+      (p) => p.evacuationId == point.evacuationId,
+    );
     if (!exists) {
       _evacuationPointsData.add(point);
       _updateEvacuationPointsDisplay();
@@ -259,13 +268,16 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
 
   void _onEvacuationUpdate(EvacuationPoint point) {
     if (point.evacuationId == null) return;
-    final index = _evacuationPointsData.indexWhere((p) => p.evacuationId == point.evacuationId);
+    final index = _evacuationPointsData.indexWhere(
+      (p) => p.evacuationId == point.evacuationId,
+    );
     if (index != -1) {
       _evacuationPointsData[index] = point;
       _updateEvacuationPointsDisplay();
-      
+
       // Update route if currently navigating to this evacuation point
-      if (_currentNavigatingEvacuationPoint.value?.evacuationId == point.evacuationId) {
+      if (_currentNavigatingEvacuationPoint.value?.evacuationId ==
+          point.evacuationId) {
         _restoreEvacuationRoute(point);
       }
     } else {
@@ -276,19 +288,24 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
 
   void _onEvacuationDelete(EvacuationPoint point) {
     if (point.evacuationId == null) return;
-    _evacuationPointsData.removeWhere((p) => p.evacuationId == point.evacuationId);
-    
+    _evacuationPointsData.removeWhere(
+      (p) => p.evacuationId == point.evacuationId,
+    );
+
     // Clear route if currently navigating to this evacuation point
-    if (_currentNavigatingEvacuationPoint.value?.evacuationId == point.evacuationId) {
+    if (_currentNavigatingEvacuationPoint.value?.evacuationId ==
+        point.evacuationId) {
       clearRoute();
     }
-    
+
     _updateEvacuationPointsDisplay();
   }
 
   void _onDisasterInsert(Disaster disaster) {
     if (disaster.disasterId == null) return;
-    final exists = _disasterPointsData.any((d) => d.disasterId == disaster.disasterId);
+    final exists = _disasterPointsData.any(
+      (d) => d.disasterId == disaster.disasterId,
+    );
     if (!exists) {
       _disasterPointsData.add(disaster);
       _updateDisasterPointsDisplay();
@@ -297,7 +314,9 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
 
   void _onDisasterUpdate(Disaster disaster) {
     if (disaster.disasterId == null) return;
-    final index = _disasterPointsData.indexWhere((d) => d.disasterId == disaster.disasterId);
+    final index = _disasterPointsData.indexWhere(
+      (d) => d.disasterId == disaster.disasterId,
+    );
     if (index != -1) {
       _disasterPointsData[index] = disaster;
       _updateDisasterPointsDisplay();
@@ -342,8 +361,8 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
 
     _sosEventsData.removeWhere((s) => s.sosId == sos.sosId);
 
-    if(_currentNavigatingSos.value?.sosId == sos.sosId) {
-        clearRoute();
+    if (_currentNavigatingSos.value?.sosId == sos.sosId) {
+      clearRoute();
     }
 
     _updateSOSPointsDisplay();
@@ -361,18 +380,19 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
   void onMapMoved() {
     _idleTimer?.cancel();
     if (!isNavigating.value) return;
-    
+
     if (isMapCentering.value) {
       isMapCentering.value = false;
     }
-    
+
     final mapCenter = mapController.mapController.camera.center;
-    
-    final distanceFromUser = distance_calc.GeoDistanceCalculator.calculateDistance(
+
+    final distanceFromUser = distance_calc
+        .GeoDistanceCalculator.calculateDistance(
       mapCenter,
       currentLocation.value,
     );
-    
+
     const double proximityThresholdKm = 2;
 
     if (distanceFromUser < proximityThresholdKm) {
@@ -395,7 +415,7 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
 
   void _centerOnUserLocation({bool animate = true}) {
     if (!isNavigating.value || !isMapCentering.value) return;
-    
+
     mapController.animateTo(
       dest: currentLocation.value,
       zoom: MapAnimationConfig.navigationZoom,
@@ -429,7 +449,10 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
   }
 
   EvacuationPoint? findEvacuationPointByLocation(LatLng location) {
-    return MapHelper.findEvacuationPointByLocation(_evacuationPointsData, location);
+    return MapHelper.findEvacuationPointByLocation(
+      _evacuationPointsData,
+      location,
+    );
   }
 
   SosEvent? findSOSByLocation(LatLng location) {
@@ -472,16 +495,29 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
     );
   }
 
-  String formatSOSReportTime(double? timestamp) => MapHelper.formatSOSReportTime(timestamp);
-  String formatDisasterDate(double? timestamp) => MapHelper.formatDisasterDate(timestamp);
-  String formatDisasterMagnitude(double? magnitude) => MapHelper.formatMagnitude(magnitude);
-  String getTsunamiPotential(double? magnitude) => MapHelper.getTsunamiPotential(magnitude);
+  String formatSOSReportTime(double? timestamp) =>
+      MapHelper.formatSOSReportTime(timestamp);
+  String formatDisasterDate(double? timestamp) =>
+      MapHelper.formatDisasterDate(timestamp);
+  String formatDisasterMagnitude(double? magnitude) =>
+      MapHelper.formatMagnitude(magnitude);
+  String getTsunamiPotential(double? magnitude) =>
+      MapHelper.getTsunamiPotential(magnitude);
   String formatDisasterDepth(String? depth) => MapHelper.formatDepth(depth);
-  Future<void> openDisasterShakeMap(Disaster disaster) => MapHelper.launchShakeMap(disaster.shakemap);
+  Future<void> openDisasterShakeMap(Disaster disaster) =>
+      MapHelper.launchShakeMap(disaster.shakemap);
 
   Future<void> showRouteToSos(SosEvent sosEvent) async {
     if (sosEvent.locationLat == null || sosEvent.locationLng == null) {
-      Get.snackbar("Error", "Lokasi SOS tidak valid");
+      Get.snackbar(
+        'Error',
+        'Lokasi SOS tidak valid',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: theme.colors.primary,
+        colorText: Colors.white,
+        animationDuration: Duration(milliseconds: 500),
+        duration: Duration(seconds: 2),
+      );
       return;
     }
 
@@ -490,7 +526,15 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
     }
 
     if (_currentResponseTeamId == null) {
-      Get.snackbar("Error", "Response team ID tidak ditemukan");
+      Get.snackbar(
+        'Error',
+        'Response team ID tidak ditemukan',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: theme.colors.primary,
+        colorText: Colors.white,
+        animationDuration: Duration(milliseconds: 500),
+        duration: Duration(seconds: 2),
+      );
       return;
     }
 
@@ -505,7 +549,15 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
     );
 
     if (!success) {
-      Get.snackbar("Error", "Gagal mengassign SOS");
+      Get.snackbar(
+        'Error',
+        'Gagal mengassign SOS',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: theme.colors.primary,
+        colorText: Colors.white,
+        animationDuration: Duration(milliseconds: 500),
+        duration: Duration(seconds: 2),
+      );
       return;
     }
 
@@ -513,21 +565,21 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
     _currentNavigatingEvacuationPoint.value = null;
 
     isRouteLoading.value = true;
-    
+
     final start = currentLocation.value;
     final end = LatLng(sosEvent.locationLat!, sosEvent.locationLng!);
 
     final routeData = await MapHelper.getRouteWithInstructions(start, end);
-    
+
     if (routeData != null && routeData.polyline.isNotEmpty) {
       routePoints.value = routeData.polyline;
       remainingRoutePoints.value = routeData.polyline;
-      
+
       // Store route steps for navigation instructions
       _routeSteps = routeData.steps;
       _currentStepIndex = 0;
       _updateNavigationInstructions();
-      
+
       isNavigating.value = true;
       navigationDestination.value = end;
       currentRouteSegment.value = 0;
@@ -544,42 +596,66 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
 
       _centerOnUserLocation(animate: true);
     } else {
-      Get.snackbar("Info", "Rute tidak ditemukan");
+      Get.snackbar(
+        'Info',
+        'Rute tidak ditemukan',
+        snackPosition: SnackPosition.BOTTOM,
+        animationDuration: Duration(milliseconds: 500),
+        duration: Duration(seconds: 2),
+      );
     }
-    
+
     isRouteLoading.value = false;
   }
 
   Future<void> showRouteToEvacuationPoint(EvacuationPoint point) async {
     if (!point.hasLocation()) {
-      Get.snackbar("Error", "Lokasi Poin Evakuasi tidak valid");
+      Get.snackbar(
+        'Error',
+        'Lokasi Poin Evakuasi tidak valid',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: theme.colors.primary,
+        colorText: Colors.white,
+        animationDuration: Duration(milliseconds: 500),
+        duration: Duration(seconds: 2),
+      );
       return;
     }
 
     if (_currentNavigatingSos.value != null) {
-      RouteWarningDialog.show(onConfirmDelete: () async {
-        Get.back(); // Close dialog
-          
+      RouteWarningDialog.show(
+        onConfirmDelete: () async {
+          Get.back(); // Close dialog
+
           // Unassign active SOS
           final sosId = _currentNavigatingSos.value!.sosId;
           final success = await SupabaseService.unassignSosFromTeam(sosId);
-          
+
           if (success) {
-             // Close the bottom sheet if open
-             if (Get.isBottomSheetOpen ?? false) {
-               Get.back();
-             }
-             
-             _startNavigationToEvacuationPoint(point);
+            // Close the bottom sheet if open
+            if (Get.isBottomSheetOpen ?? false) {
+              Get.back();
+            }
+
+            _startNavigationToEvacuationPoint(point);
           } else {
-             Get.snackbar("Error", "Gagal membatalkan rute SOS");
+            Get.snackbar(
+              'Error',
+              'Gagal membatalkan rute SOS',
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: theme.colors.primary,
+              colorText: Colors.white,
+              animationDuration: Duration(milliseconds: 500),
+              duration: Duration(seconds: 2),
+            );
           }
-      });
+        },
+      );
       return;
     }
 
     Get.back();
-    
+
     _startNavigationToEvacuationPoint(point);
   }
 
@@ -597,12 +673,12 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
     if (routeData != null && routeData.polyline.isNotEmpty) {
       routePoints.value = routeData.polyline;
       remainingRoutePoints.value = routeData.polyline;
-      
+
       // Store route steps for navigation instructions
       _routeSteps = routeData.steps;
       _currentStepIndex = 0;
       _updateNavigationInstructions();
-      
+
       // Initialize navigation state
       isNavigating.value = true;
       navigationDestination.value = end;
@@ -611,18 +687,24 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
       isMapCentering.value = true;
 
       final distance = distance_calc.GeoDistanceCalculator.calculateDistance(
-      currentLocation.value,
-      navigationDestination.value!,
-    );
-    
-    distanceToDestination.value = distance;
-      
+        currentLocation.value,
+        navigationDestination.value!,
+      );
+
+      distanceToDestination.value = distance;
+
       await _saveNavigationState(evacuationId: point.evacuationId);
-      
+
       // Center on user location with animation
       _centerOnUserLocation(animate: true);
     } else {
-      Get.snackbar("Info", "Rute tidak ditemukan");
+      Get.snackbar(
+        'Info',
+        'Rute tidak ditemukan',
+        snackPosition: SnackPosition.BOTTOM,
+        animationDuration: Duration(milliseconds: 500),
+        duration: Duration(seconds: 2),
+      );
     }
 
     isRouteLoading.value = false;
@@ -634,11 +716,11 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
       distanceFilter: 10,
     );
 
-    _positionStreamSubscription = Geolocator.getPositionStream(locationSettings: locationSettings)
-        .listen((Position position) {
-      
+    _positionStreamSubscription = Geolocator.getPositionStream(
+      locationSettings: locationSettings,
+    ).listen((Position position) {
       final newLocation = LatLng(position.latitude, position.longitude);
-      
+
       // Update heading/bearing for arrow rotation
       if (_lastLocation != null && isNavigating.value) {
         final heading = _calculateHeading(_lastLocation!, newLocation);
@@ -654,7 +736,7 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
 
       if (isNavigating.value) {
         _updateNavigationState(newLocation);
-        
+
         // Auto-center if enabled
         if (isMapCentering.value) {
           _centerOnUserLocation(animate: true);
@@ -671,7 +753,8 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
     final dLon = (to.longitude - from.longitude) * math.pi / 180;
 
     final y = math.sin(dLon) * math.cos(lat2);
-    final x = math.cos(lat1) * math.sin(lat2) -
+    final x =
+        math.cos(lat1) * math.sin(lat2) -
         math.sin(lat1) * math.cos(lat2) * math.cos(dLon);
 
     final bearing = math.atan2(y, x) * 180 / math.pi;
@@ -681,13 +764,14 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
   void _updateNavigationState(LatLng userLocation) {
     // Ensure navigationDestination is set from current navigation target
     if (navigationDestination.value == null) {
-      if (_currentNavigatingSos.value != null && _currentNavigatingSos.value!.hasLocation()) {
+      if (_currentNavigatingSos.value != null &&
+          _currentNavigatingSos.value!.hasLocation()) {
         navigationDestination.value = LatLng(
           _currentNavigatingSos.value!.locationLat!,
           _currentNavigatingSos.value!.locationLng!,
         );
-      } else if (_currentNavigatingEvacuationPoint.value != null && 
-                 _currentNavigatingEvacuationPoint.value!.hasLocation()) {
+      } else if (_currentNavigatingEvacuationPoint.value != null &&
+          _currentNavigatingEvacuationPoint.value!.hasLocation()) {
         navigationDestination.value = LatLng(
           _currentNavigatingEvacuationPoint.value!.locationLat!,
           _currentNavigatingEvacuationPoint.value!.locationLng!,
@@ -701,7 +785,7 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
       userLocation,
       navigationDestination.value!,
     );
-    
+
     distanceToDestination.value = distance;
 
     _updateRouteProgress(userLocation);
@@ -731,14 +815,13 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
     // Update current segment and remaining route
     if (nearestIndex != currentRouteSegment.value) {
       currentRouteSegment.value = nearestIndex;
-      
+
       // Update remaining route points (from current position to end)
       if (nearestIndex < routePoints.length) {
         remainingRoutePoints.value = routePoints.sublist(nearestIndex);
       }
     }
-}
-
+  }
 
   void _updateNavigationInstructions() {
     if (_routeSteps.isEmpty || currentLocation.value == null) {
@@ -751,7 +834,8 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
     // Find the next step based on current location
     for (int i = _currentStepIndex; i < _routeSteps.length; i++) {
       final step = _routeSteps[i];
-      final distanceToStep = distance_calc.GeoDistanceCalculator.calculateDistance(
+      final distanceToStep = distance_calc
+          .GeoDistanceCalculator.calculateDistance(
         currentLocation.value,
         step.location,
       );
@@ -765,7 +849,7 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
       // This is our current step
       _currentStepIndex = i;
       distanceToNextTurn.value = distanceToStep * 1000;
-      
+
       // Set turn type based on maneuver modifier
       final modifier = step.maneuverModifier?.toLowerCase() ?? '';
       if (modifier.contains('left')) {
@@ -777,12 +861,12 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
       } else {
         turnType.value = 'straight'; // Default
       }
-      
+
       // Format instruction text
       final distanceText = _formatDistance(distanceToStep * 1000);
       final direction = _getDirectionText(modifier);
       currentInstruction.value = '$distanceText $direction';
-      
+
       break;
     }
   }
@@ -811,11 +895,11 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
 
   void _checkArrival(double distanceKm) {
     const double arrivalThresholdKm = 0.40; // 30 meters
-    
+
     // Set arrival state when within 30m radius
     if (distanceKm <= arrivalThresholdKm) {
       hasArrived.value = true;
-      
+
       // Show notification only once
       if (!_hasShownArrivalNotification) {
         _hasShownArrivalNotification = true;
@@ -831,31 +915,47 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
   }
 
   Future<void> completeNavigation() async {
-    await SupabaseService.deleteSosEventById(_currentNavigatingSos.value!.sosId);
+    await SupabaseService.deleteSosEventById(
+      _currentNavigatingSos.value!.sosId,
+    );
     clearRoute();
 
     if (Get.isBottomSheetOpen ?? false) {
       Get.back();
     }
   }
+
   void _checkAndReroute(LatLng userLocation) {
-    if ((_currentNavigatingSos.value == null && _currentNavigatingEvacuationPoint.value == null) || 
-        routePoints.isEmpty || 
+    if ((_currentNavigatingSos.value == null &&
+            _currentNavigatingEvacuationPoint.value == null) ||
+        routePoints.isEmpty ||
         isRouteLoading.value) {
       return;
     }
-    
+
     bool isOffRoute = MapHelper.isUserOffRoute(
-      userLocation, 
-      routePoints, 
-      thresholdMeters: 50
+      userLocation,
+      routePoints,
+      thresholdMeters: 50,
     );
 
     if (isOffRoute) {
       if (_currentNavigatingSos.value != null) {
-        _silentReroute(userLocation, LatLng(_currentNavigatingSos.value!.locationLat!, _currentNavigatingSos.value!.locationLng!));
+        _silentReroute(
+          userLocation,
+          LatLng(
+            _currentNavigatingSos.value!.locationLat!,
+            _currentNavigatingSos.value!.locationLng!,
+          ),
+        );
       } else if (_currentNavigatingEvacuationPoint.value != null) {
-        _silentReroute(userLocation, LatLng(_currentNavigatingEvacuationPoint.value!.locationLat!, _currentNavigatingEvacuationPoint.value!.locationLng!));
+        _silentReroute(
+          userLocation,
+          LatLng(
+            _currentNavigatingEvacuationPoint.value!.locationLat!,
+            _currentNavigatingEvacuationPoint.value!.locationLng!,
+          ),
+        );
       }
     }
   }
@@ -865,24 +965,24 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
     if (routeData != null && routeData.polyline.isNotEmpty) {
       routePoints.value = routeData.polyline;
       remainingRoutePoints.value = routeData.polyline;
-      
+
       _routeSteps = routeData.steps;
       _currentStepIndex = 0;
-      
+
       currentRouteSegment.value = 0;
-      
+
       navigationDestination.value = end;
-      
+
       _updateNavigationInstructions();
     }
   }
-  
+
   void clearRoute() {
     routePoints.clear();
     remainingRoutePoints.clear();
     _currentNavigatingSos.value = null;
     _currentNavigatingEvacuationPoint.value = null;
-    
+
     isNavigating.value = false;
     isMapCentering.value = true;
     navigationDestination.value = null;
@@ -891,21 +991,23 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
     currentHeading.value = 0.0;
     _hasShownArrivalNotification = false;
     hasArrived.value = false;
-    
+
     currentInstruction.value = '';
     distanceToNextTurn.value = 0.0;
     turnType.value = '';
     _routeSteps = [];
     _currentStepIndex = 0;
-    
+
     _idleTimer?.cancel();
     _arrivalCheckTimer?.cancel();
-    
+
     _clearNavigationState();
   }
 
   Future<void> cancelRoute(SosEvent sosEvent) async {
-    await SupabaseService.unassignSosFromTeam(_currentNavigatingSos.value!.sosId);
+    await SupabaseService.unassignSosFromTeam(
+      _currentNavigatingSos.value!.sosId,
+    );
     clearRoute();
     Get.back();
   }
@@ -920,7 +1022,8 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
   }
 
   bool isCurrentlyNavigatingToEvacuationPoint(EvacuationPoint point) {
-    return _currentNavigatingEvacuationPoint.value?.evacuationId == point.evacuationId;
+    return _currentNavigatingEvacuationPoint.value?.evacuationId ==
+        point.evacuationId;
   }
 
   String? getCurrentResponseTeamId() => _currentResponseTeamId;
@@ -941,7 +1044,10 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
     );
   }
 
-  Future<void> _saveNavigationState({String? sosId, String? evacuationId}) async {
+  Future<void> _saveNavigationState({
+    String? sosId,
+    String? evacuationId,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
     if (sosId != null) {
       await prefs.setString('navigating_sos_id', sosId);
@@ -968,9 +1074,9 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
 
   Future<void> _restoreNavigationIfNeeded() async {
     if (_currentResponseTeamId == null) return;
-    
+
     await Future.delayed(const Duration(milliseconds: 500));
-    
+
     try {
       final navigationState = await _loadNavigationState();
       final savedSosId = navigationState['sosId'];
@@ -978,10 +1084,11 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
 
       if (savedSosId != null) {
         final assignedSos = _sosEventsData.firstWhere(
-          (sos) => sos.sosId == savedSosId && 
-                   sos.responseTeamId == _currentResponseTeamId && 
-                   sos.isActive &&
-                   sos.hasLocation(),
+          (sos) =>
+              sos.sosId == savedSosId &&
+              sos.responseTeamId == _currentResponseTeamId &&
+              sos.isActive &&
+              sos.hasLocation(),
           orElse: () => SosEvent(sosId: ''),
         );
 
@@ -995,7 +1102,8 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
 
       if (savedEvacuationId != null) {
         final evacuationPoint = _evacuationPointsData.firstWhere(
-          (point) => point.evacuationId == savedEvacuationId && point.hasLocation(),
+          (point) =>
+              point.evacuationId == savedEvacuationId && point.hasLocation(),
           orElse: () => EvacuationPoint(evacuationId: null),
         );
 
@@ -1012,36 +1120,36 @@ class ResponseTeamMapViewModel extends GetxController with GetTickerProviderStat
 
   Future<void> _restoreEvacuationRoute(EvacuationPoint point) async {
     if (!point.hasLocation()) return;
-    
+
     _currentNavigatingEvacuationPoint.value = point;
     _currentNavigatingSos.value = null;
-    
+
     isRouteLoading.value = true;
-    
+
     final start = currentLocation.value;
     final end = LatLng(point.locationLat!, point.locationLng!);
-    
+
     navigationDestination.value = end;
-    
+
     final routeData = await MapHelper.getRouteWithInstructions(start, end);
     if (routeData != null && routeData.polyline.isNotEmpty) {
       isNavigating.value = true;
       currentRouteSegment.value = 0;
       _hasShownArrivalNotification = false;
       isMapCentering.value = true;
-      
+
       _routeSteps = routeData.steps;
       _currentStepIndex = 0;
       _updateNavigationInstructions();
-      
+
       await Future.delayed(const Duration(milliseconds: 100));
-      
+
       routePoints.value = routeData.polyline;
       remainingRoutePoints.value = routeData.polyline;
-      
+
       _centerOnUserLocation(animate: true);
     }
-    
+
     isRouteLoading.value = false;
   }
 }

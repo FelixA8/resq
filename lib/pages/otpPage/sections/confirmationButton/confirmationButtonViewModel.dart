@@ -53,7 +53,6 @@ class OTPConfirmationButtonViewModel extends ChangeNotifier {
           final SharedPreferences prefs = await SharedPreferences.getInstance();
           await prefs.setString('userId', _otpViewModel!.userId);
 
-
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => const UserMapView()),

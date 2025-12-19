@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:resqapp/theme/theme_app.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer' as developer;
 
@@ -20,35 +22,39 @@ import 'package:geocoding/geocoding.dart';
 class UserMapViewModel extends GetxController {
   final Rx<ResqUser?> _currentUser = Rx(null);
   ResqUser? get currentUser => _currentUser.value;
+  final theme = ResQTheme();
 
   final MapController mapController = MapController();
   final Map<String, String> _disasterAddressCache = {};
-  
-  final Rx<LatLng> currentLocation = LatLng(-6.2088, 106.8456).obs; 
+
+  final Rx<LatLng> currentLocation = LatLng(-6.2088, 106.8456).obs;
   final RxBool isLoading = false.obs;
   final RxBool hasLocationPermission = false.obs;
-  
+
   final RxList<Disaster> _disasterPointsData = <Disaster>[].obs;
   final RxList<LatLng> disasterPoints = <LatLng>[].obs;
-  
+
   final RxList<EvacuationPoint> _evacuationPointsData = <EvacuationPoint>[].obs;
   final RxList<LatLng> evacuationPoints = <LatLng>[].obs;
-  
-  final Rx<SOSWaitingViewModel?> _sosWaitingViewModel = Rx<SOSWaitingViewModel?>(null);
+
+  final Rx<SOSWaitingViewModel?> _sosWaitingViewModel =
+      Rx<SOSWaitingViewModel?>(null);
   final RxBool _isSOSActive = false.obs;
+  final RxBool isSosButtonEnabled = false.obs;
   final Rx<SosEvent?> _activeSosEvent = Rx<SosEvent?>(null);
 
   final RxList<LatLng> routePoints = <LatLng>[].obs;
   final RxBool isRouteLoading = false.obs;
-  final Rx<EvacuationPoint?> _currentNavigatingEvacuationPoint = Rx<EvacuationPoint?>(null);
-  
+  final Rx<EvacuationPoint?> _currentNavigatingEvacuationPoint =
+      Rx<EvacuationPoint?>(null);
+
   static const String _kSavedEvacuationId = 'saved_evacuation_point_id';
 
   // User location address
   final RxString currentAddress = 'Loading...'.obs;
 
   StreamSubscription<Position>? _positionStreamSubscription;
-  
+
   bool get isSOSActive => _isSOSActive.value;
   SOSWaitingViewModel? get sosWaitingViewModel => _sosWaitingViewModel.value;
   SosEvent? get activeSosEvent => _activeSosEvent.value;
@@ -98,10 +104,10 @@ class UserMapViewModel extends GetxController {
     try {
       final prefs = await SharedPreferences.getInstance();
       final savedId = prefs.getString(_kSavedEvacuationId);
-      
+
       if (savedId != null) {
         final point = await SupabaseService.getEvacuationPointById(savedId);
-        
+
         if (point != null) {
           showRouteToEvacuationPoint(point, saveState: false);
         } else {
@@ -124,13 +130,21 @@ class UserMapViewModel extends GetxController {
       distanceFilter: 10,
     );
 
-    _positionStreamSubscription = Geolocator.getPositionStream(locationSettings: locationSettings)
-        .listen((Position position) {
-      final newLocation = LatLng(position.latitude, position.longitude);
-      currentLocation.value = newLocation;
-      _updateAddress(newLocation);
-      _checkAndReroute(newLocation);
-    });
+    _positionStreamSubscription = Geolocator.getPositionStream(
+      locationSettings: locationSettings,
+    ).listen(
+      (Position position) {
+        final newLocation = LatLng(position.latitude, position.longitude);
+        currentLocation.value = newLocation;
+        isSosButtonEnabled.value = true;
+        _updateAddress(newLocation);
+        _checkAndReroute(newLocation);
+      },
+      onError: (e) {
+        isSosButtonEnabled.value = false;
+        developer.log('Error in location stream: $e');
+      },
+    );
   }
 
   Future<void> _checkForActiveSOS() async {
@@ -145,7 +159,7 @@ class UserMapViewModel extends GetxController {
       if (sosEvent != null) {
         _activeSosEvent.value = sosEvent;
         _isSOSActive.value = true;
-        
+
         if (_sosWaitingViewModel.value == null) {
           _sosWaitingViewModel.value = SOSWaitingViewModel(
             pressedAtMillis: sosEvent.pressedAt,
@@ -158,13 +172,18 @@ class UserMapViewModel extends GetxController {
   }
 
   void _updateDisasterPointsDisplay() {
-    final validDisasters = _disasterPointsData
-        .where((disaster) => disaster.centerLat != null && disaster.centerLng != null)
-        .toList();
-    
-    disasterPoints.value = validDisasters
-        .map((disaster) => LatLng(disaster.centerLat!, disaster.centerLng!))
-        .toList();
+    final validDisasters =
+        _disasterPointsData
+            .where(
+              (disaster) =>
+                  disaster.centerLat != null && disaster.centerLng != null,
+            )
+            .toList();
+
+    disasterPoints.value =
+        validDisasters
+            .map((disaster) => LatLng(disaster.centerLat!, disaster.centerLng!))
+            .toList();
   }
 
   Future<void> _loadDisasterPoints() async {
@@ -179,10 +198,11 @@ class UserMapViewModel extends GetxController {
   }
 
   void _updateEvacuationPointsDisplay() {
-    evacuationPoints.value = _evacuationPointsData
-        .where((point) => point.hasLocation())
-        .map((point) => LatLng(point.locationLat!, point.locationLng!))
-        .toList();
+    evacuationPoints.value =
+        _evacuationPointsData
+            .where((point) => point.hasLocation())
+            .map((point) => LatLng(point.locationLat!, point.locationLng!))
+            .toList();
   }
 
   Future<void> _loadEvacuationPoints() async {
@@ -199,17 +219,18 @@ class UserMapViewModel extends GetxController {
   void _subscribeToEvacuationPoints() {
     try {
       final supabaseClient = Supabase.instance.client;
-      _evacuationPointsSubscription = supabaseClient
-          .channel('evacuation_points_changes_user')
-          .onPostgresChanges(
-            event: PostgresChangeEvent.all,
-            schema: 'public',
-            table: 'evacuation_points',
-            callback: (payload) {
-              _handleEvacuationPointChange(payload);
-            },
-          )
-          .subscribe();
+      _evacuationPointsSubscription =
+          supabaseClient
+              .channel('evacuation_points_changes_user')
+              .onPostgresChanges(
+                event: PostgresChangeEvent.all,
+                schema: 'public',
+                table: 'evacuation_points',
+                callback: (payload) {
+                  _handleEvacuationPointChange(payload);
+                },
+              )
+              .subscribe();
     } catch (e) {
       developer.log('Error setting up realtime subscription: $e');
     }
@@ -218,17 +239,18 @@ class UserMapViewModel extends GetxController {
   void _subscribeToDisasters() {
     try {
       final supabaseClient = Supabase.instance.client;
-      _disastersSubscription = supabaseClient
-          .channel('disasters_changes_user')
-          .onPostgresChanges(
-            event: PostgresChangeEvent.all,
-            schema: 'public',
-            table: 'disasters',
-            callback: (payload) {
-              _handleDisasterChange(payload);
-            },
-          )
-          .subscribe();
+      _disastersSubscription =
+          supabaseClient
+              .channel('disasters_changes_user')
+              .onPostgresChanges(
+                event: PostgresChangeEvent.all,
+                schema: 'public',
+                table: 'disasters',
+                callback: (payload) {
+                  _handleDisasterChange(payload);
+                },
+              )
+              .subscribe();
     } catch (e) {
       developer.log('Error setting up disaster realtime subscription: $e');
     }
@@ -257,7 +279,9 @@ class UserMapViewModel extends GetxController {
     try {
       final point = EvacuationPoint.fromJson(record);
       if (point.evacuationId != null) {
-        final exists = _evacuationPointsData.any((p) => p.evacuationId == point.evacuationId);
+        final exists = _evacuationPointsData.any(
+          (p) => p.evacuationId == point.evacuationId,
+        );
         if (!exists) {
           _evacuationPointsData.add(point);
           _updateEvacuationPointsDisplay();
@@ -268,11 +292,16 @@ class UserMapViewModel extends GetxController {
     }
   }
 
-  void _handleEvacuationPointUpdate(Map<String, dynamic> oldRecord, Map<String, dynamic> newRecord) {
+  void _handleEvacuationPointUpdate(
+    Map<String, dynamic> oldRecord,
+    Map<String, dynamic> newRecord,
+  ) {
     try {
       final newPoint = EvacuationPoint.fromJson(newRecord);
       if (newPoint.evacuationId != null) {
-        final index = _evacuationPointsData.indexWhere((p) => p.evacuationId == newPoint.evacuationId);
+        final index = _evacuationPointsData.indexWhere(
+          (p) => p.evacuationId == newPoint.evacuationId,
+        );
         if (index != -1) {
           _evacuationPointsData[index] = newPoint;
           _updateEvacuationPointsDisplay();
@@ -290,7 +319,9 @@ class UserMapViewModel extends GetxController {
     try {
       final point = EvacuationPoint.fromJson(record);
       if (point.evacuationId != null) {
-        _evacuationPointsData.removeWhere((p) => p.evacuationId == point.evacuationId);
+        _evacuationPointsData.removeWhere(
+          (p) => p.evacuationId == point.evacuationId,
+        );
         _updateEvacuationPointsDisplay();
       }
     } catch (e) {
@@ -320,9 +351,13 @@ class UserMapViewModel extends GetxController {
   bool _isDisasterFromToday(Disaster disaster) {
     if (disaster.occurredAt == null) return false;
     try {
-      final disasterDate = DateTime.fromMillisecondsSinceEpoch(disaster.occurredAt!.toInt()*1000);
+      final disasterDate = DateTime.fromMillisecondsSinceEpoch(
+        disaster.occurredAt!.toInt() * 1000,
+      );
       final now = DateTime.now();
-      return disasterDate.year == now.year && disasterDate.month == now.month && disasterDate.day == now.day;
+      return disasterDate.year == now.year &&
+          disasterDate.month == now.month &&
+          disasterDate.day == now.day;
     } catch (e) {
       return false;
     }
@@ -333,7 +368,9 @@ class UserMapViewModel extends GetxController {
       final disaster = Disaster.fromJson(record);
       if (disaster.disasterId != null) {
         if (!_isDisasterFromToday(disaster)) return;
-        final exists = _disasterPointsData.any((d) => d.disasterId == disaster.disasterId);
+        final exists = _disasterPointsData.any(
+          (d) => d.disasterId == disaster.disasterId,
+        );
         if (!exists) {
           _disasterPointsData.add(disaster);
           _updateDisasterPointsDisplay();
@@ -344,19 +381,26 @@ class UserMapViewModel extends GetxController {
     }
   }
 
-  void _handleDisasterUpdate(Map<String, dynamic> oldRecord, Map<String, dynamic> newRecord) {
+  void _handleDisasterUpdate(
+    Map<String, dynamic> oldRecord,
+    Map<String, dynamic> newRecord,
+  ) {
     try {
       final newDisaster = Disaster.fromJson(newRecord);
       if (newDisaster.disasterId != null) {
         if (!_isDisasterFromToday(newDisaster)) {
-          final index = _disasterPointsData.indexWhere((d) => d.disasterId == newDisaster.disasterId);
+          final index = _disasterPointsData.indexWhere(
+            (d) => d.disasterId == newDisaster.disasterId,
+          );
           if (index != -1) {
             _disasterPointsData.removeAt(index);
             _updateDisasterPointsDisplay();
           }
           return;
         }
-        final index = _disasterPointsData.indexWhere((d) => d.disasterId == newDisaster.disasterId);
+        final index = _disasterPointsData.indexWhere(
+          (d) => d.disasterId == newDisaster.disasterId,
+        );
         if (index != -1) {
           _disasterPointsData[index] = newDisaster;
           _updateDisasterPointsDisplay();
@@ -374,7 +418,9 @@ class UserMapViewModel extends GetxController {
     try {
       final disaster = Disaster.fromJson(record);
       if (disaster.disasterId != null) {
-        _disasterPointsData.removeWhere((d) => d.disasterId == disaster.disasterId);
+        _disasterPointsData.removeWhere(
+          (d) => d.disasterId == disaster.disasterId,
+        );
         _updateDisasterPointsDisplay();
       }
     } catch (e) {
@@ -388,10 +434,13 @@ class UserMapViewModel extends GetxController {
       LocationResult result = await LocationHelper.initializeLocation();
       currentLocation.value = result.location;
       hasLocationPermission.value = result.hasPermission;
+      isSosButtonEnabled.value = result.hasPermission;
+
       mapController.move(currentLocation.value, 15.0);
       _updateAddress(currentLocation.value);
     } catch (e) {
       hasLocationPermission.value = false;
+      isSosButtonEnabled.value = false;
     } finally {
       isLoading.value = false;
     }
@@ -407,22 +456,25 @@ class UserMapViewModel extends GetxController {
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks[0];
         String address = '';
-        
+
         // Priority: locality (district) > subLocality (neighborhood) > subAdministrativeArea (city)
         if (place.locality != null && place.locality!.isNotEmpty) {
           address = place.locality!;
         } else if (place.subLocality != null && place.subLocality!.isNotEmpty) {
           address = place.subLocality!;
-        } else if (place.subAdministrativeArea != null && place.subAdministrativeArea!.isNotEmpty) {
+        } else if (place.subAdministrativeArea != null &&
+            place.subAdministrativeArea!.isNotEmpty) {
           address = place.subAdministrativeArea!;
         }
-        
+
         if (address.isEmpty) {
           address = 'Unknown Location';
         }
 
         currentAddress.value = address;
-        developer.log('User Location: ${place.street}, ${place.subLocality}, ${place.locality}, ${place.subAdministrativeArea}, ${place.administrativeArea}');
+        developer.log(
+          'User Location: ${place.street}, ${place.subLocality}, ${place.locality}, ${place.subAdministrativeArea}, ${place.administrativeArea}',
+        );
       }
     } catch (e) {
       developer.log('Error getting address: $e');
@@ -439,7 +491,10 @@ class UserMapViewModel extends GetxController {
   }
 
   EvacuationPoint? findEvacuationPointByLocation(LatLng location) {
-    return MapHelper.findEvacuationPointByLocation(_evacuationPointsData, location);
+    return MapHelper.findEvacuationPointByLocation(
+      _evacuationPointsData,
+      location,
+    );
   }
 
   Future<String> fetchDisasterAddress(Disaster disaster) {
@@ -451,15 +506,30 @@ class UserMapViewModel extends GetxController {
     );
   }
 
-  String formatDisasterDate(double? timestamp) => MapHelper.formatDisasterDate(timestamp);
-  String formatDisasterMagnitude(double? magnitude) => MapHelper.formatMagnitude(magnitude);
-  String getTsunamiPotential(double? magnitude) => MapHelper.getTsunamiPotential(magnitude);
+  String formatDisasterDate(double? timestamp) =>
+      MapHelper.formatDisasterDate(timestamp);
+  String formatDisasterMagnitude(double? magnitude) =>
+      MapHelper.formatMagnitude(magnitude);
+  String getTsunamiPotential(double? magnitude) =>
+      MapHelper.getTsunamiPotential(magnitude);
   String formatDisasterDepth(String? depth) => MapHelper.formatDepth(depth);
-  Future<void> openDisasterShakeMap(Disaster disaster) => MapHelper.launchShakeMap(disaster.shakemap);
+  Future<void> openDisasterShakeMap(Disaster disaster) =>
+      MapHelper.launchShakeMap(disaster.shakemap);
 
-  Future<void> showRouteToEvacuationPoint(EvacuationPoint point, {bool saveState = true}) async {
+  Future<void> showRouteToEvacuationPoint(
+    EvacuationPoint point, {
+    bool saveState = true,
+  }) async {
     if (!point.hasLocation()) {
-      Get.snackbar("Error", "Lokasi Poin Evakuasi tidak valid");
+      Get.snackbar(
+        'Error',
+        'Lokasi Poin Evakuasi tidak valid',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: theme.colors.primary,
+        colorText: Colors.white,
+        animationDuration: Duration(milliseconds: 500),
+        duration: Duration(seconds: 2),
+      );
       return;
     }
 
@@ -484,10 +554,24 @@ class UserMapViewModel extends GetxController {
       if (points.isNotEmpty) {
         routePoints.value = points;
       } else {
-        Get.snackbar("Info", "Rute tidak ditemukan");
+        Get.snackbar(
+          'Info',
+          "Rute tidak ditemukan",
+          snackPosition: SnackPosition.BOTTOM,
+          animationDuration: Duration(milliseconds: 500),
+          duration: Duration(seconds: 2),
+        );
       }
     } catch (e) {
-      Get.snackbar("Error", "Gagal memuat rute");
+      Get.snackbar(
+        'Error',
+        "Gagal memuat rute",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: theme.colors.primary,
+        colorText: Colors.white,
+        animationDuration: Duration(milliseconds: 500),
+        duration: Duration(seconds: 2),
+      );
     } finally {
       isRouteLoading.value = false;
     }
@@ -501,12 +585,13 @@ class UserMapViewModel extends GetxController {
   Future<void> cancelEvacuationRoute() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_kSavedEvacuationId);
-    
+
     clearRoute();
   }
 
   bool isCurrentlyNavigatingToEvacuationPoint(EvacuationPoint point) {
-    return _currentNavigatingEvacuationPoint.value?.evacuationId == point.evacuationId;
+    return _currentNavigatingEvacuationPoint.value?.evacuationId ==
+        point.evacuationId;
   }
 
   double calculateDistanceToEvacuationPoint(EvacuationPoint point) {
@@ -518,20 +603,25 @@ class UserMapViewModel extends GetxController {
   }
 
   void _checkAndReroute(LatLng userLocation) {
-    if (_currentNavigatingEvacuationPoint.value == null || routePoints.isEmpty || isRouteLoading.value) {
+    if (_currentNavigatingEvacuationPoint.value == null ||
+        routePoints.isEmpty ||
+        isRouteLoading.value) {
       return;
     }
 
     bool isOffRoute = MapHelper.isUserOffRoute(
       userLocation,
       routePoints,
-      thresholdMeters: 50
+      thresholdMeters: 50,
     );
 
     if (isOffRoute) {
       final dest = _currentNavigatingEvacuationPoint.value!;
       if (dest.hasLocation()) {
-        _silentReroute(userLocation, LatLng(dest.locationLat!, dest.locationLng!));
+        _silentReroute(
+          userLocation,
+          LatLng(dest.locationLat!, dest.locationLng!),
+        );
       }
     }
   }
@@ -551,14 +641,14 @@ class UserMapViewModel extends GetxController {
       );
     }
   }
-  
+
   void stopSOS() {
     _isSOSActive.value = false;
     _sosWaitingViewModel.value?.dispose();
     _sosWaitingViewModel.value = null;
     _activeSosEvent.value = null;
   }
-  
+
   void updateActiveSosEvent(SosEvent sosEvent) {
     _activeSosEvent.value = sosEvent;
   }

@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:resqapp/theme/theme_app.dart';
 import 'package:uuid/uuid.dart';
 import 'models/otp_model.dart';
 import '../../service/supabase_service.dart';
@@ -15,6 +16,7 @@ enum ViewState { otpInput, usernameInput, authenticated }
 class OTPViewModel extends ChangeNotifier {
   OTPModel? _otpModel;
   bool _isLoading = false;
+  final theme = ResQTheme();
 
   Timer? _resendTimer;
   int _resendTimeLeft = 0;
@@ -80,7 +82,6 @@ class OTPViewModel extends ChangeNotifier {
 
       if (!connectionOk) {
         result = otpCode;
-
       } else {
         result = await SupabaseService.createOtpCode(otpCode);
       }
@@ -98,16 +99,16 @@ class OTPViewModel extends ChangeNotifier {
         //   otpCode: _generatedOtpCode!,
         // );
 
-        if (smsSent) {
-
-        }
+        if (smsSent) {}
       } else {
         Get.snackbar(
           'Error',
           'Gagal membuat kode OTP',
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
+          backgroundColor: theme.colors.primary,
           colorText: Colors.white,
+          animationDuration: Duration(milliseconds: 500),
+          duration: Duration(seconds: 2),
         );
       }
 
@@ -119,8 +120,10 @@ class OTPViewModel extends ChangeNotifier {
         'Error',
         'Gagal membuat kode OTP',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: theme.colors.primary,
         colorText: Colors.white,
+        animationDuration: Duration(milliseconds: 500),
+        duration: Duration(seconds: 2),
       );
       notifyListeners();
     }
@@ -132,8 +135,10 @@ class OTPViewModel extends ChangeNotifier {
         'OTP Kadaluarse',
         'Kode OTP telah kadaluarsa, silahkan meminta ulang kode OTP.',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: theme.colors.primary,
         colorText: Colors.white,
+        animationDuration: Duration(milliseconds: 500),
+        duration: Duration(seconds: 2),
       );
       notifyListeners();
       return false;
@@ -173,8 +178,10 @@ class OTPViewModel extends ChangeNotifier {
           'OTP Tidak valid',
           'Kode OTP salah, silahkan coba lagi.',
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
+          backgroundColor: theme.colors.primary,
           colorText: Colors.white,
+          animationDuration: Duration(milliseconds: 500),
+          duration: Duration(seconds: 2),
         );
       }
 
@@ -185,12 +192,14 @@ class OTPViewModel extends ChangeNotifier {
       _isLoading = false;
       print('Verifikasi gagal: ${e}');
       Get.snackbar(
-            'Verifikasi',
-            'Verifikasi gagal, silahkan coba lagi.',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.red,
-            colorText: Colors.white,
-          );
+        'Verifikasi',
+        'Verifikasi gagal, silahkan coba lagi.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: theme.colors.primary,
+        colorText: Colors.white,
+        animationDuration: Duration(milliseconds: 500),
+        duration: Duration(seconds: 2),
+      );
       notifyListeners();
       return false;
     }
@@ -226,8 +235,10 @@ class OTPViewModel extends ChangeNotifier {
         'Gagal', // Title
         'Gagal mengirim OTP. Silahkan coba lagi nanti.', // Message
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: theme.colors.primary,
         colorText: Colors.white,
+        animationDuration: Duration(milliseconds: 500),
+        duration: Duration(seconds: 2),
       );
       notifyListeners();
     }
@@ -254,8 +265,10 @@ class OTPViewModel extends ChangeNotifier {
           'OTP Kadaluarsa',
           'Kode OTP telah kadaluarsa, silahkan meminta ulang kode OTP.',
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
+          backgroundColor: theme.colors.primary,
           colorText: Colors.white,
+          animationDuration: Duration(milliseconds: 500),
+          duration: Duration(seconds: 2),
         );
         notifyListeners();
         timer.cancel();
@@ -299,8 +312,10 @@ class OTPViewModel extends ChangeNotifier {
           'Gagal',
           'Gagal membuat akun, silahkan coba lagi.',
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
+          backgroundColor: theme.colors.primary,
           colorText: Colors.white,
+          animationDuration: Duration(milliseconds: 500),
+          duration: Duration(seconds: 2),
         );
         _isLoading = false;
         notifyListeners();
@@ -312,8 +327,10 @@ class OTPViewModel extends ChangeNotifier {
         'Gagal',
         'Gagal menyimpan akun: $e',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: theme.colors.primary,
         colorText: Colors.white,
+        animationDuration: Duration(milliseconds: 500),
+        duration: Duration(seconds: 2),
       );
       notifyListeners();
       return false;

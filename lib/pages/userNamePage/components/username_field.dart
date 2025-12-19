@@ -24,7 +24,7 @@ class UsernameField extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide.none,
         ),
-        errorText: !isValid && value.isNotEmpty ? 'Username harus berupa huruf dan minimal 3 buruf.' : null,
+        errorText: !isValid && value.isNotEmpty ? 'Username harus minimal 3 karakter dan berupa huruf' : null,
       ),
     );
   }
