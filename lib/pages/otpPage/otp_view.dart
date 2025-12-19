@@ -142,24 +142,6 @@ class OTPScreen extends StatelessWidget {
                               child: CircularProgressIndicator(),
                             ),
                           ),
-                        if (otpViewModel.errorMessage.isNotEmpty)
-                          Positioned(
-                            bottom: 20,
-                            left: 20,
-                            right: 20,
-                            child: Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.red.shade100,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                otpViewModel.errorMessage,
-                                style: const TextStyle(color: Colors.red),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ),
                       ],
                     ),
                   ),

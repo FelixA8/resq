@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:resqapp/theme/theme_app.dart';
 import 'package:uuid/uuid.dart';
 import 'models/otp_model.dart';
 import '../../service/supabase_service.dart';
@@ -14,7 +16,8 @@ enum ViewState { otpInput, usernameInput, authenticated }
 class OTPViewModel extends ChangeNotifier {
   OTPModel? _otpModel;
   bool _isLoading = false;
-  String _errorMessage = '';
+  final theme = ResQTheme();
+
   Timer? _resendTimer;
   int _resendTimeLeft = 0;
   Timer? _expiryTimer;
@@ -27,7 +30,7 @@ class OTPViewModel extends ChangeNotifier {
   // Getters
   OTPModel? get otpModel => _otpModel;
   bool get isLoading => _isLoading;
-  String get errorMessage => _errorMessage;
+
   int get resendTimeLeft => _resendTimeLeft;
   bool get canResendOTP => _resendTimeLeft == 0;
   bool get isOTPExpired => _otpModel?.isExpired ?? false;
@@ -79,7 +82,6 @@ class OTPViewModel extends ChangeNotifier {
 
       if (!connectionOk) {
         result = otpCode;
-        _errorMessage = '';
       } else {
         result = await SupabaseService.createOtpCode(otpCode);
       }
@@ -97,40 +99,52 @@ class OTPViewModel extends ChangeNotifier {
         //   otpCode: _generatedOtpCode!,
         // );
 
-        if (smsSent) {
-          _errorMessage = '';
-        } else {
-          _errorMessage =
-              'OTP generated but SMS app failed to open. Code: $_generatedOtpCode';
-        }
+        if (smsSent) {}
       } else {
-        _errorMessage = 'Failed to generate OTP code';
+        Get.snackbar(
+          'Error',
+          'Gagal membuat kode OTP',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: theme.colors.primary,
+          colorText: Colors.white,
+          animationDuration: Duration(milliseconds: 500),
+          duration: Duration(seconds: 2),
+        );
       }
 
       _isLoading = false;
       notifyListeners();
     } catch (e) {
       _isLoading = false;
-      _errorMessage = 'Error generating OTP code';
+      Get.snackbar(
+        'Error',
+        'Gagal membuat kode OTP',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: theme.colors.primary,
+        colorText: Colors.white,
+        animationDuration: Duration(milliseconds: 500),
+        duration: Duration(seconds: 2),
+      );
       notifyListeners();
     }
   }
 
   Future<bool> validateOTP(String code) async {
     if (isOTPExpired) {
-      _errorMessage = 'OTP has expired. Please request a new one.';
-      notifyListeners();
-      return false;
-    }
-
-    if (_verificationId == null) {
-      _errorMessage = 'No OTP verification session found.';
+      Get.snackbar(
+        'OTP Kadaluarse',
+        'Kode OTP telah kadaluarsa, silahkan meminta ulang kode OTP.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: theme.colors.primary,
+        colorText: Colors.white,
+        animationDuration: Duration(milliseconds: 500),
+        duration: Duration(seconds: 2),
+      );
       notifyListeners();
       return false;
     }
 
     _isLoading = true;
-    _errorMessage = '';
     notifyListeners();
 
     try {
@@ -157,11 +171,18 @@ class OTPViewModel extends ChangeNotifier {
           _otpModel = _otpModel?.copyWith(username: existingUser.username);
           _currentState = ViewState.authenticated;
         } else {
-          // No existing user: Proceed to username input
           _currentState = ViewState.usernameInput;
         }
       } else {
-        _errorMessage = 'Invalid OTP code';
+        Get.snackbar(
+          'OTP Tidak valid',
+          'Kode OTP salah, silahkan coba lagi.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: theme.colors.primary,
+          colorText: Colors.white,
+          animationDuration: Duration(milliseconds: 500),
+          duration: Duration(seconds: 2),
+        );
       }
 
       _isLoading = false;
@@ -169,7 +190,16 @@ class OTPViewModel extends ChangeNotifier {
       return isValid;
     } catch (e) {
       _isLoading = false;
-      _errorMessage = 'Failed to verify OTP: $e';
+      print('Verifikasi gagal: ${e}');
+      Get.snackbar(
+        'Verifikasi',
+        'Verifikasi gagal, silahkan coba lagi.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: theme.colors.primary,
+        colorText: Colors.white,
+        animationDuration: Duration(milliseconds: 500),
+        duration: Duration(seconds: 2),
+      );
       notifyListeners();
       return false;
     }
@@ -180,7 +210,7 @@ class OTPViewModel extends ChangeNotifier {
     if (!canResendOTP || _otpModel?.phoneNumber == null) return;
 
     _isLoading = true;
-    _errorMessage = '';
+
     notifyListeners();
 
     try {
@@ -200,7 +230,16 @@ class OTPViewModel extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _isLoading = false;
-      _errorMessage = 'Failed to resend OTP: $e';
+      print('Gagal mengirim OTP: ${e}');
+      Get.snackbar(
+        'Gagal', // Title
+        'Gagal mengirim OTP. Silahkan coba lagi nanti.', // Message
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: theme.colors.primary,
+        colorText: Colors.white,
+        animationDuration: Duration(milliseconds: 500),
+        duration: Duration(seconds: 2),
+      );
       notifyListeners();
     }
   }
@@ -222,7 +261,15 @@ class OTPViewModel extends ChangeNotifier {
     _expiryTimer?.cancel();
     _expiryTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
       if (isOTPExpired) {
-        _errorMessage = 'OTP has expired. Please request a new one.';
+        Get.snackbar(
+          'OTP Kadaluarsa',
+          'Kode OTP telah kadaluarsa, silahkan meminta ulang kode OTP.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: theme.colors.primary,
+          colorText: Colors.white,
+          animationDuration: Duration(milliseconds: 500),
+          duration: Duration(seconds: 2),
+        );
         notifyListeners();
         timer.cancel();
       }
@@ -256,19 +303,35 @@ class OTPViewModel extends ChangeNotifier {
 
       if (result != null) {
         this.userId = userId;
-        _errorMessage = '';
+
         _isLoading = false;
         notifyListeners();
         return true;
       } else {
-        _errorMessage = 'Failed to create user account';
+        Get.snackbar(
+          'Gagal',
+          'Gagal membuat akun, silahkan coba lagi.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: theme.colors.primary,
+          colorText: Colors.white,
+          animationDuration: Duration(milliseconds: 500),
+          duration: Duration(seconds: 2),
+        );
         _isLoading = false;
         notifyListeners();
         return false;
       }
     } catch (e) {
       _isLoading = false;
-      _errorMessage = 'Failed to save username: $e';
+      Get.snackbar(
+        'Gagal',
+        'Gagal menyimpan akun: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: theme.colors.primary,
+        colorText: Colors.white,
+        animationDuration: Duration(milliseconds: 500),
+        duration: Duration(seconds: 2),
+      );
       notifyListeners();
       return false;
     }

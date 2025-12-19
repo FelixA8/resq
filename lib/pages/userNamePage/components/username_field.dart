@@ -6,11 +6,11 @@ class UsernameField extends StatelessWidget {
   final bool isValid;
 
   const UsernameField({
-    Key? key,
+    super.key,
     required this.value,
     required this.onChanged,
     required this.isValid,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +24,7 @@ class UsernameField extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide.none,
         ),
-        errorText: !isValid && value.isNotEmpty ? 'Invalid username' : null,
+        errorText: !isValid && value.isNotEmpty ? 'Username harus minimal 3 karakter dan berupa huruf' : null,
       ),
     );
   }

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:resqapp/pages/SOSWaiting/sos_waiting_view_model.dart';
+import 'package:resqapp/pages/settings/sections/change_username_confirmation_dialog.dart';
 import 'package:resqapp/pages/userMap/user_map_view_model.dart';
+import 'package:resqapp/theme/theme_app.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:resqapp/service/supabase_service.dart';
 import 'package:resqapp/models/supabase_models.dart';
@@ -10,6 +12,7 @@ import 'dart:developer' as developer;
 class SettingsViewModel extends GetxController {
   final Rx<ResqUser?> _user = Rx<ResqUser?>(null);
   ResqUser? get user => _user.value;
+  final theme = ResQTheme();
 
   final RxList<String?> contactNumbers = <String?>[null, null, null].obs;
   final RxBool isLoading = false.obs;
@@ -32,9 +35,9 @@ class SettingsViewModel extends GetxController {
         _user.value = await SupabaseService.getUserById(userId);
 
         final contacts = await SupabaseService.getUserContacts(userId);
-        
+
         contactNumbers.value = [null, null, null];
-        
+
         for (var contact in contacts) {
           if (contact.contactName == 'Contact 1') {
             contactNumbers[0] = contact.phoneNumber;
@@ -71,25 +74,29 @@ class SettingsViewModel extends GetxController {
     isEditingUsername.value = false;
   }
 
+  void validateUsername(String username) {
+    if (username.length >= 3 && GetUtils.isAlphabetOnly(username)) {
+      showUsernameConfirmationDialog(username);
+    } else {
+      Get.snackbar(
+        'Username tidak valid',
+        'Username harus minimal 3 karakter dan berupa huruf',
+        snackPosition: SnackPosition.BOTTOM,
+        duration: Duration(seconds: 2),
+        animationDuration: Duration(milliseconds: 500),
+        backgroundColor: theme.colors.primary,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+      );
+    }
+  }
+
   Future<void> showUsernameConfirmationDialog(String newUsername) async {
     final result = await Get.dialog<bool>(
-      AlertDialog(
-        title: Text('Confirm Username Change'),
-        content: Text('Are you sure you want to change your username to "$newUsername"?'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Get.back(result: false);
-            },
-            child: Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Get.back(result: true);
-            },
-            child: Text('Confirm'),
-          ),
-        ],
+      ChangeUsernameConfirmationDialog(
+        onConfirm: () {
+          Get.back(result: true);
+        },
       ),
     );
 
@@ -101,12 +108,15 @@ class SettingsViewModel extends GetxController {
 
   Future<void> updateContact(int index, String? number) async {
     if (user == null) return;
-    
+
     // 1-based index for contact name
     final contactName = 'Contact ${index + 1}';
-    
+
     if (number == null || number.isEmpty) {
-      final success = await SupabaseService.deleteContact(user!.userId, contactName);
+      final success = await SupabaseService.deleteContact(
+        user!.userId,
+        contactName,
+      );
       if (success) {
         contactNumbers[index] = null;
       }

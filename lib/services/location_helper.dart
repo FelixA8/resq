@@ -3,13 +3,12 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:resqapp/theme/theme_app.dart';
 
 class LocationHelper {
   // Jakarta default
-  static const LatLng defaultLocation = LatLng(
-    -6.2088,
-    106.8456,
-  );
+  static const LatLng defaultLocation = LatLng(-6.2088, 106.8456);
+  static const theme = ResQTheme();
 
   /// Initialize location by checking permissions first, then getting location
   static Future<LocationResult> initializeLocation() async {
@@ -17,10 +16,11 @@ class LocationHelper {
       bool locationServiceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!locationServiceEnabled) {
         Get.snackbar(
-          'Location Service Disabled',
-          'Please enable location services to use this feature',
+          'Layanan Lokasi Nonaktif',
+          'Mohon aktifkan Lokasi Anda untuk menggunakan fitur ini',
           snackPosition: SnackPosition.BOTTOM,
-          duration: Duration(seconds: 1),
+          animationDuration: Duration(milliseconds: 500),
+          duration: Duration(seconds: 2),
           isDismissible: true,
         );
         return LocationResult(
@@ -37,10 +37,11 @@ class LocationHelper {
 
         if (permission == LocationPermission.denied) {
           Get.snackbar(
-            'Permission Denied',
-            'Location permission is required to show your position on the map',
+            'Izin Ditolak',
+            'Izin lokasi diperlukan untuk menampilkan posisi Anda di peta',
             snackPosition: SnackPosition.BOTTOM,
-            duration: Duration(seconds: 1),
+            animationDuration: Duration(milliseconds: 500),
+            duration: Duration(seconds: 2),
             isDismissible: true,
           );
           return LocationResult(
@@ -54,8 +55,8 @@ class LocationHelper {
       return await _getLocationAfterPermission();
     } catch (e) {
       Get.snackbar(
-        'Location Error',
-        'Failed to initialize location: ${e.toString()}',
+        'Kesalahan Lokasi',
+        'Gagal menginisialisasi lokasi: ${e.toString()}',
         snackPosition: SnackPosition.BOTTOM,
       );
       return LocationResult(
@@ -91,10 +92,11 @@ class LocationHelper {
       bool locationServiceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!locationServiceEnabled) {
         Get.snackbar(
-          'Location Service Disabled',
-          'Please enable location services to use this feature',
+          'Layanan Lokasi Nonaktif',
+          'Mohon aktifkan Lokasi Anda untuk menggunakan fitur ini',
           snackPosition: SnackPosition.BOTTOM,
-          duration: Duration(seconds: 1),
+          animationDuration: Duration(milliseconds: 500),
+          duration: Duration(seconds: 2),
           isDismissible: true,
         );
         return LocationResult(
@@ -120,27 +122,28 @@ class LocationHelper {
         hasPermission: true,
       );
     } catch (e) {
-      String errorMessage = 'Location Service Not Responding';
-      Color backgroundColor = const Color(0xFFB71C1C);
+      String errorMessage = 'Layanan Lokasi Tidak Merespons';
+      Color backgroundColor = theme.colors.primary;
 
       if (e.toString().contains('timeout')) {
-        errorMessage = 'Unable to get location. Please try again.';
+        errorMessage = 'Tidak dapat mendapatkan lokasi. Silakan coba lagi.';
       } else if (e.toString().contains('permission')) {
         errorMessage =
-            'Location permission is required to show your position on the map';
+            'Izin lokasi diperlukan untuk menampilkan posisi Anda di peta';
       } else if (e.toString().contains(
         'Unable to get current or last known location',
       )) {
-        errorMessage = 'Unable to get your current location. Please try again.';
+        errorMessage = 'Gagal mendapatkan lokasi terkini. Silakan coba lagi.';
       }
 
       Get.snackbar(
-        'Location Error',
+        'Kesalahan Lokasi',
         errorMessage,
         backgroundColor: backgroundColor,
         colorText: Color(0xFFFFFFFF),
         snackPosition: SnackPosition.BOTTOM,
-        duration: Duration(seconds: 1),
+        animationDuration: Duration(milliseconds: 500),
+        duration: Duration(seconds: 2),
         isDismissible: true,
       );
 
@@ -174,7 +177,9 @@ class LocationHelper {
   }
 
   /// Get address details from coordinates using reverse geocoding
-  static Future<LocationDetailResult> getLocationDetails(LatLng coordinates) async {
+  static Future<LocationDetailResult> getLocationDetails(
+    LatLng coordinates,
+  ) async {
     try {
       List<Placemark> placemarks = await placemarkFromCoordinates(
         coordinates.latitude,
@@ -183,30 +188,34 @@ class LocationHelper {
 
       if (placemarks.isNotEmpty) {
         Placemark placemark = placemarks.first;
-        
-        String city = placemark.locality ?? 
-                     placemark.administrativeArea ?? 
-                     placemark.subAdministrativeArea ?? 
-                     'Unknown City';
+
+        String city =
+            placemark.locality ??
+            placemark.administrativeArea ??
+            placemark.subAdministrativeArea ??
+            'Kota Tidak Diketahui';
 
         List<String> addressParts = [];
-        
+
         if (placemark.street != null && placemark.street!.isNotEmpty) {
           addressParts.add(placemark.street!);
         }
-        if (placemark.subLocality != null && placemark.subLocality!.isNotEmpty) {
+        if (placemark.subLocality != null &&
+            placemark.subLocality!.isNotEmpty) {
           addressParts.add(placemark.subLocality!);
         }
         if (placemark.locality != null && placemark.locality!.isNotEmpty) {
           addressParts.add(placemark.locality!);
         }
-        if (placemark.administrativeArea != null && placemark.administrativeArea!.isNotEmpty) {
+        if (placemark.administrativeArea != null &&
+            placemark.administrativeArea!.isNotEmpty) {
           addressParts.add(placemark.administrativeArea!);
         }
 
-        String locationDetail = addressParts.isNotEmpty 
-            ? addressParts.join(', ')
-            : 'Lat: ${coordinates.latitude.toStringAsFixed(6)}, Lng: ${coordinates.longitude.toStringAsFixed(6)}';
+        String locationDetail =
+            addressParts.isNotEmpty
+                ? addressParts.join(', ')
+                : 'Lat: ${coordinates.latitude.toStringAsFixed(6)}, Lng: ${coordinates.longitude.toStringAsFixed(6)}';
 
         return LocationDetailResult(
           city: city,
@@ -215,16 +224,18 @@ class LocationHelper {
         );
       } else {
         return LocationDetailResult(
-          city: 'Unknown City',
-          locationDetail: 'Lat: ${coordinates.latitude.toStringAsFixed(6)}, Lng: ${coordinates.longitude.toStringAsFixed(6)}',
+          city: 'Kota Tidak Diketahui',
+          locationDetail:
+              'Lat: ${coordinates.latitude.toStringAsFixed(6)}, Lng: ${coordinates.longitude.toStringAsFixed(6)}',
           success: false,
-          error: 'No address found for this location',
+          error: 'Alamat tidak ditemukan untuk lokasi ini',
         );
       }
     } catch (e) {
       return LocationDetailResult(
-        city: 'Unknown City',
-        locationDetail: 'Lat: ${coordinates.latitude.toStringAsFixed(6)}, Lng: ${coordinates.longitude.toStringAsFixed(6)}',
+        city: 'Kota Tidak Diketahui',
+        locationDetail:
+            'Lat: ${coordinates.latitude.toStringAsFixed(6)}, Lng: ${coordinates.longitude.toStringAsFixed(6)}',
         success: false,
         error: e.toString(),
       );

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -7,6 +8,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:resqapp/theme/theme_app.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer' as developer;
 
@@ -24,6 +26,7 @@ import 'package:geocoding/geocoding.dart';
 class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
   final Rx<ResqUser?> _currentUser = Rx(null);
   ResqUser? get currentUser => _currentUser.value;
+  final theme = ResQTheme();
 
   late final AnimatedMapController mapController;
   final Map<String, String> _disasterAddressCache = {};
@@ -41,6 +44,7 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
   final Rx<SOSWaitingViewModel?> _sosWaitingViewModel =
       Rx<SOSWaitingViewModel?>(null);
   final RxBool _isSOSActive = false.obs;
+  final RxBool isSosButtonEnabled = false.obs;
   final Rx<SosEvent?> _activeSosEvent = Rx<SosEvent?>(null);
 
   final RxList<LatLng> routePoints = <LatLng>[].obs;
@@ -475,6 +479,8 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
       LocationResult result = await LocationHelper.initializeLocation();
       currentLocation.value = result.location;
       hasLocationPermission.value = result.hasPermission;
+      isSosButtonEnabled.value = result.hasPermission;
+      
       await mapController.animateTo(
         dest: currentLocation.value,
         zoom: MapAnimationConfig.initialZoom,
@@ -484,6 +490,7 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
       _updateAddress(currentLocation.value);
     } catch (e) {
       hasLocationPermission.value = false;
+      isSosButtonEnabled.value = false;
     } finally {
       isLoading.value = false;
     }
@@ -569,7 +576,15 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
     bool saveState = true,
   }) async {
     if (!point.hasLocation()) {
-      Get.snackbar("Error", "Lokasi Poin Evakuasi tidak valid");
+      Get.snackbar(
+        'Error',
+        'Lokasi Poin Evakuasi tidak valid',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: theme.colors.primary,
+        colorText: Colors.white,
+        animationDuration: Duration(milliseconds: 500),
+        duration: Duration(seconds: 2),
+      );
       return;
     }
 
@@ -620,10 +635,24 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
         // Center on user location with animation
         _centerOnUserLocation(animate: true);
       } else {
-        Get.snackbar("Info", "Rute tidak ditemukan");
+        Get.snackbar(
+          'Info',
+          "Rute tidak ditemukan",
+          snackPosition: SnackPosition.BOTTOM,
+          animationDuration: Duration(milliseconds: 500),
+          duration: Duration(seconds: 2),
+        );
       }
     } catch (e) {
-      Get.snackbar("Error", "Gagal memuat rute");
+      Get.snackbar(
+        'Error',
+        "Gagal memuat rute",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: theme.colors.primary,
+        colorText: Colors.white,
+        animationDuration: Duration(milliseconds: 500),
+        duration: Duration(seconds: 2),
+      );
     } finally {
       isRouteLoading.value = false;
     }

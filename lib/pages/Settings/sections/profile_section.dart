@@ -107,7 +107,7 @@ class _ProfileSectionState extends State<ProfileSection> {
                       minimumSize: Size(0, 35),
                     ),
                     onPressed: () {
-                      viewModel.showUsernameConfirmationDialog(_controller.text);
+                      viewModel.validateUsername(_controller.text);
                     },
                     child: Text(
                       'Save',

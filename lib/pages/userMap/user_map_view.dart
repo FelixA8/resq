@@ -102,25 +102,43 @@ class UserMapView extends GetView<UserMapViewModel> {
                 const SizedBox(width: 7),
                 Obx(() {
                   final isSOSActive = controller.isSOSActive;
+                  final isSosButtonEnabled =
+                      controller.isSosButtonEnabled.value;
+
+                  final bool isDisabled = isSOSActive || !isSosButtonEnabled;
+
                   return SizedBox(
                     height: 35,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor:
-                            isSOSActive
+                            isDisabled
                                 ? Colors.grey.shade400
                                 : theme.colors.primary,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        minimumSize: Size(35, 35),
-                        maximumSize: Size(double.infinity, 35),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        minimumSize: const Size(35, 35),
+                        maximumSize: const Size(double.infinity, 35),
                       ),
                       onPressed:
-                          isSOSActive
-                              ? null
+                          isDisabled
+                              ? () {
+                                Get.snackbar(
+                                  'Layanan Lokasi Nonaktif',
+                                  'Mohon aktifkan Lokasi Anda untuk menggunakan fitur ini',
+                                  snackPosition: SnackPosition.BOTTOM,
+                                  backgroundColor: theme.colors.primary,
+                                  colorText: Colors.white,
+                                  animationDuration: Duration(
+                                    milliseconds: 500,
+                                  ),
+                                  duration: Duration(seconds: 2),
+                                  isDismissible: true,
+                                );
+                              }
                               : () {
                                 showModalBottomSheet(
                                   context: context,
@@ -129,16 +147,16 @@ class UserMapView extends GetView<UserMapViewModel> {
                                   enableDrag: true,
                                   backgroundColor: Colors.transparent,
                                   builder: (modalContext) {
-                                    return SOSView();
+                                    return const SOSView();
                                   },
-                                  shape: RoundedRectangleBorder(
+                                  shape: const RoundedRectangleBorder(
                                     borderRadius: BorderRadius.vertical(
                                       top: Radius.circular(24),
                                     ),
                                   ),
                                 );
                               },
-                      child: Text(
+                      child: const Text(
                         'SOS',
                         style: TextStyle(
                           fontFamily: 'SF Pro',

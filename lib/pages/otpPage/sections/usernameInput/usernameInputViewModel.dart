@@ -31,8 +31,8 @@ class UsernameInputViewModel extends ChangeNotifier {
   }
 
   void _validateUsername() {
-    // Basic validation - username should not be empty and should be at least 3 characters
-    _isValid = _username.trim().isNotEmpty && _username.trim().length >= 3;
+    final RegExp alpha = RegExp(r'^[a-zA-Z]+$');
+    _isValid = _username.trim().isNotEmpty && _username.trim().length >= 3 && alpha.hasMatch(_username.trim());
   }
 
   void handleUsernameChanged(String value) {
