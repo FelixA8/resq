@@ -6,8 +6,8 @@ import 'dart:developer' as developer;
 class ZenzivaService {
   static const String _userKey = '1c2862404c33';
   static const String _passKey = '2d6605743f8ef904448af764';
-  // static const String _baseUrl = 'https://console.zenziva.net/wareguler/api/sendWA/';
-  static const String _baseUrl = 'https://console.zenziva.net/waofficial/api/sendWAOfficial/';
+  static const String _baseUrl = 'https://console.zenziva.net/wareguler/api/sendWA/';
+//   static const String _baseUrl = 'https://console.zenziva.net/waofficial/api/sendWAOfficial/';
 
   /// Send WhatsApp OTP
   static Future<bool> sendOtpWhatsapp({
@@ -21,7 +21,7 @@ class ZenzivaService {
         ..fields['userkey'] = _userKey
         ..fields['passkey'] = _passKey
         ..fields['to'] = phoneNumber
-        ..fields['brand'] = 'resq'
+        ..fields['brand'] = 'RESQ'
         ..fields['otp'] = otpCode;
 
       final streamedResponse = await request.send();

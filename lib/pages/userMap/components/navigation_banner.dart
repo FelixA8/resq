@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:resqapp/pages/responseTeam/responseTeamMap/response_team_map_view_model.dart';
+import 'package:resqapp/pages/userMap/user_map_view_model.dart';
 import 'package:resqapp/theme/theme_app.dart';
 
 class NavigationBanner extends StatelessWidget {
@@ -10,7 +10,7 @@ class NavigationBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     var theme = ResQTheme();
     
-    return GetX<ResponseTeamMapViewModel>(
+    return GetX<UserMapViewModel>(
       builder: (controller) {
         if (!controller.isNavigating.value) {
           return SizedBox.shrink();
@@ -27,12 +27,12 @@ class NavigationBanner extends StatelessWidget {
     );
   }
 
-  Widget _buildArrivalBanner(ResponseTeamMapViewModel controller, ResQTheme theme) {
+  Widget _buildArrivalBanner(UserMapViewModel controller, ResQTheme theme) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: theme.colors.primary,
+        color: Colors.green.shade600,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -60,7 +60,7 @@ class NavigationBanner extends StatelessWidget {
             ),
             child: Icon(
               Icons.check_circle,
-              color: theme.colors.primary,
+              color: Colors.green.shade600,
               size: 32,
             ),
           ),
@@ -72,7 +72,7 @@ class NavigationBanner extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Kamu telah sampai',
+                  'You have arrived',
                   style: TextStyle(
                     fontFamily: 'SF Pro',
                     fontWeight: FontWeight.w700,
@@ -99,7 +99,7 @@ class NavigationBanner extends StatelessWidget {
             onPressed: () => controller.completeNavigation(),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,
-              foregroundColor: theme.colors.primary,
+              foregroundColor: Colors.green.shade600,
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -107,7 +107,7 @@ class NavigationBanner extends StatelessWidget {
               elevation: 2,
             ),
             child: Text(
-              'Selesai',
+              'Finish',
               style: TextStyle(
                 fontFamily: 'SF Pro',
                 fontWeight: FontWeight.w700,
@@ -120,7 +120,7 @@ class NavigationBanner extends StatelessWidget {
     );
   }
 
-  Widget _buildNavigationBanner(ResponseTeamMapViewModel controller, ResQTheme theme) {
+  Widget _buildNavigationBanner(UserMapViewModel controller, ResQTheme theme) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
