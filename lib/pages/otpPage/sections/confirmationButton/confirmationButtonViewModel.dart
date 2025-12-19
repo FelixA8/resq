@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:resqapp/pages/userMap/user_map_view.dart';
 import '../../otp_view_model.dart';
 
@@ -49,6 +50,10 @@ class OTPConfirmationButtonViewModel extends ChangeNotifier {
     if (_isEnabled && _otpViewModel != null) {
       _otpViewModel!.saveUsername().then((success) async {
         if (success && context.mounted) {
+          final SharedPreferences prefs = await SharedPreferences.getInstance();
+          await prefs.setString('userId', _otpViewModel!.userId);
+
+
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => const UserMapView()),
