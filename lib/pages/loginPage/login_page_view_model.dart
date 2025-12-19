@@ -18,7 +18,7 @@ class LoginPageViewModel extends ChangeNotifier {
     final phone = phoneController.text;
     final isNumeric = RegExp(r'^[0-9]+$').hasMatch(phone);
 
-    if (phone.isNotEmpty && isNumeric && phone.length >= 12 && phone.length <= 15) {
+    if (phone.isNotEmpty && isNumeric && phone.length >= 10 && phone.length <= 15) {
       phoneError = null;
       notifyListeners();
       Navigator.pushNamed(
@@ -30,7 +30,7 @@ class LoginPageViewModel extends ChangeNotifier {
         },
       );
     } else {
-      phoneError = 'Nomor telepon harus numerik dan 12 - 15 angka';
+      phoneError = 'Nomor telepon harus numerik dan 10 - 15 angka';
       notifyListeners();
     }
   }
