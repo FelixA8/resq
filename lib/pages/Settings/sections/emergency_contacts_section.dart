@@ -194,10 +194,26 @@ class _EmergencyContactsSectionState extends State<EmergencyContactsSection> {
                                   minimumSize: Size(0, 35),
                                 ),
                                 onPressed: () async {
-                                  String newNumber = controllers[index].text;
-                                  bool isValid =
-                                      newNumber.length >= 10 &&
-                                      newNumber.startsWith('08');
+                                  String newNumber =
+                                      controllers[index].text.trim();
+
+                                  // Remove any leading + if present
+                                  if (newNumber.startsWith('+')) {
+                                    newNumber = newNumber.substring(1);
+                                  }
+
+                                  // Convert leading 0 to 62
+                                  if (newNumber.startsWith('0')) {
+                                    newNumber = '62${newNumber.substring(1)}';
+                                  }
+                                  // Add 62 prefix if it doesn't already start with 62
+                                  else if (!newNumber.startsWith('62')) {
+                                    newNumber = '62$newNumber';
+                                  }
+
+                                  // Validate: must be at least 12 characters (62 + 10 digits minimum)
+                                  bool isValid = newNumber.length >= 12;
+
                                   if (!isValid) {
                                     Get.dialog(
                                       Dialog(
@@ -248,7 +264,7 @@ class _EmergencyContactsSectionState extends State<EmergencyContactsSection> {
 
                                               // Main message
                                               const Text(
-                                                'Nomor telepon harus dimulai dengan 08 dengan minimal 10 digit',
+                                                'Nomor telepon harus minimal 10 digit',
                                                 style: TextStyle(
                                                   fontFamily: 'SF Pro',
                                                   fontSize: 16,
@@ -265,6 +281,17 @@ class _EmergencyContactsSectionState extends State<EmergencyContactsSection> {
                                     );
                                     return;
                                   }
+
+                                  // Save the contact with 62 prefix
+                                  await viewModel.updateContact(
+                                    index,
+                                    newNumber,
+                                  );
+
+                                  // Exit edit mode
+                                  setState(() {
+                                    isEditing[index] = false;
+                                  });
                                 },
                                 child: Text(
                                   'Simpan',
