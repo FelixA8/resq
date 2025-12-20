@@ -134,7 +134,8 @@ class UserMapViewModel extends GetxController
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     LocationPermission permission = await Geolocator.checkPermission();
 
-    bool isPermissionGranted = permission == LocationPermission.always ||
+    bool isPermissionGranted =
+        permission == LocationPermission.always ||
         permission == LocationPermission.whileInUse;
 
     if (serviceEnabled && isPermissionGranted) {
@@ -142,7 +143,7 @@ class UserMapViewModel extends GetxController
       if (Get.isDialogOpen == true) {
         Get.back();
       }
-      _initializeLocation(); 
+      _initializeLocation();
       return true;
     } else {
       isLocationServiceEnabled.value = false;
@@ -157,7 +158,7 @@ class UserMapViewModel extends GetxController
     Get.dialog(
       LocationDisabledDialog(
         onRetry: () async {
-            return await refreshLocationStatus();
+          return await refreshLocationStatus();
         },
       ),
       barrierDismissible: false,
@@ -205,7 +206,7 @@ class UserMapViewModel extends GetxController
   void _startLocationStream() {
     const LocationSettings locationSettings = LocationSettings(
       accuracy: LocationAccuracy.bestForNavigation,
-      distanceFilter: 0,
+      distanceFilter: 1,
     );
 
     _positionStreamSubscription = Geolocator.getPositionStream(
@@ -534,9 +535,9 @@ class UserMapViewModel extends GetxController
       hasLocationPermission.value = result.hasPermission;
       hasLocationPermission.value = result.hasPermission;
       isLocationServiceEnabled.value = result.hasPermission;
-      
+
       if (!result.hasPermission) {
-         _showLocationDisabledDialog();
+        _showLocationDisabledDialog();
       }
 
       await mapController.animateTo(
@@ -550,7 +551,7 @@ class UserMapViewModel extends GetxController
       hasLocationPermission.value = false;
       hasLocationPermission.value = false;
       isLocationServiceEnabled.value = false;
-      
+
       _showLocationDisabledDialog();
     } finally {
       isLoading.value = false;
@@ -589,7 +590,9 @@ class UserMapViewModel extends GetxController
       }
     } catch (e) {
       developer.log('Error getting address: $e');
-      currentAddress.value = 'Location Unavailable';
+      if (currentAddress.value.isEmpty) {
+        currentAddress.value = 'Location Unavailable';
+      }
     }
   }
 

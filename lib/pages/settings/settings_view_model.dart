@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:resqapp/pages/SOSWaiting/sos_waiting_view_model.dart';
+import 'package:resqapp/pages/settings/components/settings_error_dialog.dart';
 import 'package:resqapp/pages/settings/sections/change_username_confirmation_dialog.dart';
 import 'package:resqapp/pages/userMap/user_map_view_model.dart';
 import 'package:resqapp/theme/theme_app.dart';
@@ -134,6 +135,54 @@ class SettingsViewModel extends GetxController {
     if (success) {
       contactNumbers[index] = number;
     }
+  }
+
+  void validateAndSaveContact(
+    int index,
+    String rawNumber,
+    Function() onSuccess,
+  ) {
+    String newNumber = rawNumber.trim();
+
+    if (newNumber.startsWith('+')) {
+      newNumber = newNumber.substring(1);
+    }
+
+    if (newNumber.startsWith('0')) {
+      newNumber = '62${newNumber.substring(1)}';
+    } else if (!newNumber.startsWith('62')) {
+      newNumber = '62$newNumber';
+    }
+
+    bool isValidLength = newNumber.length >= 12;
+
+    if (!isValidLength) {
+      Get.dialog(
+        const SettingsErrorDialog(
+          icon: Icons.warning_rounded,
+          title: 'Nomor tidak valid',
+          description: 'Nomor telepon harus minimal 10 digit',
+        ),
+      );
+      return;
+    }
+
+    for (int i = 0; i < contactNumbers.length; i++) {
+      if (i != index && contactNumbers[i] == newNumber) {
+        Get.dialog(
+          const SettingsErrorDialog(
+            icon: Icons.copy_rounded,
+            title: 'Nomor sudah terdaftar',
+            description: 'Nomor ini sudah digunakan di kontak darurat lainnya.',
+          ),
+        );
+        return;
+      }
+    }
+
+    updateContact(index, newNumber).then((_) {
+      onSuccess();
+    });
   }
 
   Future<void> logoutUser() async {

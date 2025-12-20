@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:resqapp/pages/settings/components/settings_cancel_button.dart';
 import 'package:resqapp/theme/theme_app.dart';
 import '../settings_view_model.dart';
 
@@ -38,9 +39,7 @@ class _ProfileSectionState extends State<ProfileSection> {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isEditing
-              ? Color(0xFFF1C8C8)
-              : theme.colors.primary,
+          color: isEditing ? Color(0xFFF1C8C8) : theme.colors.primary,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
@@ -52,35 +51,35 @@ class _ProfileSectionState extends State<ProfileSection> {
                 children: [
                   isEditing
                       ? SizedBox(
-                          height: 28, // Match static text height
-                          child: TextField(
-                            controller: _controller,
-                            focusNode: _focusNode,
-                            style: TextStyle(
-                              fontFamily: 'SF Pro',
-                              fontWeight: FontWeight.w500,
-                              fontSize: 20,
-                              color: Colors.black, // Black when editing
-                              height: 1.0, // Match Text widget line height
-                            ),
-                            decoration: InputDecoration(
-                              border: InputBorder.none,
-                              isDense: true,
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                            cursorColor: Colors.black,
-                            textAlignVertical: TextAlignVertical.center,
-                          ),
-                        )
-                      : Text(
-                          username,
+                        height: 28, // Match static text height
+                        child: TextField(
+                          controller: _controller,
+                          focusNode: _focusNode,
                           style: TextStyle(
                             fontFamily: 'SF Pro',
                             fontWeight: FontWeight.w500,
                             fontSize: 20,
-                            color: Colors.white, // White when not editing
+                            color: Colors.black, // Black when editing
+                            height: 1.0, // Match Text widget line height
                           ),
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            isDense: true,
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                          cursorColor: Colors.black,
+                          textAlignVertical: TextAlignVertical.center,
                         ),
+                      )
+                      : Text(
+                        username,
+                        style: TextStyle(
+                          fontFamily: 'SF Pro',
+                          fontWeight: FontWeight.w500,
+                          fontSize: 20,
+                          color: Colors.white, // White when not editing
+                        ),
+                      ),
                   SizedBox(height: 3),
                   Text(
                     phone,
@@ -96,57 +95,73 @@ class _ProfileSectionState extends State<ProfileSection> {
             ),
             SizedBox(width: 8),
             isEditing
-                ? ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colors.primary,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                ? Row(
+                  children: [
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.colors.primary,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 1,
+                        ),
+                        minimumSize: Size(0, 35),
                       ),
-                      padding: EdgeInsets.symmetric(horizontal: 18, vertical: 1),
-                      minimumSize: Size(0, 35),
-                    ),
-                    onPressed: () {
-                      viewModel.validateUsername(_controller.text);
-                    },
-                    child: Text(
-                      'Simpan',
-                      style: TextStyle(
-                        fontFamily: 'SF Pro',
-                        fontWeight: FontWeight.w500,
-                        fontSize: 16,
-                        color: Colors.white
+                      onPressed: () {
+                        viewModel.validateUsername(_controller.text);
+                      },
+                      child: Text(
+                        'Simpan',
+                        style: TextStyle(
+                          fontFamily: 'SF Pro',
+                          fontWeight: FontWeight.w500,
+                          fontSize: 16,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
-                  )
+                    SizedBox(width: 4),
+                    SettingsCancelButton(
+                      onCancel: () {
+                        setState(() {
+                          _focusNode.unfocus();
+                          viewModel.isEditingUsername.value = false;
+                        });
+                      },
+                    ),
+                  ],
+                )
                 : ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 1),
-                      minimumSize: Size(0, 35),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    onPressed: () {
-                      viewModel.startEditingUsername();
-                      _controller.text = username;
-                      Future.delayed(Duration(milliseconds: 100), () {
-                        _focusNode.requestFocus();
-                      });
-                    },
-                    icon: Icon(Icons.edit, color: theme.colors.primary),
-                    label: Text(
-                      'Edit',
-                      style: TextStyle(
-                        fontFamily: 'SF Pro',
-                        fontWeight: FontWeight.w500,
-                        fontSize: 16,
-                        color: theme.colors.primary,
-                      ),
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 1),
+                    minimumSize: Size(0, 35),
+                  ),
+                  onPressed: () {
+                    viewModel.startEditingUsername();
+                    _controller.text = username;
+                    Future.delayed(Duration(milliseconds: 100), () {
+                      _focusNode.requestFocus();
+                    });
+                  },
+                  icon: Icon(Icons.edit, color: theme.colors.primary),
+                  label: Text(
+                    'Modifikasi',
+                    style: TextStyle(
+                      fontFamily: 'SF Pro',
+                      fontWeight: FontWeight.w500,
+                      fontSize: 16,
+                      color: theme.colors.primary,
                     ),
                   ),
+                ),
           ],
         ),
       );

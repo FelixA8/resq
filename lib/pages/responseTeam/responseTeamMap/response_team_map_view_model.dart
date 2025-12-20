@@ -101,7 +101,8 @@ class ResponseTeamMapViewModel extends GetxController
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     LocationPermission permission = await Geolocator.checkPermission();
 
-    bool isPermissionGranted = permission == LocationPermission.always ||
+    bool isPermissionGranted =
+        permission == LocationPermission.always ||
         permission == LocationPermission.whileInUse;
 
     if (serviceEnabled && isPermissionGranted) {
@@ -264,12 +265,12 @@ class ResponseTeamMapViewModel extends GetxController
     try {
       isLoading.value = true;
       await refreshLocationStatus();
-      
+
       if (!hasLocationPermission.value) return;
 
       LocationResult result = await LocationHelper.initializeLocation();
       currentLocation.value = result.location;
-      
+
       await mapController.animateTo(
         dest: currentLocation.value,
         zoom: MapAnimationConfig.initialZoom,
@@ -341,10 +342,11 @@ class ResponseTeamMapViewModel extends GetxController
       }
     } catch (e) {
       developer.log('Error getting address: $e');
-      currentAddress.value = 'Location Unavailable';
+      if (currentAddress.value.isEmpty) {
+        currentAddress.value = 'Location Unavailable';
+      }
     }
   }
-
 
   void _onEvacuationInsert(EvacuationPoint point) {
     if (point.evacuationId == null) return;
@@ -907,7 +909,7 @@ class ResponseTeamMapViewModel extends GetxController
     // Update current segment and remaining route
     if (nearestIndex != currentRouteSegment.value) {
       currentRouteSegment.value = nearestIndex;
-      
+
       // If user is at or past the last point, clear the remaining route
       if (nearestIndex >= routePoints.length - 1) {
         remainingRoutePoints.clear();
@@ -944,17 +946,18 @@ class ResponseTeamMapViewModel extends GetxController
       // This is our current step
       _currentStepIndex = i;
       distanceToNextTurn.value = distanceToStep * 1000;
-      
+
       // Set turn type based on maneuver type and modifier
       final maneuverType = step.maneuverType.toLowerCase();
       final modifier = step.maneuverModifier?.toLowerCase() ?? '';
-      
+
       // Handle U-turns specifically
       if (modifier == 'uturn' || maneuverType == 'uturn') {
         turnType.value = 'uturn';
       }
       // Handle roundabouts
-      else if (maneuverType.contains('roundabout') || maneuverType == 'rotary') {
+      else if (maneuverType.contains('roundabout') ||
+          maneuverType == 'rotary') {
         turnType.value = 'roundabout';
       }
       // Handle regular turns
@@ -990,7 +993,7 @@ class ResponseTeamMapViewModel extends GetxController
     if (modifier == 'uturn' || maneuverType == 'uturn') {
       return 'putar balik';
     }
-    
+
     // Handle roundabouts
     if (maneuverType.contains('roundabout') || maneuverType == 'rotary') {
       if (modifier.contains('left')) {
@@ -1001,7 +1004,7 @@ class ResponseTeamMapViewModel extends GetxController
         return 'masuk bundaran';
       }
     }
-    
+
     // Handle regular turns
     if (modifier.contains('slight left')) {
       return 'belok kiri sedikit';
