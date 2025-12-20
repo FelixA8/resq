@@ -280,7 +280,7 @@ class UserMapView extends GetView<UserMapViewModel> {
                                                 context,
                                               ).size.height;
                                           final heightFactor =
-                                              screenHeight < 700 ? 0.4 : 0.35;
+                                              screenHeight < 700 ? 0.3 : 0.25;
 
                                           return FractionallySizedBox(
                                             heightFactor: heightFactor,
