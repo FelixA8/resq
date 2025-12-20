@@ -12,7 +12,6 @@ class ResponseLoginFormSection extends StatelessWidget {
     final viewModel = Get.find<ResponseLoginPageViewModel>();
     var theme = ResQTheme();
 
-    // Add a reactive variable for password visibility
     final isPasswordVisible = false.obs;
 
     return Container(
@@ -25,7 +24,6 @@ class ResponseLoginFormSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // --- Kode Instansi ---
           const Text(
             'Kode Instansi',
             style: TextStyle(
@@ -63,8 +61,6 @@ class ResponseLoginFormSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 18),
-
-          // --- Kata Sandi ---
           const Text(
             'Kata Sandi',
             style: TextStyle(
@@ -76,7 +72,6 @@ class ResponseLoginFormSection extends StatelessWidget {
           ),
           const SizedBox(height: 8),
 
-          // Reactive password field with visibility toggle
           Obx(() => TextField(
                 controller: viewModel.passwordController,
                 obscureText: !isPasswordVisible.value,
@@ -117,7 +112,6 @@ class ResponseLoginFormSection extends StatelessWidget {
               )),
           const SizedBox(height: 60),
 
-          // --- Confirmation Button ---
           Obx(() => ConfirmationButton(
                 onPressed: () {
                   if (viewModel.isLoading.value) return;

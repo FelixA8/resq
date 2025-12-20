@@ -20,7 +20,8 @@ class AddEvacuationPointViewModel extends GetxController {
   final RxBool isLoading = false.obs;
   final RxBool hasLocationPermission = false.obs;
   final RxString selectedCity = 'Jakarta'.obs; // Default city
-  final RxString selectedLocationDetail = ''.obs; // Location detail from geocoding
+  final RxString selectedLocationDetail =
+      ''.obs; // Location detail from geocoding
   final RxBool isGeocodingLoading = false.obs;
 
   // Timer for debounced geocoding
@@ -60,7 +61,8 @@ class AddEvacuationPointViewModel extends GetxController {
         );
         selectedLocation.value = currentLocation.value;
         selectedCity.value = existingEvacuationPoint!.city ?? 'Unknown City';
-        selectedLocationDetail.value = existingEvacuationPoint!.locationDetail ?? '';
+        selectedLocationDetail.value =
+            existingEvacuationPoint!.locationDetail ?? '';
         hasLocationPermission.value = true;
 
         // Move map to the existing location
@@ -96,7 +98,7 @@ class AddEvacuationPointViewModel extends GetxController {
   void _startGeocodingTimer() {
     // Cancel existing timer if it exists
     _geocodingTimer?.cancel();
-    
+
     // Start new timer for 1 second delay
     _geocodingTimer = Timer(Duration(milliseconds: 500), () {
       _performGeocodingForSelectedLocation();
@@ -107,21 +109,25 @@ class AddEvacuationPointViewModel extends GetxController {
   Future<void> _performGeocodingForSelectedLocation() async {
     try {
       isGeocodingLoading.value = true;
-      
-      LocationDetailResult result = await LocationHelper.getLocationDetails(selectedLocation.value);
-      
+
+      LocationDetailResult result = await LocationHelper.getLocationDetails(
+        selectedLocation.value,
+      );
+
       if (result.success) {
         selectedCity.value = result.city;
         selectedLocationDetail.value = result.locationDetail;
       } else {
         // Fallback to coordinates if geocoding fails
         selectedCity.value = 'Unknown City';
-        selectedLocationDetail.value = 'Lat: ${selectedLocation.value.latitude.toStringAsFixed(6)}, Lng: ${selectedLocation.value.longitude.toStringAsFixed(6)}';
+        selectedLocationDetail.value =
+            'Lat: ${selectedLocation.value.latitude.toStringAsFixed(6)}, Lng: ${selectedLocation.value.longitude.toStringAsFixed(6)}';
       }
     } catch (e) {
       // Silent failure for geocoding - use coordinates as fallback
       selectedCity.value = 'Unknown City';
-      selectedLocationDetail.value = 'Lat: ${selectedLocation.value.latitude.toStringAsFixed(6)}, Lng: ${selectedLocation.value.longitude.toStringAsFixed(6)}';
+      selectedLocationDetail.value =
+          'Lat: ${selectedLocation.value.latitude.toStringAsFixed(6)}, Lng: ${selectedLocation.value.longitude.toStringAsFixed(6)}';
     } finally {
       isGeocodingLoading.value = false;
     }
@@ -173,7 +179,7 @@ class AddEvacuationPointViewModel extends GetxController {
 
       // Get stored response team data to get response_team_id
       final storedResponseTeam = await SupabaseService.getStoredResponseTeam();
-      
+
       if (storedResponseTeam == null) {
         Get.snackbar(
           'Error',
@@ -181,6 +187,8 @@ class AddEvacuationPointViewModel extends GetxController {
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.red,
           colorText: Colors.white,
+          animationDuration: Duration(milliseconds: 500),
+          duration: Duration(seconds: 2),
         );
         return;
       }
@@ -192,26 +200,31 @@ class AddEvacuationPointViewModel extends GetxController {
           locationLat: selectedLocation.value.latitude,
           locationLng: selectedLocation.value.longitude,
           city: selectedCity.value.isNotEmpty ? selectedCity.value : 'Jakarta',
-          locationDetail: selectedLocationDetail.value.isNotEmpty 
-              ? selectedLocationDetail.value 
-              : 'Lat: ${selectedLocation.value.latitude.toStringAsFixed(6)}, Lng: ${selectedLocation.value.longitude.toStringAsFixed(6)}',
+          locationDetail:
+              selectedLocationDetail.value.isNotEmpty
+                  ? selectedLocationDetail.value
+                  : 'Lat: ${selectedLocation.value.latitude.toStringAsFixed(6)}, Lng: ${selectedLocation.value.longitude.toStringAsFixed(6)}',
           createdAt: existingEvacuationPoint!.createdAt,
         );
 
-        final success = await SupabaseService.modifyEvacuationPoint(updatedPoint);
-        
+        final success = await SupabaseService.modifyEvacuationPoint(
+          updatedPoint,
+        );
+
         if (success) {
-          print('Success: Evacuation point updated successfully');  
+          print('Success: Evacuation point updated successfully');
 
           Get.back(result: true);
         } else {
           print('Error: Failed to update evacuation point');
           Get.snackbar(
             'Error',
-            'Failed to update evacuation point',
+            'Gagal memperbarui poin evakuasi',
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: Colors.red,
             colorText: Colors.white,
+            animationDuration: Duration(milliseconds: 500),
+            duration: Duration(seconds: 2),
           );
         }
       } else {
@@ -219,12 +232,13 @@ class AddEvacuationPointViewModel extends GetxController {
           locationLat: selectedLocation.value.latitude,
           locationLng: selectedLocation.value.longitude,
           city: selectedCity.value.isNotEmpty ? selectedCity.value : 'Jakarta',
-          locationDetail: selectedLocationDetail.value.isNotEmpty 
-              ? selectedLocationDetail.value 
-              : 'Lat: ${selectedLocation.value.latitude.toStringAsFixed(6)}, Lng: ${selectedLocation.value.longitude.toStringAsFixed(6)}',
+          locationDetail:
+              selectedLocationDetail.value.isNotEmpty
+                  ? selectedLocationDetail.value
+                  : 'Lat: ${selectedLocation.value.latitude.toStringAsFixed(6)}, Lng: ${selectedLocation.value.longitude.toStringAsFixed(6)}',
           responseTeamId: storedResponseTeam.responseTeamId,
         );
-        
+
         if (result != null) {
           print('Success: Evacuation point added successfully');
           // Navigate back with success result
@@ -233,10 +247,12 @@ class AddEvacuationPointViewModel extends GetxController {
           print('Error: Failed to add evacuation point - result is null');
           Get.snackbar(
             'Error',
-            'Failed to add evacuation point',
+            'Gagal menambahkan poin evakuasi',
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: Colors.red,
             colorText: Colors.white,
+            animationDuration: Duration(milliseconds: 500),
+            duration: Duration(seconds: 2),
           );
         }
       }
@@ -244,10 +260,12 @@ class AddEvacuationPointViewModel extends GetxController {
       print('Exception in onConfirmPressed: $e');
       Get.snackbar(
         'Error',
-        'An error occurred: ${e.toString()}',
+        '${e.toString()}',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red,
         colorText: Colors.white,
+        animationDuration: Duration(milliseconds: 500),
+        duration: Duration(seconds: 2),
       );
     } finally {
       isLoading.value = false;

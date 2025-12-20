@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:resqapp/pages/userMap/user_map_view_model.dart';
 import 'package:resqapp/pages/SOSWaiting/sos_waiting_view_model.dart';
 import 'package:resqapp/service/supabase_service.dart';
+import 'package:resqapp/services/emergency_sms_service.dart';
 import 'dart:developer' as developer;
 
 class SOSViewModel extends GetxController {
@@ -62,6 +63,10 @@ class SOSViewModel extends GetxController {
       }
       _userMapViewModel?.updateActiveSosEvent(sosEvent);
 
+      // Send emergency SMS alerts to contacts (non-blocking)
+      // This runs in the background and won't prevent SOS activation
+      _sendEmergencyAlerts(userId, currentLat, currentLng);
+
       final sosWaitingViewModel = triggerSOS();
       
       return {
@@ -96,5 +101,35 @@ class SOSViewModel extends GetxController {
   
   void cleanup() {
     isSOSActive.value = false;
+  }
+
+  /// Send emergency SMS alerts to user's emergency contacts
+  /// This runs asynchronously and won't block the SOS flow
+  void _sendEmergencyAlerts(String userId, double lat, double lng) async {
+    try {
+      developer.log('SOS: Sending emergency SMS alerts...');
+      
+      // Get location name from userMapViewModel
+      final locationName = _userMapViewModel?.currentAddress.value ?? 'Unknown Location';
+      
+      final result = await EmergencySmsService.sendEmergencyAlerts(
+        userId: userId,
+        locationName: locationName,
+        latitude: lat,
+        longitude: lng,
+      );
+
+      if (result['skipped'] == true) {
+        developer.log('SOS: Emergency SMS disabled');
+      } else {
+        developer.log('SOS: Emergency SMS sent to ${result['sent']}/${result['total']} contacts');
+        if (result['failed'] > 0) {
+          developer.log('SOS: Failed to send to ${result['failed']} contacts');
+        }
+      }
+    } catch (e) {
+      // Log error but don't block SOS flow
+      developer.log('SOS: Error sending emergency SMS - $e');
+    }
   }
 }

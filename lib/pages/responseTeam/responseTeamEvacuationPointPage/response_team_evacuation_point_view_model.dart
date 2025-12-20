@@ -4,10 +4,12 @@ import 'package:resqapp/models/supabase_models.dart';
 import 'package:resqapp/pages/responseTeam/addEvacuationPointPage/add_evacuation_point_view.dart';
 import 'package:resqapp/pages/responseTeam/responseTeamEvacuationPointPage/components/evacuation_delete_dialog.dart';
 import 'package:resqapp/service/supabase_service.dart';
+import 'package:resqapp/theme/theme_app.dart';
 
 class ResponseTeamEvacuationPointViewModel extends GetxController {
   final String instanceCode;
-  
+  final theme = ResQTheme();
+
   // Reactive state
   final RxList<EvacuationPoint> evacuationPoints = <EvacuationPoint>[].obs;
   final RxBool isLoading = false.obs;
@@ -27,25 +29,26 @@ class ResponseTeamEvacuationPointViewModel extends GetxController {
     try {
       isLoading.value = true;
       errorMessage.value = '';
-      
+
       final response = await SupabaseService.getEvacuationPoints();
       evacuationPoints.value = response;
       totalEvacuationPoints.value = response.length;
-      
+
       print('Loaded ${response.length} evacuation points');
-      
     } catch (e) {
       print('Error loading evacuation points: $e');
-      errorMessage.value = 'Failed to load evacuation points: ${e.toString()}';
-      
+      errorMessage.value = 'Error: ${e.toString()}';
+
       // Only show snackbar if this is not a silent refresh
       if (isLoading.value) {
         Get.snackbar(
           'Error',
-          'Failed to load evacuation points',
+          'Gagal memuat poin evakuasi',
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
+          backgroundColor: theme.colors.primary,
           colorText: Colors.white,
+          animationDuration: Duration(milliseconds: 500),
+          duration: Duration(seconds: 2),
         );
       }
     } finally {
@@ -55,37 +58,14 @@ class ResponseTeamEvacuationPointViewModel extends GetxController {
 
   /// Refresh evacuation points data
   Future<void> refreshData() async {
-    print('Refreshing evacuation points data...');
+    print('Refreshing evacuation points data');
     await _loadEvacuationPoints();
-  }
-
-  /// Manual refresh with user feedback
-  Future<void> manualRefresh() async {
-    try {
-      await refreshData();
-      Get.snackbar(
-        'Success',
-        'Evacuation points refreshed',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 1),
-      );
-    } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to refresh data',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-    }
   }
 
   /// Add new evacuation point
   void addEvacuationPoint() async {
     final result = await Get.to(() => const AddEvacuationPointView());
-    
+
     // If result is true, it means a new evacuation point was added successfully
     if (result == true) {
       print('Refreshing evacuation points after successful addition');
@@ -95,11 +75,13 @@ class ResponseTeamEvacuationPointViewModel extends GetxController {
 
   /// Edit evacuation point
   void editEvacuationPoint(EvacuationPoint point) async {
-    final result = await Get.to(() => AddEvacuationPointView(
-      instanceCode: instanceCode,
-      existingEvacuationPoint: point,
-    ));
-    
+    final result = await Get.to(
+      () => AddEvacuationPointView(
+        instanceCode: instanceCode,
+        existingEvacuationPoint: point,
+      ),
+    );
+
     // If result is true, it means the evacuation point was updated successfully
     if (result == true) {
       print('Refreshing evacuation points after successful edit');
@@ -119,31 +101,38 @@ class ResponseTeamEvacuationPointViewModel extends GetxController {
   Future<void> _performDelete(EvacuationPoint point) async {
     try {
       isLoading.value = true;
-      
-      final success = await SupabaseService.deleteEvacuationPoint(point.evacuationId!);
-      
+
+      final success = await SupabaseService.deleteEvacuationPoint(
+        point.evacuationId!,
+      );
+
       if (success) {
         // Remove from local list
-        evacuationPoints.removeWhere((p) => p.evacuationId == point.evacuationId);
+        evacuationPoints.removeWhere(
+          (p) => p.evacuationId == point.evacuationId,
+        );
         totalEvacuationPoints.value = evacuationPoints.length;
-        
+
         Get.snackbar(
           'Berhasil',
           'Poin evakuasi berhasil dihapus',
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
+          backgroundColor: theme.colors.primary,
           colorText: Colors.white,
-          duration: const Duration(seconds: 2),
+          animationDuration: Duration(milliseconds: 500),
+          duration: Duration(seconds: 2),
         );
-        
+
         print('Successfully deleted evacuation point: ${point.evacuationId}');
       } else {
         Get.snackbar(
           'Error',
           'Gagal menghapus poin evakuasi',
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
+          backgroundColor: theme.colors.primary,
           colorText: Colors.white,
+          animationDuration: Duration(milliseconds: 500),
+          duration: Duration(seconds: 2),
         );
       }
     } catch (e) {
@@ -152,41 +141,14 @@ class ResponseTeamEvacuationPointViewModel extends GetxController {
         'Error',
         'Terjadi kesalahan: ${e.toString()}',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: theme.colors.primary,
         colorText: Colors.white,
+        animationDuration: Duration(milliseconds: 500),
+        duration: Duration(seconds: 2),
       );
     } finally {
       isLoading.value = false;
     }
   }
-
-  /// Navigate to map view
-  void navigateToMap() {
-    // TODO: Navigate to map view
-    Get.snackbar(
-      'Map',
-      'Navigate to map view',
-      snackPosition: SnackPosition.BOTTOM,
-    );
-  }
-
-  /// Navigate to SOS reports
-  void navigateToSosReports() {
-    // TODO: Navigate to SOS reports
-    Get.snackbar(
-      'SOS Reports',
-      'Navigate to SOS reports',
-      snackPosition: SnackPosition.BOTTOM,
-    );
-  }
-
-  /// Logout functionality
-  void logout() {
-    // TODO: Implement logout logic
-    Get.snackbar(
-      'Logout',
-      'Logout functionality',
-      snackPosition: SnackPosition.BOTTOM,
-    );
-  }
 }
+

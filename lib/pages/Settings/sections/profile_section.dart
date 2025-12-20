@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:resqapp/pages/settings/components/settings_cancel_button.dart';
 import 'package:resqapp/theme/theme_app.dart';
+import '../settings_view_model.dart';
 
 class ProfileSection extends StatefulWidget {
   const ProfileSection({Key? key}) : super(key: key);
@@ -10,18 +13,8 @@ class ProfileSection extends StatefulWidget {
 
 class _ProfileSectionState extends State<ProfileSection> {
   final theme = ResQTheme();
-  bool isEditing = false;
-  String username = 'Budiman Setianto';
-  String previousUsername = 'Budiman Setianto';
-  final phone = '+62 81338327789';
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
-
-  @override
-  void initState() {
-    super.initState();
-    _controller.text = username;
-  }
 
   @override
   void dispose() {
@@ -30,60 +23,34 @@ class _ProfileSectionState extends State<ProfileSection> {
     super.dispose();
   }
 
-  void _showSaveConfirmation() async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Confirm Username Change'),
-        content: Text('Are you sure you want to change your username to "${_controller.text}"?'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(false);
-            },
-            child: Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(true);
-            },
-            child: Text('Confirm'),
-          ),
-        ],
-      ),
-    );
-    if (result == true) {
-      setState(() {
-        username = _controller.text;
-        isEditing = false;
-      });
-    } else {
-      setState(() {
-        _controller.text = previousUsername;
-        isEditing = false;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isEditing
-            ? Color(0xFFF1C8C8)
-            : theme.colors.primary,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                isEditing
-                    ? SizedBox(
+    final viewModel = Get.find<SettingsViewModel>();
+
+    return Obx(() {
+      final username = viewModel.user?.username ?? 'Loading...';
+      final phone = viewModel.user?.phoneNumber ?? 'Loading...';
+      final isEditing = viewModel.isEditingUsername.value;
+
+      if (!isEditing && _controller.text != username) {
+        _controller.text = username;
+      }
+
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isEditing ? Color(0xFFF1C8C8) : theme.colors.primary,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  isEditing
+                      ? SizedBox(
                         height: 28, // Match static text height
                         child: TextField(
                           controller: _controller,
@@ -104,7 +71,7 @@ class _ProfileSectionState extends State<ProfileSection> {
                           textAlignVertical: TextAlignVertical.center,
                         ),
                       )
-                    : Text(
+                      : Text(
                         username,
                         style: TextStyle(
                           fontFamily: 'SF Pro',
@@ -113,45 +80,61 @@ class _ProfileSectionState extends State<ProfileSection> {
                           color: Colors.white, // White when not editing
                         ),
                       ),
-                SizedBox(height: 3),
-                Text(
-                  phone,
-                  style: TextStyle(
-                    fontFamily: 'SF Pro',
-                    fontWeight: FontWeight.w400,
-                    fontSize: 16,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(width: 8),
-          isEditing
-              ? ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colors.primary,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    padding: EdgeInsets.symmetric(horizontal: 18, vertical: 1),
-                    minimumSize: Size(0, 35),
-                  ),
-                  onPressed: () {
-                    _showSaveConfirmation();
-                  },
-                  child: Text(
-                    'Save',
+                  SizedBox(height: 3),
+                  Text(
+                    phone,
                     style: TextStyle(
                       fontFamily: 'SF Pro',
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w400,
                       fontSize: 16,
-                      color: Colors.white
+                      color: Colors.white,
                     ),
                   ),
+                ],
+              ),
+            ),
+            SizedBox(width: 8),
+            isEditing
+                ? Row(
+                  children: [
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.colors.primary,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 1,
+                        ),
+                        minimumSize: Size(0, 35),
+                      ),
+                      onPressed: () {
+                        viewModel.validateUsername(_controller.text);
+                      },
+                      child: Text(
+                        'Simpan',
+                        style: TextStyle(
+                          fontFamily: 'SF Pro',
+                          fontWeight: FontWeight.w500,
+                          fontSize: 16,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 4),
+                    SettingsCancelButton(
+                      onCancel: () {
+                        setState(() {
+                          _focusNode.unfocus();
+                          viewModel.isEditingUsername.value = false;
+                        });
+                      },
+                    ),
+                  ],
                 )
-              : ElevatedButton.icon(
+                : ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     elevation: 0,
@@ -162,18 +145,15 @@ class _ProfileSectionState extends State<ProfileSection> {
                     minimumSize: Size(0, 35),
                   ),
                   onPressed: () {
-                    setState(() {
-                      isEditing = true;
-                      previousUsername = username;
-                      _controller.text = username;
-                    });
+                    viewModel.startEditingUsername();
+                    _controller.text = username;
                     Future.delayed(Duration(milliseconds: 100), () {
                       _focusNode.requestFocus();
                     });
                   },
                   icon: Icon(Icons.edit, color: theme.colors.primary),
                   label: Text(
-                    'Edit',
+                    'Modifikasi',
                     style: TextStyle(
                       fontFamily: 'SF Pro',
                       fontWeight: FontWeight.w500,
@@ -182,8 +162,9 @@ class _ProfileSectionState extends State<ProfileSection> {
                     ),
                   ),
                 ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    });
   }
 }

@@ -27,7 +27,6 @@ class EvacuationDeleteDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Warning Icon
             Container(
               width: 80,
               height: 80,
@@ -42,8 +41,6 @@ class EvacuationDeleteDialog extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-
-            // Title
             const Text(
               'Hapus Poin Evakuasi',
               style: TextStyle(
@@ -55,8 +52,6 @@ class EvacuationDeleteDialog extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
-
-            // Main message
             const Text(
               'Apakah Anda yakin ingin menghapus poin evakuasi ini?',
               style: TextStyle(
@@ -69,14 +64,11 @@ class EvacuationDeleteDialog extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // Location Details Card
             if (_hasLocationDetails()) _buildLocationDetailsCard(),
-
             if (_hasLocationDetails()) const SizedBox(height: 20),
 
             const SizedBox(height: 24),
 
-            // Action Buttons
             _buildActionButtons(),
           ],
         ),
@@ -84,14 +76,12 @@ class EvacuationDeleteDialog extends StatelessWidget {
     );
   }
 
-  /// Check if evacuation point has location details to display
   bool _hasLocationDetails() {
     return (evacuationPoint.locationDetail != null &&
             evacuationPoint.locationDetail!.isNotEmpty) ||
         (evacuationPoint.city != null && evacuationPoint.city!.isNotEmpty);
   }
 
-  /// Build the location details card
   Widget _buildLocationDetailsCard() {
     return Container(
       width: double.infinity,
@@ -161,12 +151,10 @@ class EvacuationDeleteDialog extends StatelessWidget {
     );
   }
 
-  /// Build the action buttons row
   Widget _buildActionButtons() {
     const theme = ResQTheme();
     return Row(
       children: [
-        // Cancel Button
         Expanded(
           child: Container(
             height: 48,
@@ -194,8 +182,6 @@ class EvacuationDeleteDialog extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-
-        // Delete Button
         Expanded(
           child: Container(
             height: 48,
@@ -240,7 +226,6 @@ class EvacuationDeleteDialog extends StatelessWidget {
     );
   }
 
-  /// Static method to show the dialog
   static void show({
     required EvacuationPoint evacuationPoint,
     required VoidCallback onConfirmDelete,

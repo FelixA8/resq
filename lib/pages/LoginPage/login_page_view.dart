@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:resqapp/pages/loginPage/lower_case_view_model.dart';
+import 'package:resqapp/pages/loginPage/login_page_view_model.dart';
 import 'sections/login_header_section.dart';
 import 'sections/login_form_section.dart';
 
@@ -12,24 +12,32 @@ class LoginPageView extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => LoginPageViewModel(),
       child: Scaffold(
-        body: Stack(
-          children: [
-            Positioned.fill(
-              child: Container(
-                color: Colors.white,
-              ),
-            ),
-            SafeArea(
-              child: Column(
-                children: const [
-                  SizedBox(height: 100),
-                  LoginHeaderSection(),
-                  Expanded(child: LoginFormSection()),
-                  SizedBox(height: 35),
-                ],
-              ),
-            ),
-          ],
+        backgroundColor: Colors.white,
+        resizeToAvoidBottomInset: true,
+        body: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                padding: const EdgeInsets.only(bottom: 20),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: constraints.maxHeight,
+                  ),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      children: const [
+                        SizedBox(height: 100),
+                        LoginHeaderSection(),
+                        Spacer(),
+                        LoginFormSection(),
+                        SizedBox(height: 35),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
         ),
       ),
     );

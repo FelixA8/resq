@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:resqapp/components/logout_confirmation_dialog.dart';
 import 'package:resqapp/pages/responseTeam/response_team_dashboard_view_model.dart';
 import 'package:resqapp/pages/responseTeam/responseTeamEvacuationPointPage/response_team_evacuation_point_view.dart';
 import 'package:resqapp/pages/responseTeam/responseTeamMap/response_team_map_view.dart';
@@ -22,6 +23,7 @@ class ResponseTeamDashboardView
     }
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -50,15 +52,15 @@ class ResponseTeamDashboardView
                   height: 14,
                 ),
                 const SizedBox(width: 2),
-                Text(
-                  'Tangerang Selatan',
+                Obx(() => Text(
+                  controller.currentAddress.value,
                   style: TextStyle(
                     fontFamily: 'SF Pro',
                     fontWeight: FontWeight.w400,
                     fontSize: 13,
                     color: theme.colors.primary,
                   ),
-                ),
+                )),
               ],
             ),
           ],
@@ -84,31 +86,7 @@ class ResponseTeamDashboardView
                       maximumSize: Size(35, 35),
                     ),
                     onPressed: () async {
-                      final result = await showDialog<bool>(
-                        context: context,
-                        builder:
-                            (context) => AlertDialog(
-                              title: Text('Konfirmasi Logout'),
-                              content: Text(
-                                'Apakah Anda yakin ingin keluar akun?',
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed:
-                                      () => Navigator.of(context).pop(false),
-                                  child: Text('Batal'),
-                                ),
-                                TextButton(
-                                  onPressed:
-                                      () => Navigator.of(context).pop(true),
-                                  child: Text('Konfirmasi'),
-                                ),
-                              ],
-                            ),
-                      );
-                      if (result == true) {
-                        Navigator.of(context).pushReplacementNamed('/login');
-                      }
+                      Get.dialog(LogoutConfirmationDialog(onConfirm: controller.logout));
                     },
                     child: Image.asset(
                       'assets/images/icons/logout.png',

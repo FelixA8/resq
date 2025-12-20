@@ -1,29 +1,55 @@
-/// Model for SOS Report items displayed in the list
-class SOSReportItem {
-  final String reportId;
-  final String userName;
-  final String phoneNumber;
-  final double distanceKm; // Distance in kilometers
-  final DateTime timestamp;
-  final String? assignedUnitId; // If null, report is unassigned
-  final double? locationLat;
-  final double? locationLng;
+import 'package:resqapp/models/supabase_models.dart';
 
-  SOSReportItem({
-    required this.reportId,
-    required this.userName,
-    required this.phoneNumber,
-    required this.distanceKm,
-    required this.timestamp,
-    this.assignedUnitId,
-    this.locationLat,
-    this.locationLng,
+class SosReportItem {
+  final SosEvent sosEvent;
+  final ResqUser? user;
+  final double? distanceKm;
+
+  SosReportItem({
+    required this.sosEvent,
+    this.user,
+    this.distanceKm,
   });
 
-  /// Check if report is already assigned to a unit
-  bool get isAssigned => assignedUnitId != null;
+  String get username => user?.username ?? 'Unknown User';
 
-  /// Check if report has location data
-  bool get hasLocation => locationLat != null && locationLng != null;
+  String get phoneNumber => user?.phoneNumber ?? 'No phone number';
+
+  String get formattedTime {
+    if (sosEvent.pressedAt == null) return '-';
+    final dateTime = DateTime.fromMillisecondsSinceEpoch(sosEvent.pressedAt!.toInt());
+    final hour = dateTime.hour.toString().padLeft(2, '0');
+    final minute = dateTime.minute.toString().padLeft(2, '0');
+    final second = dateTime.second.toString().padLeft(2, '0');
+    return '$hour:$minute:$second';
+  }
+
+  String get formattedDistance {
+    if (distanceKm == null) return '-';
+    return distanceKm!.toStringAsFixed(1);
+  }
+
+  /// Check if this SOS is assigned to a team
+  bool get isAssigned => sosEvent.isAssigned;
+
+  /// Get the response team ID if assigned
+  String? get assignedTeamId => sosEvent.responseTeamId;
+
+  /// Check if this SOS is active
+  bool get isActive => sosEvent.isActive;
+
+  /// Create a copy with updated fields
+  SosReportItem copyWith({
+    SosEvent? sosEvent,
+    ResqUser? user,
+    double? distanceKm,
+  }) {
+    return SosReportItem(
+      sosEvent: sosEvent ?? this.sosEvent,
+      user: user ?? this.user,
+      distanceKm: distanceKm ?? this.distanceKm,
+    );
+  }
 }
+
 

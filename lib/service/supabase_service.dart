@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:async';
+import 'dart:ffi';
 import 'dart:math';
 import 'dart:developer' as developer;
 
@@ -170,23 +171,49 @@ class SupabaseService {
     }
   }
 
+  static Future<bool> upsertContact(Contact contact) async {
+    try {
+      // Delete existing contact with same name for this user
+      await _client
+          .from('contacts')
+          .delete()
+          .eq('user_id', contact.userId)
+          .eq('contact_name', contact.contactName);
+
+      // Insert new/updated contact
+      await _client.from('contacts').insert(contact.toJson());
+      return true;
+    } catch (e) {
+      developer.log('Error upserting contact: $e');
+      return false;
+    }
+  }
+
+  /// Delete emergency contact
+  static Future<bool> deleteContact(String userId, String contactName) async {
+    try {
+      await _client
+          .from('contacts')
+          .delete()
+          .eq('user_id', userId)
+          .eq('contact_name', contactName);
+      return true;
+    } catch (e) {
+      developer.log('Error deleting contact: $e');
+      return false;
+    }
+  }
+
   // ==================== Disasters ====================
 
   /// Get all disasters that occurred today
   static Future<List<Disaster>> getFilteredDisasters() async {
     try {
-      final now = DateTime.now();
-      final startOfDay = DateTime(now.year, now.month, now.day);
-      final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59, 999);
-
-      final startOfDayMs = startOfDay.millisecondsSinceEpoch.toDouble();
-      final endOfDayMs = endOfDay.millisecondsSinceEpoch.toDouble();
-
+      final startOfDayMs = _getStartOfDayTimestamp(dayRange: 15);
       final response = await _client
           .from('disasters')
           .select()
           .gte('occurred_at', startOfDayMs)
-          .lte('occurred_at', endOfDayMs)
           .order('occurred_at', ascending: false);
 
       return (response as List).map((json) => Disaster.fromJson(json)).toList();
@@ -226,7 +253,7 @@ class SupabaseService {
         'location_lat': lat,
         'location_lng': lng,
         'response_team_id': null,
-        'is_current': false,
+        'is_current': true,
         'pressed_at': currentTimestamp,
         'assigned_at': 0.0,
         'resolved_at': 0.0,
@@ -242,7 +269,6 @@ class SupabaseService {
     }
   }
 
-  /// Get SOS events
   static Future<List<SosEvent>> getSoSEvents() async {
     try {
       final response = await _client
@@ -250,9 +276,12 @@ class SupabaseService {
           .select()
           .order('pressed_at', ascending: true);
 
-      return (response as List).map((json) => SosEvent.fromJson(json)).toList();
+      final events =
+          (response as List).map((json) => SosEvent.fromJson(json)).toList();
+
+      return events;
     } catch (e) {
-      developer.log('Error getting SOS events: $e');
+      print('Error getting SOS events: $e');
       return [];
     }
   }
@@ -306,6 +335,22 @@ class SupabaseService {
     }
   }
 
+  /// Unassign SOS event from response team
+  static Future<bool> unassignSosFromTeam(String sosId) async {
+    try {
+      await _client
+          .from('sos_events')
+          .update({'response_team_id': null, 'assigned_at': 0.0})
+          .eq('sos_id', sosId);
+
+      developer.log('SOS event $sosId unassigned');
+      return true;
+    } catch (e) {
+      developer.log('Error unassigning SOS: $e');
+      return false;
+    }
+  }
+
   /// Resolve SOS event
   static Future<bool> resolveSosEvent(String sosId) async {
     try {
@@ -321,6 +366,22 @@ class SupabaseService {
       return true;
     } catch (e) {
       developer.log('Error resolving SOS: $e');
+      return false;
+    }
+  }
+
+  /// Complete SOS event (set is_current to false)
+  static Future<bool> completeSosEvent(String sosId) async {
+    try {
+      await _client
+          .from('sos_events')
+          .update({'is_current': false})
+          .eq('sos_id', sosId);
+
+      developer.log('SOS event $sosId completed');
+      return true;
+    } catch (e) {
+      developer.log('Error completing SOS: $e');
       return false;
     }
   }
@@ -344,6 +405,48 @@ class SupabaseService {
     } catch (e) {
       developer.log('Error deleting SOS event: $e');
       return false;
+    }
+  }
+
+  /// Get paginated SOS events (for SOS report list)
+  /// Returns active SOS events ordered by most recent first
+  static Future<List<SosEvent>> getPaginatedSosEvents({
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    try {
+      final response = await _client
+          .from('sos_events')
+          .select()
+          .eq('is_current', true)
+          .order('pressed_at', ascending: false)
+          .range(offset, offset + limit - 1);
+
+      final events =
+          (response as List).map((json) => SosEvent.fromJson(json)).toList();
+
+      developer.log(
+        'Fetched ${events.length} SOS events (offset: $offset, limit: $limit)',
+      );
+      return events;
+    } catch (e) {
+      developer.log('Error getting paginated SOS events: $e');
+      return [];
+    }
+  }
+
+  /// Get total count of active SOS events
+  static Future<int> getActiveSosEventsCount() async {
+    try {
+      final response = await _client
+          .from('sos_events')
+          .select('sos_id')
+          .eq('is_current', true);
+
+      return (response as List).length;
+    } catch (e) {
+      developer.log('Error getting SOS events count: $e');
+      return 0;
     }
   }
 
@@ -591,5 +694,22 @@ class SupabaseService {
     } catch (e) {
       developer.log('Error clearing response team data: $e');
     }
+  }
+
+  static int _getStartOfDayTimestamp({required int dayRange}) {
+    final now = DateTime.now();
+
+    final targetDate = now.subtract(Duration(days: dayRange));
+
+    final startOfDay = DateTime(
+      targetDate.year,
+      targetDate.month,
+      targetDate.day,
+    );
+
+    final miliEpoch = startOfDay.millisecondsSinceEpoch;
+    final timestamp = (miliEpoch / 1000).round();
+
+    return timestamp;
   }
 }
