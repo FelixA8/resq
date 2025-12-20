@@ -13,11 +13,23 @@ class LocationDisabledDialog extends StatefulWidget {
 }
 
 class _LocationDisabledDialogState extends State<LocationDisabledDialog> {
+  final theme = ResQTheme();
+
   Future<void> _handleRetry() async {
     final success = await widget.onRetry();
 
     if (success) {
       Get.back();
+    } else {
+      Get.snackbar(
+        'Error',
+        'Gagal mendeteksi lokasi, periksa pengaturan anda!',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: theme.colors.primary,
+        colorText: Colors.white,
+        animationDuration: Duration(milliseconds: 500),
+        duration: Duration(seconds: 2),
+      );
     }
   }
 
@@ -102,7 +114,7 @@ class _LocationDisabledDialogState extends State<LocationDisabledDialog> {
           ),
           disabledBackgroundColor: theme.colors.primary,
         ),
-        child: const Text(
+        child: Text(
           'Coba Lagi / Refresh',
           style: TextStyle(
             fontFamily: 'SF Pro',

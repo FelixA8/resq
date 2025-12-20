@@ -139,6 +139,9 @@ class UserMapViewModel extends GetxController
 
     if (serviceEnabled && isPermissionGranted) {
       isLocationServiceEnabled.value = true;
+      if (Get.isDialogOpen == true) {
+        Get.back();
+      }
       _initializeLocation(); 
       return true;
     } else {
@@ -208,6 +211,13 @@ class UserMapViewModel extends GetxController
     _positionStreamSubscription = Geolocator.getPositionStream(
       locationSettings: locationSettings,
     ).listen((Position position) {
+      if (!isLocationServiceEnabled.value) {
+        isLocationServiceEnabled.value = true;
+        if (Get.isDialogOpen ?? false) {
+          Get.back();
+        }
+      }
+
       final newLocation = LatLng(position.latitude, position.longitude);
 
       // Update heading/bearing for arrow rotation
@@ -528,6 +538,7 @@ class UserMapViewModel extends GetxController
       if (!result.hasPermission) {
          _showLocationDisabledDialog();
       }
+
       await mapController.animateTo(
         dest: currentLocation.value,
         zoom: MapAnimationConfig.initialZoom,
@@ -539,6 +550,7 @@ class UserMapViewModel extends GetxController
       hasLocationPermission.value = false;
       hasLocationPermission.value = false;
       isLocationServiceEnabled.value = false;
+      
       _showLocationDisabledDialog();
     } finally {
       isLoading.value = false;

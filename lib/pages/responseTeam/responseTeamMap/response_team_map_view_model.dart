@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:resqapp/models/supabase_models.dart';
 import 'package:resqapp/helpers/map_helper.dart';
 import 'package:resqapp/pages/responseTeam/responseTeamMap/components/route_warning_dialog.dart';
+import 'package:resqapp/pages/userMap/components/location_disabled_dialog.dart';
 import 'package:resqapp/pages/responseTeam/responseTeamMap/managers/response_team_map_realtime_manager.dart';
 import 'package:resqapp/pages/responseTeam/responseTeamMap/extensions/map_animation_config.dart';
 import 'package:resqapp/service/supabase_service.dart';
@@ -20,7 +21,7 @@ import 'package:geocoding/geocoding.dart';
 import 'dart:developer' as developer;
 
 class ResponseTeamMapViewModel extends GetxController
-    with GetTickerProviderStateMixin {
+    with GetTickerProviderStateMixin, WidgetsBindingObserver {
   final String instanceCode;
   late final AnimatedMapController mapController;
   final theme = ResQTheme();
@@ -84,8 +85,49 @@ class ResponseTeamMapViewModel extends GetxController
   @override
   void onInit() {
     super.onInit();
+    WidgetsBinding.instance.addObserver(this);
     mapController = AnimatedMapController(vsync: this);
     _initializeAsync();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      refreshLocationStatus();
+    }
+  }
+
+  Future<bool> refreshLocationStatus() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    LocationPermission permission = await Geolocator.checkPermission();
+
+    bool isPermissionGranted = permission == LocationPermission.always ||
+        permission == LocationPermission.whileInUse;
+
+    if (serviceEnabled && isPermissionGranted) {
+      hasLocationPermission.value = true;
+      if (Get.isDialogOpen == true) {
+        Get.back();
+      }
+      return true;
+    } else {
+      hasLocationPermission.value = false;
+      _showLocationDisabledDialog();
+      return false;
+    }
+  }
+
+  void _showLocationDisabledDialog() {
+    if (Get.isDialogOpen ?? false) return;
+
+    Get.dialog(
+      LocationDisabledDialog(
+        onRetry: () async {
+          return await refreshLocationStatus();
+        },
+      ),
+      barrierDismissible: false,
+    );
   }
 
   Future<void> _initializeAsync() async {
@@ -104,6 +146,7 @@ class ResponseTeamMapViewModel extends GetxController
 
   @override
   void onClose() {
+    WidgetsBinding.instance.removeObserver(this);
     _realtimeManager.dispose();
     _positionStreamSubscription?.cancel();
     _idleTimer?.cancel();
@@ -220,9 +263,13 @@ class ResponseTeamMapViewModel extends GetxController
   Future<void> _initializeLocation() async {
     try {
       isLoading.value = true;
+      await refreshLocationStatus();
+      
+      if (!hasLocationPermission.value) return;
+
       LocationResult result = await LocationHelper.initializeLocation();
       currentLocation.value = result.location;
-      hasLocationPermission.value = result.hasPermission;
+      
       await mapController.animateTo(
         dest: currentLocation.value,
         zoom: MapAnimationConfig.initialZoom,
@@ -232,6 +279,7 @@ class ResponseTeamMapViewModel extends GetxController
       _updateAddress(currentLocation.value);
     } catch (_) {
       hasLocationPermission.value = false;
+      _showLocationDisabledDialog();
     } finally {
       isLoading.value = false;
     }

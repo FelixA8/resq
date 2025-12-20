@@ -110,7 +110,7 @@ class _ProfileSectionState extends State<ProfileSection> {
                       viewModel.validateUsername(_controller.text);
                     },
                     child: Text(
-                      'Save',
+                      'Simpan',
                       style: TextStyle(
                         fontFamily: 'SF Pro',
                         fontWeight: FontWeight.w500,
