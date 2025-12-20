@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -9,9 +10,17 @@ import 'models/otp_model.dart';
 import '../../service/supabase_service.dart';
 import '../../models/supabase_models.dart';
 import '../../services/sms_service.dart';
-import '../../services/zenziva_service.dart';
+import '../../services/message_central_service.dart';
 
 enum ViewState { otpInput, usernameInput, authenticated }
+
+// ============================================================
+// FEATURE FLAG: Toggle between Message Central API and Local SMS
+// ============================================================
+// Set to true to use Message Central API (requires credentials)
+// Set to false to use local SMS app (free, but requires manual sending)
+const bool USE_MESSAGE_CENTRAL = false;
+// ============================================================
 
 class OTPViewModel extends ChangeNotifier {
   OTPModel? _otpModel;
@@ -23,8 +32,8 @@ class OTPViewModel extends ChangeNotifier {
   Timer? _expiryTimer;
   ViewState _currentState = ViewState.otpInput;
 
-  String? _verificationId;
-  String? _generatedOtpCode;
+  String? _verificationId; // For both local and Message Central
+  String? _generatedOtpCode; // Only used for local SMS method
   String userId = ""; // Store userId after saving username
 
   // Getters
@@ -62,54 +71,73 @@ class OTPViewModel extends ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
-      _generatedOtpCode = _generateOtpCode();
-      _verificationId =
-          'otp_${DateTime.now().millisecondsSinceEpoch}_${phoneNumber.replaceAll('+', '')}';
-
-      final otpCode = OtpCode(
-        verificationId: _verificationId!,
-        otpCode: _generatedOtpCode,
-        isValid: true,
-        createdAt: DateTime.now(),
-        expiresAt: DateTime.now().add(
-          const Duration(minutes: OTPModel.expirationMinutes),
-        ),
-      );
-
-      final connectionOk = await SupabaseService.testConnection();
-
-      OtpCode? result;
-
-      if (!connectionOk) {
-        result = otpCode;
-      } else {
-        result = await SupabaseService.createOtpCode(otpCode);
-      }
-
-      if (result != null) {
-        // Send SMS with OTP code (opens SMS app)
-        final smsSent = await SmsService.sendOtpSms(
+      if (USE_MESSAGE_CENTRAL) {
+        // ========== MESSAGE CENTRAL API METHOD ==========
+        final result = await MessageCentralService.sendOtp(
           phoneNumber: phoneNumber,
-          otpCode: _generatedOtpCode!,
+          otpLength: 6,
         );
 
-        // Send WhatsApp OTP via Zenziva (Disabled to save costs)
-        // final whatsappSent = await ZenzivaService.sendOtpWhatsapp(
-        //   phoneNumber: phoneNumber,
-        //   otpCode: _generatedOtpCode!,
-        // );
-
-        if (smsSent) {}
+        if (result['success']) {
+          _verificationId = result['verificationId'];
+          developer.log('OTP sent via Message Central: $_verificationId');
+        } else {
+          Get.snackbar(
+            'Error',
+            result['message'] ?? 'Gagal mengirim OTP',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: theme.colors.primary,
+            colorText: Colors.white,
+            animationDuration: Duration(milliseconds: 500),
+            duration: Duration(seconds: 2),
+          );
+        }
       } else {
-        Get.snackbar(
-          'Error',
-          'Gagal membuat kode OTP',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: theme.colors.primary,
-          colorText: Colors.white,
-          animationDuration: Duration(milliseconds: 500),
-          duration: Duration(seconds: 2),
+        developer.log("[log] otp_view_model.dart:USE_MESSAGE_CENTRAL=false");
+        // ========== LOCAL SMS METHOD ==========
+        _generatedOtpCode = _generateOtpCode();
+        _verificationId =
+            'otp_${DateTime.now().millisecondsSinceEpoch}_${phoneNumber.replaceAll('+', '')}';
+
+        final otpCode = OtpCode(
+          verificationId: _verificationId!,
+          otpCode: _generatedOtpCode,
+          isValid: true,
+          createdAt: DateTime.now(),
+          expiresAt: DateTime.now().add(
+            const Duration(minutes: OTPModel.expirationMinutes),
+          ),
         );
+
+        final connectionOk = await SupabaseService.testConnection();
+
+        OtpCode? result;
+
+        if (!connectionOk) {
+          result = otpCode;
+        } else {
+          result = await SupabaseService.createOtpCode(otpCode);
+        }
+
+        if (result != null) {
+          // Send SMS with OTP code (opens SMS app)
+          final smsSent = await SmsService.sendOtpSms(
+            phoneNumber: phoneNumber,
+            otpCode: _generatedOtpCode!,
+          );
+
+          if (smsSent) {}
+        } else {
+          Get.snackbar(
+            'Error',
+            'Gagal membuat kode OTP',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: theme.colors.primary,
+            colorText: Colors.white,
+            animationDuration: Duration(milliseconds: 500),
+            duration: Duration(seconds: 2),
+          );
+        }
       }
 
       _isLoading = false;
@@ -150,14 +178,31 @@ class OTPViewModel extends ChangeNotifier {
     try {
       bool isValid = false;
 
-      try {
-        isValid = await SupabaseService.verifyOtpCode(_verificationId!, code);
+      if (USE_MESSAGE_CENTRAL) {
+        // ========== MESSAGE CENTRAL API VALIDATION ==========
+        final result = await MessageCentralService.validateOtp(
+          verificationId: _verificationId!,
+          code: code,
+          phoneNumber: _otpModel!.phoneNumber,
+        );
+        isValid = result['success'];
 
-        if (isValid) {
-          await SupabaseService.invalidateOtpCode(_verificationId!);
+        if (!isValid) {
+          developer.log(
+            'Message Central validation failed: ${result['message']}',
+          );
         }
-      } catch (e) {
-        isValid = _generatedOtpCode == code;
+      } else {
+        // ========== LOCAL SMS VALIDATION ==========
+        try {
+          isValid = await SupabaseService.verifyOtpCode(_verificationId!, code);
+
+          if (isValid) {
+            await SupabaseService.invalidateOtpCode(_verificationId!);
+          }
+        } catch (e) {
+          isValid = _generatedOtpCode == code;
+        }
       }
 
       if (isValid) {
