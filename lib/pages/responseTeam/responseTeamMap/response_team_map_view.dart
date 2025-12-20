@@ -135,14 +135,7 @@ class ResponseTeamMapView extends GetView<ResponseTeamMapViewModel> {
                                   isScrollControlled: true,
                                   backgroundColor: Colors.transparent,
                                   builder: (modalContext) {
-                                    final screenHeight =
-                                        MediaQuery.of(context).size.height;
-                                    // Responsive height: adjust based on screen size
-                                    final heightFactor =
-                                        screenHeight < 700 ? 0.30 : 0.28;
-
                                     return FractionallySizedBox(
-                                      heightFactor: heightFactor,
                                       child: EvacuationPointDetailModal(
                                         evacuationPoint: evacuationPoint,
                                       ),
@@ -185,14 +178,7 @@ class ResponseTeamMapView extends GetView<ResponseTeamMapViewModel> {
                                   isScrollControlled: true,
                                   backgroundColor: Colors.transparent,
                                   builder: (modalContext) {
-                                    final screenHeight =
-                                        MediaQuery.of(context).size.height;
-                                    // Responsive height: adjust based on screen size
-                                    final heightFactor =
-                                        screenHeight < 700 ? 0.6 : 0.5;
-
                                     return FractionallySizedBox(
-                                      heightFactor: heightFactor,
                                       child: DisasterDetailModal(
                                         disaster: disaster,
                                       ),
@@ -235,12 +221,7 @@ class ResponseTeamMapView extends GetView<ResponseTeamMapViewModel> {
                                     isScrollControlled: true,
                                     backgroundColor: Colors.transparent,
                                     builder: (modalContext) {
-                                      final screenHeight =
-                                          MediaQuery.of(context).size.height;
-                                      final heightFactor =
-                                          screenHeight < 700 ? 0.45 : 0.41;
                                       return FractionallySizedBox(
-                                        heightFactor: heightFactor,
                                         child: SOSDetailModal(
                                           sosEvent: sosEvent,
                                         ),
@@ -274,9 +255,7 @@ class ResponseTeamMapView extends GetView<ResponseTeamMapViewModel> {
               top: 0,
               left: 0,
               right: 0,
-              child: SafeArea(
-                child: NavigationBanner(),
-              ),
+              child: SafeArea(child: NavigationBanner()),
             ),
 
             if (controller.isLoading.value)

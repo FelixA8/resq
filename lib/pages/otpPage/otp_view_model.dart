@@ -117,6 +117,7 @@ class OTPViewModel extends ChangeNotifier {
           result = otpCode;
         } else {
           result = await SupabaseService.createOtpCode(otpCode);
+          developer.log("[log] otp code generated: ${otpCode.otpCode}");
         }
 
         if (result != null) {

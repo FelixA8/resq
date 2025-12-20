@@ -281,18 +281,7 @@ class UserMapView extends GetView<UserMapViewModel> {
                                             isScrollControlled: true,
                                             backgroundColor: Colors.transparent,
                                             builder: (modalContext) {
-                                              // Logic to adjust height based on whether we are navigating or just viewing details could go here
-                                              final screenHeight =
-                                                  MediaQuery.of(
-                                                    context,
-                                                  ).size.height;
-                                              final heightFactor =
-                                                  screenHeight < 700
-                                                      ? 0.4
-                                                      : 0.35;
-
                                               return FractionallySizedBox(
-                                                heightFactor: heightFactor,
                                                 child:
                                                     EvacuationPointDetailModal(
                                                       evacuationPoint:
@@ -336,17 +325,7 @@ class UserMapView extends GetView<UserMapViewModel> {
                                             isScrollControlled: true,
                                             backgroundColor: Colors.transparent,
                                             builder: (modalContext) {
-                                              final screenHeight =
-                                                  MediaQuery.of(
-                                                    context,
-                                                  ).size.height;
-                                              final heightFactor =
-                                                  screenHeight < 700
-                                                      ? 0.6
-                                                      : 0.5;
-
                                               return FractionallySizedBox(
-                                                heightFactor: heightFactor,
                                                 child: DisasterDetailModal(
                                                   disaster: disaster,
                                                 ),
