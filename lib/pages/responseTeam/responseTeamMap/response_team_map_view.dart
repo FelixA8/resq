@@ -139,7 +139,7 @@ class ResponseTeamMapView extends GetView<ResponseTeamMapViewModel> {
                                         MediaQuery.of(context).size.height;
                                     // Responsive height: adjust based on screen size
                                     final heightFactor =
-                                        screenHeight < 700 ? 0.30 : 0.28;
+                                        screenHeight < 700 ? 0.3 : 0.25;
 
                                     return FractionallySizedBox(
                                       heightFactor: heightFactor,
