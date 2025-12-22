@@ -21,6 +21,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:resqapp/helpers/map_helper.dart';
 import 'package:resqapp/services/distance_calculator.dart' as distance_calc;
+import 'package:resqapp/pages/userMap/components/evacuation_deleted_dialog.dart';
 import 'package:geocoding/geocoding.dart';
 
 class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
@@ -364,6 +365,13 @@ class UserMapViewModel extends GetxController with GetTickerProviderStateMixin {
     try {
       final point = EvacuationPoint.fromJson(record);
       if (point.evacuationId != null) {
+        // Check if currently navigating to this point
+        if (_currentNavigatingEvacuationPoint.value?.evacuationId ==
+            point.evacuationId) {
+          EvacuationDeletedDialog.show();
+          cancelEvacuationRoute();
+        }
+
         _evacuationPointsData.removeWhere(
           (p) => p.evacuationId == point.evacuationId,
         );
