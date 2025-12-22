@@ -56,15 +56,15 @@ class _DisasterDetailModalState extends State<DisasterDetailModal> {
     }
   }
 
-  Future<void> _downloadShakeMap() async {
-    try {
-      await widget.onDownloadShakeMap(widget.disaster);
-    } on DisasterActionException catch (e) {
-      _showSnackBar(e.message);
-    } catch (e) {
-      _showSnackBar('Error: ${e.toString()}');
-    }
-  }
+  // Future<void> _downloadShakeMap() async {
+  //   try {
+  //     await widget.onDownloadShakeMap(widget.disaster);
+  //   } on DisasterActionException catch (e) {
+  //     _showSnackBar(e.message);
+  //   } catch (e) {
+  //     _showSnackBar('Error: ${e.toString()}');
+  //   }
+  // }
 
   void _showSnackBar(String message) {
     if (!mounted) return;
@@ -152,10 +152,6 @@ class _DisasterDetailModalState extends State<DisasterDetailModal> {
                     // Title
                     _buildHeader(),
                     const SizedBox(height: 18),
-
-                    // Download Shake Map
-                    _buildDownloadLink(),
-                    const SizedBox(height: 8),
 
                     // Disaster Info List
                     Padding(
@@ -258,34 +254,6 @@ class _DisasterDetailModalState extends State<DisasterDetailModal> {
                     ),
                   ),
           ],
-        ),
-      );
-
-  Widget _buildDownloadLink() => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: GestureDetector(
-          onTap: _downloadShakeMap,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Unduh Peta Guncangan',
-                style: TextStyle(
-                  fontFamily: 'SF Pro',
-                  fontWeight: FontWeight.w400,
-                  fontSize: 13,
-                  color: theme.colors.primary,
-                  decoration: TextDecoration.underline,
-                ),
-              ),
-              const SizedBox(width: 2),
-              Icon(
-                Icons.download,
-                size: 16,
-                color: theme.colors.primary,
-              ),
-            ],
-          ),
         ),
       );
 }
