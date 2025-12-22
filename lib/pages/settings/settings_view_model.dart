@@ -94,10 +94,12 @@ class SettingsViewModel extends GetxController {
 
   Future<void> showUsernameConfirmationDialog(String newUsername) async {
     final result = await Get.dialog<bool>(
-      ChangeUsernameConfirmationDialog(
+      ConfirmationDialog(
         onConfirm: () {
           Get.back(result: true);
         },
+        title: 'Konfirmasi perubahan nama',
+        caption: 'Apakah kamu yakin ingin mengubah nama?',
       ),
     );
 
@@ -180,9 +182,18 @@ class SettingsViewModel extends GetxController {
       }
     }
 
-    updateContact(index, newNumber).then((_) {
-      onSuccess();
-    });
+    Get.dialog(
+      ConfirmationDialog(
+        onConfirm: () {
+          updateContact(index, newNumber).then((_) {
+            onSuccess();
+            Get.back();
+          });
+        },
+        title: 'Apakah kamu yakin?',
+        caption: 'Penekanan tombol SOS akan menyebabkan nomor telepon terhubung dengan pihak terkait.',
+      ),
+    );
   }
 
   Future<void> logoutUser() async {

@@ -186,7 +186,7 @@ class ResponseTeamMapViewModel extends GetxController
 
   Future<void> _loadDisasterPoints() async {
     try {
-      final disasters = await SupabaseService.getAllDisasters();
+      final disasters = await SupabaseService.getFilteredDisasters();
       _disasterPointsData.value = disasters;
       _updateDisasterPointsDisplay();
     } catch (_) {

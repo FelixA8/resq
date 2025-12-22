@@ -2,10 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:resqapp/theme/theme_app.dart';
 
-class ChangeUsernameConfirmationDialog extends StatelessWidget {
+class ConfirmationDialog extends StatelessWidget {
   final VoidCallback onConfirm;
+  final String title;
+  final String caption;
 
-  const ChangeUsernameConfirmationDialog({super.key, required this.onConfirm});
+  const ConfirmationDialog({
+    super.key,
+    required this.onConfirm,
+    required this.caption,
+    required this.title,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -37,8 +44,8 @@ class ChangeUsernameConfirmationDialog extends StatelessWidget {
             const SizedBox(height: 20),
 
             // Title
-            const Text(
-              'Konfirmasi perubahan nama',
+            Text(
+              title,
               style: TextStyle(
                 fontFamily: 'SF Pro',
                 fontSize: 22,
@@ -49,8 +56,8 @@ class ChangeUsernameConfirmationDialog extends StatelessWidget {
             ),
             const SizedBox(height: 12),
 
-            const Text(
-              'Apakah kamu yakin ingin mengubah nama?',
+            Text(
+              caption,
               style: TextStyle(
                 fontFamily: 'SF Pro',
                 fontSize: 16,
@@ -136,9 +143,17 @@ class ChangeUsernameConfirmationDialog extends StatelessWidget {
     );
   }
 
-  static void show({required VoidCallback onConfirmDelete}) {
+  static void show({
+    required VoidCallback onConfirmDelete,
+    required String caption,
+    required String title,
+  }) {
     Get.dialog(
-      ChangeUsernameConfirmationDialog(onConfirm: onConfirmDelete),
+      ConfirmationDialog(
+        onConfirm: onConfirmDelete,
+        caption: caption,
+        title: title,
+      ),
       barrierDismissible: false,
     );
   }
