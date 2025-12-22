@@ -215,7 +215,6 @@ class SupabaseService {
           .select()
           .gte('occurred_at', startOfDayMs)
           .order('occurred_at', ascending: false);
-
       return (response as List).map((json) => Disaster.fromJson(json)).toList();
     } catch (e) {
       developer.log('Error getting disasters: $e');
