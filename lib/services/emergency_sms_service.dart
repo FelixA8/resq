@@ -8,7 +8,7 @@ import 'dart:developer' as developer;
 // ============================================================
 // Set to true to send SMS alerts to emergency contacts
 // Set to false to disable SMS sending (save costs during development)
-const bool SEND_EMERGENCY_SMS = true;
+const bool SEND_EMERGENCY_SMS = false;
 // ============================================================
 
 /// Service for sending emergency SMS alerts to user's emergency contacts

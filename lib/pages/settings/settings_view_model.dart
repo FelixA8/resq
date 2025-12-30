@@ -76,8 +76,10 @@ class SettingsViewModel extends GetxController {
   }
 
   void validateUsername(String username) {
-    if (username.length >= 3 && GetUtils.isAlphabetOnly(username)) {
-      showUsernameConfirmationDialog(username);
+    final trimmedUsername = username.trim();
+    final RegExp alphaHyphen = RegExp(r'^[a-zA-Z-]+$');
+    if (trimmedUsername.length >= 3 && alphaHyphen.hasMatch(trimmedUsername)) {
+      showUsernameConfirmationDialog(trimmedUsername);
     } else {
       Get.snackbar(
         'Username tidak valid',

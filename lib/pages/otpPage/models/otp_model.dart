@@ -25,13 +25,14 @@ class OTPModel {
 
   String get formattedPhoneNumber {
     if (phoneNumber.length < 4) return phoneNumber;
-    return '${phoneNumber.substring(0, 4)} ${phoneNumber.substring(4)}';
+    return '${phoneNumber.substring(0, 4)} ${phoneNumber.substring(4)}'; 
   }
 
   bool get isUsernameValid {
-    return username.trim().isNotEmpty &&
-        username.trim().length >= 3 &&
-        username.trim().length <= 30;
+    final RegExp alphaHyphen = RegExp(r'^[a-zA-Z-]+$');
+    return username.trim().length >= 3 &&
+        username.trim().length <= 30 &&
+        alphaHyphen.hasMatch(username.trim());
   }
 
   OTPModel copyWith({

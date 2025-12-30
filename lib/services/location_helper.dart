@@ -6,11 +6,9 @@ import 'package:latlong2/latlong.dart';
 import 'package:resqapp/theme/theme_app.dart';
 
 class LocationHelper {
-  // Jakarta default
   static const LatLng defaultLocation = LatLng(-6.2088, 106.8456);
   static const theme = ResQTheme();
 
-  /// Initialize location by checking permissions first, then getting location
   static Future<LocationResult> initializeLocation() async {
     try {
       bool locationServiceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -67,7 +65,6 @@ class LocationHelper {
     }
   }
 
-  /// Get location after permission has been granted
   static Future<LocationResult> _getLocationAfterPermission() async {
     try {
       Position? lastKnownPosition = await Geolocator.getLastKnownPosition();

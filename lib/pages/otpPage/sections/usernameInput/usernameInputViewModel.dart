@@ -31,8 +31,8 @@ class UsernameInputViewModel extends ChangeNotifier {
   }
 
   void _validateUsername() {
-    final RegExp alpha = RegExp(r'^[a-zA-Z]+$');
-    _isValid = _username.trim().isNotEmpty && _username.trim().length >= 3 && alpha.hasMatch(_username.trim());
+    final RegExp alphaHyphen = RegExp(r'^[a-zA-Z-]+$');
+    _isValid = _username.trim().length >= 3 && alphaHyphen.hasMatch(_username.trim());
   }
 
   void handleUsernameChanged(String value) {

@@ -461,7 +461,8 @@ class SupabaseService {
         query = query.eq('city', city);
       }
 
-      final response = await query;
+      final response = await query.order('created_at', ascending: false);
+
       return (response as List)
           .map((json) => EvacuationPoint.fromJson(json))
           .toList();

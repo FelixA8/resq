@@ -938,7 +938,7 @@ class ResponseTeamMapViewModel extends GetxController
       );
 
       // If we're close to this step's location (within 50m), move to next step
-      if (distanceToStep < 0.05 && i < _routeSteps.length - 1) {
+      if (distanceToStep < 0.02 && i < _routeSteps.length - 1) {
         _currentStepIndex = i + 1;
         continue;
       }

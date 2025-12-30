@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'dart:developer' as developer;
 
 class SmsService {
-  /// Send SMS with OTP code
   static Future<bool> sendOtpSms({
     required String phoneNumber,
     required String otpCode,
@@ -11,15 +10,12 @@ class SmsService {
     try {
       final message =
           'Your ResQ verification code is: $otpCode\n\nThis code will expire in 15 minutes.';
-
-      // Create SMS URL
       final smsUrl = Uri(
         scheme: 'sms',
         path: phoneNumber,
         queryParameters: {'body': message},
       );
 
-      // Launch SMS app
       final canLaunch = await canLaunchUrl(smsUrl);
       if (canLaunch) {
         await launchUrl(smsUrl);
@@ -28,9 +24,7 @@ class SmsService {
         return false;
       }
     } catch (e) {
-      if (kDebugMode) {
-        developer.log('SMS Error: $e');
-      }
+      developer.log('SMS Error: $e');
       return false;
     }
   }
@@ -41,9 +35,7 @@ class SmsService {
       final smsUrl = Uri(scheme: 'sms', path: '');
       return await canLaunchUrl(smsUrl);
     } catch (e) {
-      if (kDebugMode) {
-        developer.log('SMS Check Error: $e');
-      }
+      developer.log('SMS Check Error: $e');
       return false;
     }
   }

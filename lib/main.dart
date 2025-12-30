@@ -62,7 +62,7 @@ class MyApp extends StatelessWidget {
         GetPage(name: '/usermapview', page: () => UserMapView()),
       ],
 
-      //Old Routing Method (Still need /login, hence do not delete)
+      //Old Routing Method (Still need /login, hence do not delete).
       routes: {
         '/login': (context) => const LoginPageView(),
         '/responseLogin': (context) => const ResponseLoginPageView(),

@@ -95,16 +95,27 @@ class OTPScreen extends StatelessWidget {
                           )
                         else if (otpViewModel.currentState ==
                             ViewState.usernameInput)
-                          Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: Column(
-                              children: [
-                                const SizedBox(height: 20),
-                                const UsernameInputView(),
-                                const Spacer(),
-                                const ConfirmationButtonView(),
-                              ],
-                            ),
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              return SingleChildScrollView(
+                                padding: const EdgeInsets.all(20),
+                                child: ConstrainedBox(
+                                  constraints: BoxConstraints(
+                                    minHeight: constraints.maxHeight,
+                                  ),
+                                  child: IntrinsicHeight(
+                                    child: Column(
+                                      children: [
+                                        const SizedBox(height: 20),
+                                        const UsernameInputView(),
+                                        const Spacer(),
+                                        const ConfirmationButtonView(),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
                           )
                         else if (otpViewModel.currentState ==
                             ViewState.authenticated)
