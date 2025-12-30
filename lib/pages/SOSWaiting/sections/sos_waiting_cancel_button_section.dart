@@ -6,7 +6,7 @@ import 'package:resqapp/service/supabase_service.dart';
 import 'package:resqapp/theme/theme_app.dart';
 
 class SOSWaitingCancelButtonSection extends StatelessWidget {
-  const SOSWaitingCancelButtonSection({Key? key}) : super(key: key);
+  const SOSWaitingCancelButtonSection({super.key});
 
   void _showCancelConfirmationDialog(BuildContext context) {
     final theme = ResQTheme();

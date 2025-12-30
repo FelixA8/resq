@@ -33,22 +33,24 @@ class ResponseLoginPageView extends GetView<ResponseLoginPageViewModel> {
                         const ResponseLoginBackButton(),
 
                         SizedBox(height: screenHeight * 0.10),
+
                         const ResponseLoginLogo(),
+
                         const Spacer(),
 
-                        // Illustration
                         Padding(
-                          padding: const EdgeInsets.only(top: 24.0, bottom: 0.0),
+                          padding: const EdgeInsets.only(
+                            top: 24.0,
+                            bottom: 0.0,
+                          ),
                           child: SizedBox(
-                            height: screenHeight * 0.11, // slightly smaller
+                            height: screenHeight * 0.11,
                             child: Image.asset(
                               'assets/images/illustrations/response-team.png',
                               fit: BoxFit.contain,
                             ),
                           ),
                         ),
-
-                         // 👈 pushes the form section down like before
 
                         const ResponseLoginFormSection(),
 

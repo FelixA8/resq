@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:resqapp/theme/theme_app.dart';
 
 class LoginPageViewModel extends ChangeNotifier {
   final TextEditingController phoneController = TextEditingController();
   bool isResponseTeam = false;
   final FocusNode phoneFocus = FocusNode();
-  final theme = ResQTheme();
 
   String? phoneError;
 

@@ -130,7 +130,6 @@ class Contact {
   }
 }
 
-/// Disaster event
 class Disaster {
   final String disasterId;
   final double? occurredAt;
@@ -189,7 +188,6 @@ class Disaster {
   bool hasLocation() => centerLat != null && centerLng != null;
 }
 
-/// Response team member
 class ResponseTeam {
   final String responseTeamId;
   final String? role;
@@ -221,7 +219,6 @@ class ResponseTeam {
     };
   }
 
-  /// Convert to JSON for shared preferences (exclude password for security)
   Map<String, dynamic> toSharedPrefsJson() {
     return {
       'response_team_id': responseTeamId,
@@ -230,7 +227,6 @@ class ResponseTeam {
     };
   }
 
-  /// Create from shared preferences JSON
   factory ResponseTeam.fromSharedPrefsJson(Map<String, dynamic> json) {
     return ResponseTeam(
       responseTeamId: json['response_team_id'] as String,
@@ -241,7 +237,6 @@ class ResponseTeam {
   }
 }
 
-/// Evacuation point
 class EvacuationPoint {
   final String? evacuationId;
   final String? responseTeamId;
@@ -297,7 +292,6 @@ class EvacuationPoint {
   bool hasLocation() => locationLat != null && locationLng != null;
 }
 
-/// SOS emergency event
 class SosEvent {
   final String sosId;
   final String? userId;
@@ -321,12 +315,7 @@ class SosEvent {
     this.resolvedAt,
   });
 
-  // bool get isActive {
-  //   return isCurrent == true && resolvedAt == null;
-  // }
-
   factory SosEvent.fromJson(Map<String, dynamic> json) {
-    print(json);
     return SosEvent(
       sosId: json['sos_id'] as String,
       userId: json['user_id'] as String?,
@@ -340,16 +329,18 @@ class SosEvent {
               : null,
       responseTeamId: json['response_team_id'] as String?,
       isCurrent: json['is_current'] as bool?,
-      pressedAt: json['pressed_at'] != null
-    ? (json['pressed_at'] as num).toDouble()
-    : null,
-      assignedAt: json['assigned_at'] != null
-    ? (json['assigned_at'] as num).toDouble()
-    : null,
-      resolvedAt: json['resolved_at'] != null
-    ? (json['resolved_at'] as num).toDouble()
-    : null,
-
+      pressedAt:
+          json['pressed_at'] != null
+              ? (json['pressed_at'] as num).toDouble()
+              : null,
+      assignedAt:
+          json['assigned_at'] != null
+              ? (json['assigned_at'] as num).toDouble()
+              : null,
+      resolvedAt:
+          json['resolved_at'] != null
+              ? (json['resolved_at'] as num).toDouble()
+              : null,
     );
   }
 
@@ -368,12 +359,11 @@ class SosEvent {
   }
 
   bool hasLocation() => locationLat != null && locationLng != null;
-  
+
   bool get isAssigned => responseTeamId != null;
   bool get isResolved => resolvedAt != null && resolvedAt! > 0;
   bool get isActive => isCurrent == true && !isResolved;
-  
-  /// Create a copy of this SosEvent with updated fields
+
   SosEvent copyWith({
     String? sosId,
     String? userId,
@@ -399,7 +389,6 @@ class SosEvent {
   }
 }
 
-/// Junction table linking disasters to response teams
 class DisasterResponseTeam {
   final String disasterId;
   final String responseTeamId;

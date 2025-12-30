@@ -6,42 +6,39 @@ import 'package:resqapp/theme/theme_app.dart';
 import 'dart:math' as math;
 
 class SOSActiveBanner extends StatelessWidget {
-  const SOSActiveBanner({Key? key}) : super(key: key);
+  const SOSActiveBanner({super.key});
 
   @override
   Widget build(BuildContext context) {
     var theme = ResQTheme();
-    
-    // Get the UserMapViewModel from GetX
+
     return GetX<UserMapViewModel>(
       builder: (controller) {
         if (!controller.isSOSActive) {
           return SizedBox.shrink();
         }
-        
+
         return GestureDetector(
           onTap: () {
-            // Navigate to SOS waiting view with existing ViewModel
             Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (_) => SOSWaitingView(
-                  viewModel: controller.sosWaitingViewModel,
-                ),
+                builder:
+                    (_) => SOSWaitingView(
+                      viewModel: controller.sosWaitingViewModel,
+                    ),
               ),
             );
           },
           child: Container(
             width: double.infinity,
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: theme.colors.primary,
-            ),
+            decoration: BoxDecoration(color: theme.colors.primary),
             child: Row(
               children: [
-                // Animated SOS Icon Circle
                 AnimatedSOSCircle(),
+
                 SizedBox(width: 12),
-                // Text Content
+
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -56,7 +53,9 @@ class SOSActiveBanner extends StatelessWidget {
                           color: Colors.white,
                         ),
                       ),
+
                       SizedBox(height: 2),
+
                       Text(
                         'Tunggu bantuan datang dalam waktu dekat!',
                         style: TextStyle(
@@ -145,10 +144,7 @@ class RotatingBorderPainter extends CustomPainter {
   final double progress;
   final Color borderColor;
 
-  RotatingBorderPainter({
-    required this.progress,
-    required this.borderColor,
-  });
+  RotatingBorderPainter({required this.progress, required this.borderColor});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -156,16 +152,17 @@ class RotatingBorderPainter extends CustomPainter {
     final radius = size.width / 2;
     final strokeWidth = 3.0;
     final sweepAngle = math.pi * 1.2; // 120 degrees arc
-    
+
     // Calculate the start angle based on progress (0 to 2π)
     final startAngle = -math.pi / 2 + (progress * 2 * math.pi);
-    
-    final paint = Paint()
-      ..color = borderColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-    
+
+    final paint =
+        Paint()
+          ..color = borderColor
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = strokeWidth
+          ..strokeCap = StrokeCap.round;
+
     // Draw the rotating arc border
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),

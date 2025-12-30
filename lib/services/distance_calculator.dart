@@ -11,7 +11,8 @@ class GeoDistanceCalculator {
     final deltaLatRad = _degreesToRadians(point2.latitude - point1.latitude);
     final deltaLngRad = _degreesToRadians(point2.longitude - point1.longitude);
 
-    final a = sin(deltaLatRad / 2) * sin(deltaLatRad / 2) +
+    final a =
+        sin(deltaLatRad / 2) * sin(deltaLatRad / 2) +
         cos(lat1Rad) *
             cos(lat2Rad) *
             sin(deltaLngRad / 2) *
@@ -23,21 +24,16 @@ class GeoDistanceCalculator {
     return distanceKm;
   }
 
-  /// Calculate distance from coordinates (lat, lng) to a LatLng point
   static double calculateDistanceFromCoordinates({
     required double lat1,
     required double lng1,
     required double lat2,
     required double lng2,
   }) {
-    return calculateDistance(
-      LatLng(lat1, lng1),
-      LatLng(lat2, lng2),
-    );
+    return calculateDistance(LatLng(lat1, lng1), LatLng(lat2, lng2));
   }
 
   /// Format distance for display
-  /// Returns formatted string like "1.5 Km" or "500 m"
   static String formatDistance(double distanceKm) {
     if (distanceKm < 1.0) {
       final meters = (distanceKm * 1000).round();

@@ -32,9 +32,9 @@ class EvacuationDeletedDialog extends StatelessWidget {
                 color: Colors.red.shade400,
               ),
             ),
+
             const SizedBox(height: 20),
 
-            // Title
             const Text(
               'Poin Evakuasi Dihapus',
               style: TextStyle(
@@ -45,9 +45,9 @@ class EvacuationDeletedDialog extends StatelessWidget {
               ),
               textAlign: TextAlign.center,
             ),
+
             const SizedBox(height: 12),
 
-            // Main message
             const Text(
               'Poin evakuasi tujuan Anda sudah tidak aktif. Navigasi akan dihentikan.',
               style: TextStyle(
@@ -60,7 +60,6 @@ class EvacuationDeletedDialog extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // Action Buttons
             _buildActionButtons(),
           ],
         ),
@@ -68,12 +67,10 @@ class EvacuationDeletedDialog extends StatelessWidget {
     );
   }
 
-  /// Build the action buttons row
   Widget _buildActionButtons() {
     const theme = ResQTheme();
     return Row(
       children: [
-        // OK Button
         Expanded(
           child: Container(
             height: 48,
@@ -105,9 +102,6 @@ class EvacuationDeletedDialog extends StatelessWidget {
   }
 
   static void show() {
-    Get.dialog(
-      const EvacuationDeletedDialog(),
-      barrierDismissible: false,
-    );
+    Get.dialog(const EvacuationDeletedDialog(), barrierDismissible: false);
   }
 }

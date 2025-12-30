@@ -16,7 +16,7 @@ class SOSDetailModal extends StatefulWidget {
   final bool isRouteButtonEnabled;
 
   const SOSDetailModal({
-    Key? key,
+    super.key,
     required this.sosEvent,
     required this.onFetchUser,
     required this.onFetchAddress,
@@ -27,7 +27,7 @@ class SOSDetailModal extends StatefulWidget {
     this.onCancelRoute,
     this.currentResponseTeamId,
     this.isRouteButtonEnabled = true,
-  }) : super(key: key);
+  });
 
   @override
   State<SOSDetailModal> createState() => _SOSDetailModalState();
@@ -64,7 +64,6 @@ class _SOSDetailModalState extends State<SOSDetailModal> {
       setState(() => _isLoadingUser = false);
     }
 
-    // Load address
     setState(() => _isLoadingAddress = true);
     try {
       final address = await widget.onFetchAddress(widget.sosEvent);
@@ -82,61 +81,54 @@ class _SOSDetailModalState extends State<SOSDetailModal> {
     }
   }
 
-  // -----------------------------
-  // UI Builders
-  // -----------------------------
   Widget _buildHandleBar() => Center(
-        child: Container(
-          width: 40,
-          height: 4,
-          decoration: BoxDecoration(
-            color: Colors.grey.shade300,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-      );
+    child: Container(
+      width: 40,
+      height: 4,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade300,
+        borderRadius: BorderRadius.circular(2),
+      ),
+    ),
+  );
 
   Widget _buildHeader() => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Username
-            _isLoadingUser
-                ? CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      theme.colors.primary,
-                    ),
-                  )
-                : Text(
-                    _user?.username ?? 'Tidak diketahui',
-                    style: TextStyle(
-                      fontFamily: 'SF Pro',
-                      fontWeight: FontWeight.w600,
-                      fontSize: 20,
-                      color: Colors.black,
-                    ),
-                  ),
-            const SizedBox(height: 4),
-            // Report Location
-            _isLoadingAddress
-                ? CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      theme.colors.primary,
-                    ),
-                  )
-                : Text(
-                    _address ?? 'Lokasi tidak tersedia',
-                    style: TextStyle(
-                      fontFamily: 'SF Pro',
-                      fontWeight: FontWeight.w400,
-                      fontSize: 13,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-          ],
-        ),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 20),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _isLoadingUser
+            ? CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(theme.colors.primary),
+            )
+            : Text(
+              _user?.username ?? 'Tidak diketahui',
+              style: TextStyle(
+                fontFamily: 'SF Pro',
+                fontWeight: FontWeight.w600,
+                fontSize: 20,
+                color: Colors.black,
+              ),
+            ),
+
+        const SizedBox(height: 4),
+
+        _isLoadingAddress
+            ? CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(theme.colors.primary),
+            )
+            : Text(
+              _address ?? 'Lokasi tidak tersedia',
+              style: TextStyle(
+                fontFamily: 'SF Pro',
+                fontWeight: FontWeight.w400,
+                fontSize: 13,
+                color: Colors.grey[600],
+              ),
+            ),
+      ],
+    ),
+  );
 
   Widget _buildInfoRow({
     required String iconPath,
@@ -197,58 +189,57 @@ class _SOSDetailModalState extends State<SOSDetailModal> {
   }
 
   Widget _buildShowRouteButton() => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: ConfirmationButton(
-          onPressed: widget.onShowRoute,
-          isEnabled: widget.isRouteButtonEnabled,
-          text: 'Tunjukkan Rute',
-        ),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 20),
+    child: ConfirmationButton(
+      onPressed: widget.onShowRoute,
+      isEnabled: widget.isRouteButtonEnabled,
+      text: 'Tunjukkan Rute',
+    ),
+  );
 
   Widget _buildNavigatingUI() => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              '${widget.distanceKm.toStringAsFixed(2)} Km',
+    padding: const EdgeInsets.symmetric(horizontal: 20),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          '${widget.distanceKm.toStringAsFixed(2)} Km',
+          style: TextStyle(
+            fontFamily: 'SF Pro',
+            fontWeight: FontWeight.w600,
+            fontSize: 24,
+            color: theme.colors.primary,
+          ),
+        ),
+
+        const SizedBox(height: 20),
+
+        SizedBox(
+          width: 65,
+          child: ElevatedButton(
+            onPressed: widget.onCancelRoute,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colors.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+              'Batal',
               style: TextStyle(
                 fontFamily: 'SF Pro',
                 fontWeight: FontWeight.w600,
-                fontSize: 24,
-                color: theme.colors.primary,
+                fontSize: 16,
               ),
             ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: 65,
-              child: ElevatedButton(
-                onPressed: widget.onCancelRoute,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.colors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text(
-                  'Batal',
-                  style: TextStyle(
-                    fontFamily: 'SF Pro',
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                  ),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
-      );
+      ],
+    ),
+  );
 
-  // -----------------------------
-  // Build Method
-  // -----------------------------
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -258,9 +249,8 @@ class _SOSDetailModalState extends State<SOSDetailModal> {
       ),
       child: Stack(
         children: [
-          // Scrollable content
           Padding(
-            padding: const EdgeInsets.only(top: 18), // spacing below handle bar
+            padding: const EdgeInsets.only(top: 18),
             child: SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 32),
@@ -269,22 +259,25 @@ class _SOSDetailModalState extends State<SOSDetailModal> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 20),
-                    // Header (Username and Location)
+
                     _buildHeader(),
+
                     const SizedBox(height: 8),
-                    // Report Time
+
                     _buildInfoRow(
                       iconPath: 'assets/images/icons/time.png',
                       label: 'Waktu Pelaporan',
                       value: widget.formatReportTime(widget.sosEvent.pressedAt),
                     ),
-                    // Phone Number
+
                     _buildInfoRow(
                       iconPath: 'assets/images/icons/phone.png',
                       label: 'Nomor Telepon',
                       value: _user?.phoneNumber ?? 'Tidak tersedia',
                     ),
+
                     const SizedBox(height: 30),
+
                     if (widget.isNavigating)
                       _buildNavigatingUI()
                     else
@@ -295,7 +288,6 @@ class _SOSDetailModalState extends State<SOSDetailModal> {
             ),
           ),
 
-          // Fixed handle bar
           Positioned(
             top: 12,
             left: 0,
@@ -314,4 +306,3 @@ class _SOSDetailModalState extends State<SOSDetailModal> {
     );
   }
 }
-

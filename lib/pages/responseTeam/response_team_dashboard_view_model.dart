@@ -15,7 +15,6 @@ class ResponseTeamDashboardViewModel extends GetxController {
     selectedIndex.value = index;
   }
 
-  // Get current address from the map view model
   RxString get currentAddress {
     if (Get.isRegistered<ResponseTeamMapViewModel>()) {
       final mapViewModel = Get.find<ResponseTeamMapViewModel>();
@@ -27,7 +26,7 @@ class ResponseTeamDashboardViewModel extends GetxController {
   void logout() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.clear();
-    
+
     Get.offAll(LoginPageView());
   }
 }

@@ -9,22 +9,17 @@ import 'package:resqapp/services/location_helper.dart';
 
 class AddEvacuationPointViewModel extends GetxController {
   final String instanceCode;
-  final EvacuationPoint? existingEvacuationPoint; // For editing mode
+  final EvacuationPoint? existingEvacuationPoint;
   final MapController mapController = MapController();
 
-  // Reactive state
-  final Rx<LatLng> currentLocation =
-      LatLng(-6.2088, 106.8456).obs; // Jakarta default
-  final Rx<LatLng> selectedLocation =
-      LatLng(-6.2088, 106.8456).obs; // Selected evacuation point location
+  final Rx<LatLng> currentLocation = LatLng(-6.2088, 106.8456).obs;
+  final Rx<LatLng> selectedLocation = LatLng(-6.2088, 106.8456).obs;
   final RxBool isLoading = false.obs;
   final RxBool hasLocationPermission = false.obs;
-  final RxString selectedCity = 'Jakarta'.obs; // Default city
-  final RxString selectedLocationDetail =
-      ''.obs; // Location detail from geocoding
+  final RxString selectedCity = 'Jakarta'.obs;
+  final RxString selectedLocationDetail = ''.obs;
   final RxBool isGeocodingLoading = false.obs;
 
-  // Timer for debounced geocoding
   Timer? _geocodingTimer;
 
   AddEvacuationPointViewModel({
@@ -38,22 +33,18 @@ class AddEvacuationPointViewModel extends GetxController {
     super.onInit();
   }
 
-  /// Check if this is editing mode
   bool get isEditMode => existingEvacuationPoint != null;
 
   @override
   void onClose() {
-    // Cancel any pending geocoding timer
     _geocodingTimer?.cancel();
     super.onClose();
   }
 
-  /// Initialize location using the LocationHelper
   Future<void> _initializeLocation() async {
     try {
       isLoading.value = true;
 
-      // If editing mode, use existing evacuation point location
       if (isEditMode && existingEvacuationPoint!.hasLocation()) {
         currentLocation.value = LatLng(
           existingEvacuationPoint!.locationLat!,
@@ -65,47 +56,38 @@ class AddEvacuationPointViewModel extends GetxController {
             existingEvacuationPoint!.locationDetail ?? '';
         hasLocationPermission.value = true;
 
-        // Move map to the existing location
         mapController.move(currentLocation.value, 15.0);
       } else {
-        // Normal initialization for new evacuation point
         LocationResult result = await LocationHelper.initializeLocation();
 
         currentLocation.value = result.location;
         selectedLocation.value = result.location;
         hasLocationPermission.value = result.hasPermission;
 
-        // Move map to the location
         mapController.move(currentLocation.value, 15.0);
 
-        // Perform initial geocoding for the current location
         _performGeocodingForSelectedLocation();
       }
     } catch (e) {
-      // LocationHelper already handles error messages
       hasLocationPermission.value = false;
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Update selected location when map is moved
   void onMapPositionChanged(MapCamera camera) {
     selectedLocation.value = camera.center;
     _startGeocodingTimer();
   }
 
   void _startGeocodingTimer() {
-    // Cancel existing timer if it exists
     _geocodingTimer?.cancel();
 
-    // Start new timer for 1 second delay
     _geocodingTimer = Timer(Duration(milliseconds: 500), () {
       _performGeocodingForSelectedLocation();
     });
   }
 
-  /// Perform geocoding for the currently selected location
   Future<void> _performGeocodingForSelectedLocation() async {
     try {
       isGeocodingLoading.value = true;
@@ -118,13 +100,11 @@ class AddEvacuationPointViewModel extends GetxController {
         selectedCity.value = result.city;
         selectedLocationDetail.value = result.locationDetail;
       } else {
-        // Fallback to coordinates if geocoding fails
         selectedCity.value = 'Unknown City';
         selectedLocationDetail.value =
             'Lat: ${selectedLocation.value.latitude.toStringAsFixed(6)}, Lng: ${selectedLocation.value.longitude.toStringAsFixed(6)}';
       }
     } catch (e) {
-      // Silent failure for geocoding - use coordinates as fallback
       selectedCity.value = 'Unknown City';
       selectedLocationDetail.value =
           'Lat: ${selectedLocation.value.latitude.toStringAsFixed(6)}, Lng: ${selectedLocation.value.longitude.toStringAsFixed(6)}';
@@ -133,14 +113,12 @@ class AddEvacuationPointViewModel extends GetxController {
     }
   }
 
-  /// Move map to a specific location
   void moveToLocation(LatLng location) {
     mapController.move(location, 16.0);
     selectedLocation.value = location;
     _startGeocodingTimer();
   }
 
-  /// Move to current user location
   void moveToCurrentLocation() {
     if (hasLocationPermission.value) {
       mapController.move(currentLocation.value, 16.0);
@@ -149,7 +127,6 @@ class AddEvacuationPointViewModel extends GetxController {
     }
   }
 
-  /// Refresh current location
   Future<void> refreshCurrentLocation() async {
     if (!hasLocationPermission.value) return;
 
@@ -160,24 +137,19 @@ class AddEvacuationPointViewModel extends GetxController {
       if (result.hasPermission) {
         currentLocation.value = result.location;
       }
-    } catch (e) {
-      // Silent refresh, no error messages
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Retry location initialization
   Future<void> retryLocationRequest() async {
     await _initializeLocation();
   }
 
-  /// Handle confirmation button press
   Future<void> onConfirmPressed() async {
     try {
       isLoading.value = true;
 
-      // Get stored response team data to get response_team_id
       final storedResponseTeam = await SupabaseService.getStoredResponseTeam();
 
       if (storedResponseTeam == null) {
@@ -212,11 +184,8 @@ class AddEvacuationPointViewModel extends GetxController {
         );
 
         if (success) {
-          print('Success: Evacuation point updated successfully');
-
           Get.back(result: true);
         } else {
-          print('Error: Failed to update evacuation point');
           Get.snackbar(
             'Error',
             'Gagal memperbarui poin evakuasi',
@@ -240,11 +209,8 @@ class AddEvacuationPointViewModel extends GetxController {
         );
 
         if (result != null) {
-          print('Success: Evacuation point added successfully');
-          // Navigate back with success result
           Get.back(result: true);
         } else {
-          print('Error: Failed to add evacuation point - result is null');
           Get.snackbar(
             'Error',
             'Gagal menambahkan poin evakuasi',
@@ -257,7 +223,6 @@ class AddEvacuationPointViewModel extends GetxController {
         }
       }
     } catch (e) {
-      print('Exception in onConfirmPressed: $e');
       Get.snackbar(
         'Error',
         '${e.toString()}',
@@ -272,7 +237,6 @@ class AddEvacuationPointViewModel extends GetxController {
     }
   }
 
-  /// Navigate back
   void onBackPressed() {
     Get.back(result: false);
   }

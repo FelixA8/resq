@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:resqapp/pages/SOSWaiting/sos_waiting_view_model.dart';
 import 'package:resqapp/pages/settings/components/settings_error_dialog.dart';
 import 'package:resqapp/pages/settings/sections/change_username_confirmation_dialog.dart';
-import 'package:resqapp/pages/userMap/user_map_view_model.dart';
 import 'package:resqapp/theme/theme_app.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:resqapp/service/supabase_service.dart';
@@ -114,7 +112,6 @@ class SettingsViewModel extends GetxController {
   Future<void> updateContact(int index, String? number) async {
     if (user == null) return;
 
-    // 1-based index for contact name
     final contactName = 'Contact ${index + 1}';
 
     if (number == null || number.isEmpty) {
@@ -193,7 +190,8 @@ class SettingsViewModel extends GetxController {
           });
         },
         title: 'Apakah kamu yakin?',
-        caption: 'Penekanan tombol SOS akan menyebabkan nomor telepon terhubung dengan pihak terkait.',
+        caption:
+            'Penekanan tombol SOS akan menyebabkan nomor telepon terhubung dengan pihak terkait.',
       ),
     );
   }

@@ -29,16 +29,10 @@ class SosReportItem {
     return distanceKm!.toStringAsFixed(1);
   }
 
-  /// Check if this SOS is assigned to a team
   bool get isAssigned => sosEvent.isAssigned;
-
-  /// Get the response team ID if assigned
   String? get assignedTeamId => sosEvent.responseTeamId;
-
-  /// Check if this SOS is active
   bool get isActive => sosEvent.isActive;
-
-  /// Create a copy with updated fields
+  
   SosReportItem copyWith({
     SosEvent? sosEvent,
     ResqUser? user,

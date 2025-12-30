@@ -6,7 +6,7 @@ import 'sections/sos_button_section.dart';
 import '../SOSWaiting/sos_waiting_view.dart';
 
 class SOSView extends StatelessWidget {
-  const SOSView({Key? key}) : super(key: key);
+  const SOSView({super.key});
 
   @override
   Widget build(BuildContext context) {

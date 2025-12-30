@@ -46,7 +46,6 @@ class ResponseLoginPageViewModel extends GetxController {
     }
   }
 
-  /// Show error snackbar
   void _showErrorSnackbar(String message) {
     Get.snackbar(
       'Error',

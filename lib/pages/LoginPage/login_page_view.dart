@@ -27,9 +27,13 @@ class LoginPageView extends StatelessWidget {
                     child: Column(
                       children: const [
                         SizedBox(height: 100),
+                        
                         LoginHeaderSection(),
+                        
                         Spacer(),
+                        
                         LoginFormSection(),
+                        
                         SizedBox(height: 35),
                       ],
                     ),

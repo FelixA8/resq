@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:resqapp/theme/theme_app.dart';
 
 class EmergencySettingsSaveButton extends StatelessWidget {

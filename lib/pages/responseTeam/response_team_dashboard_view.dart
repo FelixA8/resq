@@ -17,7 +17,6 @@ class ResponseTeamDashboardView
 
   @override
   Widget build(BuildContext context) {
-    // Register the controller if not already registered
     if (!Get.isRegistered<ResponseTeamDashboardViewModel>()) {
       Get.put(ResponseTeamDashboardViewModel(instanceCode: instanceCode));
     }
@@ -52,15 +51,17 @@ class ResponseTeamDashboardView
                   height: 14,
                 ),
                 const SizedBox(width: 2),
-                Obx(() => Text(
-                  controller.currentAddress.value,
-                  style: TextStyle(
-                    fontFamily: 'SF Pro',
-                    fontWeight: FontWeight.w400,
-                    fontSize: 13,
-                    color: theme.colors.primary,
+                Obx(
+                  () => Text(
+                    controller.currentAddress.value,
+                    style: TextStyle(
+                      fontFamily: 'SF Pro',
+                      fontWeight: FontWeight.w400,
+                      fontSize: 13,
+                      color: theme.colors.primary,
+                    ),
                   ),
-                )),
+                ),
               ],
             ),
           ],
@@ -86,7 +87,9 @@ class ResponseTeamDashboardView
                       maximumSize: Size(35, 35),
                     ),
                     onPressed: () async {
-                      Get.dialog(LogoutConfirmationDialog(onConfirm: controller.logout));
+                      Get.dialog(
+                        LogoutConfirmationDialog(onConfirm: controller.logout),
+                      );
                     },
                     child: Image.asset(
                       'assets/images/icons/logout.png',

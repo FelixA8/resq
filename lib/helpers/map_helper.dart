@@ -11,11 +11,15 @@ import 'package:http/http.dart' as http;
 import 'package:resqapp/components/disaster_detail_modal.dart';
 
 class MapHelper {
-  static final DateFormat _disasterDateFormatter =
-      DateFormat('d MMMM yyyy, HH:mm:ss', 'id_ID');
+  static final DateFormat _disasterDateFormatter = DateFormat(
+    'd MMMM yyyy, HH:mm:ss',
+    'id_ID',
+  );
 
   static Disaster? findDisasterByLocation(
-      List<Disaster> list, LatLng location) {
+    List<Disaster> list,
+    LatLng location,
+  ) {
     const tolerance = 0.0001;
     try {
       return list.firstWhere(
@@ -31,7 +35,9 @@ class MapHelper {
   }
 
   static EvacuationPoint? findEvacuationPointByLocation(
-      List<EvacuationPoint> list, LatLng location) {
+    List<EvacuationPoint> list,
+    LatLng location,
+  ) {
     const tolerance = 0.0001;
     try {
       return list.firstWhere(
@@ -62,13 +68,16 @@ class MapHelper {
   }
 
   static Future<String> getAddressFromLocation(
-      double? lat, double? lng, Map<String, String> cache, String id) async {
+    double? lat,
+    double? lng,
+    Map<String, String> cache,
+    String id,
+  ) async {
     if (cache.containsKey(id)) return cache[id]!;
     if (lat == null || lng == null) return 'Lokasi tidak tersedia';
 
     try {
-      final result =
-          await LocationHelper.getLocationDetails(LatLng(lat, lng));
+      final result = await LocationHelper.getLocationDetails(LatLng(lat, lng));
       final address = result.locationDetail;
       cache[id] = address;
       return address;
@@ -80,8 +89,9 @@ class MapHelper {
   static String formatDisasterDate(double? timestamp) {
     if (timestamp == null) return 'Tidak tersedia';
     try {
-      final dateTime =
-          DateTime.fromMillisecondsSinceEpoch(timestamp.toInt() * 1000);
+      final dateTime = DateTime.fromMillisecondsSinceEpoch(
+        timestamp.toInt() * 1000,
+      );
       return '${_disasterDateFormatter.format(dateTime)} WIB';
     } catch (_) {
       return 'Tidak tersedia';
@@ -105,7 +115,7 @@ class MapHelper {
       "September",
       "Oktober",
       "November",
-      "Desember"
+      "Desember",
     ];
     final date =
         "${dateTime.day} ${months[dateTime.month - 1]} ${dateTime.year}";
@@ -135,7 +145,8 @@ class MapHelper {
       final uri = Uri.parse(url);
       if (!await canLaunchUrl(uri)) {
         throw const DisasterActionException(
-            'Tidak dapat membuka peta guncangan');
+          'Tidak dapat membuka peta guncangan',
+        );
       }
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (e) {
@@ -144,51 +155,31 @@ class MapHelper {
     }
   }
 
-  static Future<List<LatLng>> getRoutePolyline(LatLng start, LatLng end) async {
+  static Future<RouteData?> getRouteWithInstructions(
+    LatLng start,
+    LatLng end,
+  ) async {
     final url = Uri.parse(
       'http://router.project-osrm.org/route/v1/driving/'
       '${start.longitude},${start.latitude};'
       '${end.longitude},${end.latitude}'
-      '?overview=full&geometries=geojson'
+      '?overview=full&geometries=geojson&steps=true',
     );
 
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        
-        if (data['routes'] != null && (data['routes'] as List).isNotEmpty) {
-          final geometry = data['routes'][0]['geometry']['coordinates'] as List;
-          return geometry
-              .map((coord) => LatLng(coord[1].toDouble(), coord[0].toDouble()))
-              .toList();
-        }
-      }
-    } catch (e) {
-      debugPrint('Error fetching route: $e');
-    }
-    return [];
-  }
 
-  static Future<RouteData?> getRouteWithInstructions(LatLng start, LatLng end) async {
-    final url = Uri.parse(
-      'http://router.project-osrm.org/route/v1/driving/'
-      '${start.longitude},${start.latitude};'
-      '${end.longitude},${end.latitude}'
-      '?overview=full&geometries=geojson&steps=true'
-    );
-
-    try {
-      final response = await http.get(url);
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        
         if (data['routes'] != null && (data['routes'] as List).isNotEmpty) {
           final route = data['routes'][0];
           final geometry = route['geometry']['coordinates'] as List;
-          final polyline = geometry
-              .map((coord) => LatLng(coord[1].toDouble(), coord[0].toDouble()))
-              .toList();
+          final polyline =
+              geometry
+                  .map(
+                    (coord) => LatLng(coord[1].toDouble(), coord[0].toDouble()),
+                  )
+                  .toList();
 
           final steps = <RouteStep>[];
           if (route['legs'] != null && (route['legs'] as List).isNotEmpty) {
@@ -201,14 +192,16 @@ class MapHelper {
                   maneuver['location'][0].toDouble(),
                 );
 
-                steps.add(RouteStep(
-                  distance: (step['distance'] ?? 0.0).toDouble(),
-                  duration: (step['duration'] ?? 0.0).toDouble(),
-                  instruction: step['name'] ?? '',
-                  maneuverType: maneuver['type'] ?? 'turn',
-                  maneuverModifier: maneuver['modifier'],
-                  location: stepLocation,
-                ));
+                steps.add(
+                  RouteStep(
+                    distance: (step['distance'] ?? 0.0).toDouble(),
+                    duration: (step['duration'] ?? 0.0).toDouble(),
+                    instruction: step['name'] ?? '',
+                    maneuverType: maneuver['type'] ?? 'turn',
+                    maneuverModifier: maneuver['modifier'],
+                    location: stepLocation,
+                  ),
+                );
               }
             }
           }
@@ -227,34 +220,36 @@ class MapHelper {
     return null;
   }
 
-
   static bool isUserOffRoute(
-    LatLng userLocation, 
-    List<LatLng> routePoints, 
-    {double thresholdMeters = 50.0}
-  ) {
+    LatLng userLocation,
+    List<LatLng> routePoints, {
+    double thresholdMeters = 50.0,
+  }) {
     if (routePoints.isEmpty) return false;
 
     double minDistanceKm = double.infinity;
 
     for (final point in routePoints) {
-      final distance = GeoDistanceCalculator.calculateDistance(userLocation, point);
+      final distance = GeoDistanceCalculator.calculateDistance(
+        userLocation,
+        point,
+      );
       if (distance < minDistanceKm) {
         minDistanceKm = distance;
       }
     }
     final minDistanceMeters = minDistanceKm * 1000;
-    
+
     return minDistanceMeters > thresholdMeters;
   }
 }
 
 class RouteStep {
-  final double distance; // in meters
-  final double duration; // in seconds
+  final double distance;
+  final double duration;
   final String instruction;
-  final String maneuverType; // 'turn', 'depart', 'arrive', etc.
-  final String? maneuverModifier; // 'left', 'right', 'straight', etc.
+  final String maneuverType;
+  final String? maneuverModifier;
   final LatLng location;
 
   RouteStep({
@@ -270,8 +265,8 @@ class RouteStep {
 class RouteData {
   final List<LatLng> polyline;
   final List<RouteStep> steps;
-  final double totalDistance; // in meters
-  final double totalDuration; // in seconds
+  final double totalDistance;
+  final double totalDuration;
 
   RouteData({
     required this.polyline,

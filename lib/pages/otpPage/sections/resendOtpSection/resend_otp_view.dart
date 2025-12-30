@@ -28,9 +28,9 @@ class ResendOTPSection extends StatelessWidget {
         TextButton(
           onPressed: canResend ? onResendPressed : null,
           style: TextButton.styleFrom(
-            padding: EdgeInsets.zero, // Remove all padding
-            minimumSize: Size(0, 0), // Remove min size
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap, // Shrink tap target
+            padding: EdgeInsets.zero,
+            minimumSize: Size(0, 0),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
           child: Text(
             canResend ? 'Kirim Ulang Kode OTP' : 'Tunggu $timeLeft detik',

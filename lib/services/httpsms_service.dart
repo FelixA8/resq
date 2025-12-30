@@ -50,7 +50,7 @@ class HttpSmsService {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        developer.log('httpSMS: ✅ SMS sent successfully to $to');
+        developer.log('httpSMS: SMS sent successfully to $to');
         
         return {
           'success': true,
@@ -58,7 +58,7 @@ class HttpSmsService {
         };
       } else {
         final errorBody = response.body;
-        developer.log('httpSMS: ❌ Failed (${response.statusCode}): $errorBody');
+        developer.log('httpSMS: Failed (${response.statusCode}): $errorBody');
         
         return {
           'success': false,

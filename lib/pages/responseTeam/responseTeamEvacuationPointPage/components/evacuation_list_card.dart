@@ -73,7 +73,7 @@ class EvacuationPointCard extends StatelessWidget {
               ],
             ),
             Text(
-              "Ditetapkan Mulai: $formattedDate", // Mock date as shown in Figma
+              "Ditetapkan Mulai: $formattedDate",
               style: TextStyle(
                 color: Colors.black,
                 fontWeight: FontWeight.w400,
@@ -84,7 +84,6 @@ class EvacuationPointCard extends StatelessWidget {
 
             SizedBox(height: theme.size.ms),
 
-            // Action buttons row
             Row(
               children: [
                 EvacuationActionButton(

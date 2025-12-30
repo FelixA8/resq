@@ -21,9 +21,9 @@ void main() async {
     await dotenv.load(fileName: '.env');
   } catch (e) {
     developer.log(
-      '🚨 Please create a .env file with SUPABASE_URL and SUPABASE_ANON_KEY',
+      'Please create a .env file with SUPABASE_URL and SUPABASE_ANON_KEY',
     );
-  } 
+  }
 
   final supabaseUrl = dotenv.env['SUPABASE_URL'] ?? "";
   final supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'] ?? "";

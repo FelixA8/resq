@@ -34,14 +34,12 @@ class ResponseTeamSOSReportViewModel extends GetxController {
     _initialize();
   }
 
-  /// Initialize: load first page and set up real-time subscription
   Future<void> _initialize() async {
     await _loadSOSReports();
     await _initializeLocation();
     _subscribeToSOSEvents();
   }
 
-  /// Initialize response team location
   Future<void> _initializeLocation() async {
     try {
       final result = await LocationHelper.getCurrentLocationSilent();
@@ -65,7 +63,6 @@ class ResponseTeamSOSReportViewModel extends GetxController {
     super.onClose();
   }
 
-  /// Load initial SOS reports from Supabase
   Future<void> _loadSOSReports() async {
     isLoading.value = true;
     errorMessage.value = null;
@@ -92,7 +89,6 @@ class ResponseTeamSOSReportViewModel extends GetxController {
     }
   }
 
-  /// Load more SOS reports (pagination)
   Future<void> loadMoreReports() async {
     if (isLoadingMore.value || !hasMoreData.value || isLoading.value) return;
 
@@ -101,7 +97,6 @@ class ResponseTeamSOSReportViewModel extends GetxController {
     try {
       developer.log('📋 Loading more SOS reports (offset: $_currentOffset)...');
 
-      // Fetch next page
       final sosEvents = await SupabaseService.getPaginatedSosEvents(
         limit: _pageSize,
         offset: _currentOffset,
@@ -120,14 +115,13 @@ class ResponseTeamSOSReportViewModel extends GetxController {
     }
   }
 
-  /// Enrich SOS events with user data and calculate distances
   Future<List<SosReportItem>> _enrichSOSEventsWithUserData(
     List<SosEvent> sosEvents,
   ) async {
     final reportItems = <SosReportItem>[];
 
     if (responseTeamLocation.value == null) {
-      developer.log('⚠️ Response team location not available yet, waiting...');
+      developer.log('Response team location not available yet, waiting...');
       await _initializeLocation();
     }
 
@@ -143,7 +137,7 @@ class ResponseTeamSOSReportViewModel extends GetxController {
             _userCache[sosEvent.userId!] = user;
           }
         } catch (e) {
-          developer.log('⚠️ Error fetching user ${sosEvent.userId}: $e');
+          developer.log('Error fetching user ${sosEvent.userId}: $e');
         }
       }
 
@@ -278,7 +272,6 @@ class ResponseTeamSOSReportViewModel extends GetxController {
         );
 
         if (index != -1) {
-          // Update the existing item
           final oldItem = sosReports[index];
           sosReports[index] = oldItem.copyWith(sosEvent: newSosEvent);
         }
@@ -298,7 +291,7 @@ class ResponseTeamSOSReportViewModel extends GetxController {
 
         if (sosReports.length < initialLength) {
           _currentOffset--;
-          developer.log('✅ Removed SOS event: ${sosEvent.sosId}');
+          developer.log('Removed SOS event: ${sosEvent.sosId}');
         }
       }
     } catch (e) {

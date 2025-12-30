@@ -4,7 +4,7 @@ import 'package:resqapp/theme/theme_app.dart';
 class ConfirmationButton extends StatelessWidget {
   final VoidCallback onPressed;
   final bool isEnabled;
-  final String text; // Add text parameter
+  final String text;
 
   static const theme = ResQTheme();
 
@@ -12,7 +12,7 @@ class ConfirmationButton extends StatelessWidget {
     super.key,
     required this.onPressed,
     required this.isEnabled,
-    required this.text, // Require text parameter
+    required this.text,
   });
 
   @override
@@ -28,7 +28,7 @@ class ConfirmationButton extends StatelessWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
         child: Text(
-          text, // Use the text parameter
+          text,
           style: TextStyle(
             fontSize: 16,
             fontWeight: theme.font.semibold,

@@ -119,7 +119,7 @@ class LoginFormSection extends StatelessWidget {
                 ),
             ],
           ),
-            
+
           const SizedBox(height: 28),
           SizedBox(
             child: ConfirmationButton(
