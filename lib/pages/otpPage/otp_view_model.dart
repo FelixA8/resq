@@ -18,7 +18,7 @@ enum ViewState { otpInput, usernameInput, authenticated }
 // ============================================================
 // Set to true to use Message Central API (requires credentials)
 // Set to false to use local SMS app (free, but requires manual sending)
-const bool USE_MESSAGE_CENTRAL = true;
+const bool USE_MESSAGE_CENTRAL = false;
 // ============================================================
 
 class OTPViewModel extends ChangeNotifier {
@@ -55,14 +55,14 @@ class OTPViewModel extends ChangeNotifier {
   Future<void> initialize(String phoneNumber) async {
     _otpModel = OTPModel(phoneNumber: phoneNumber, sentTime: DateTime.now());
 
-    await _createAndStoreOtpCode(phoneNumber);
+    await _getOtp(phoneNumber);
 
     _startResendTimer();
     _startExpiryTimer();
     notifyListeners();
   }
 
-  Future<void> _createAndStoreOtpCode(String phoneNumber) async {
+  Future<void> _getOtp(String phoneNumber) async {
     try {
       _isLoading = true;
       notifyListeners();
@@ -89,6 +89,7 @@ class OTPViewModel extends ChangeNotifier {
         }
       } else {
         _generatedOtpCode = _generateOtpCode();
+        print("OTP Code: ${_generatedOtpCode}");
         _verificationId =
             'otp_${DateTime.now().millisecondsSinceEpoch}_${phoneNumber.replaceAll('+', '')}';
 
@@ -159,10 +160,10 @@ class OTPViewModel extends ChangeNotifier {
     }
   }
 
-  Future<bool> validateOTP(String code) async {
+  Future<bool> verifyOTP(String code) async {
     if (isOTPExpired) {
       Get.snackbar(
-        'OTP Kadaluarse',
+        'OTP Kadaluarsa',
         'Kode OTP telah kadaluarsa, silahkan meminta ulang kode OTP.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: theme.colors.primary,
@@ -259,7 +260,7 @@ class OTPViewModel extends ChangeNotifier {
       if (_verificationId != null) {
         await SupabaseService.invalidateOtpCode(_verificationId!);
       }
-      await _createAndStoreOtpCode(_otpModel!.phoneNumber);
+      await _getOtp(_otpModel!.phoneNumber);
 
       _otpModel = _otpModel?.copyWith(
         resendAttempts: (_otpModel?.resendAttempts ?? 0) + 1,

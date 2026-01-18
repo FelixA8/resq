@@ -123,7 +123,7 @@ class LoginFormSection extends StatelessWidget {
           const SizedBox(height: 28),
           SizedBox(
             child: ConfirmationButton(
-              onPressed: () => viewModel.validate(context),
+              onPressed: () => viewModel.submitCredential(context),
               isEnabled: true,
               text: 'Kirim OTP',
             ),

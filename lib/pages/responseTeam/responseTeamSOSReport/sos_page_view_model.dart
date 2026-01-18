@@ -12,7 +12,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'models/sos_report_item.dart';
 import 'dart:developer' as developer;
 
-class ResponseTeamSOSReportViewModel extends GetxController {
+class SOSPageViewModel extends GetxController {
   final RxList<SosReportItem> sosReports = <SosReportItem>[].obs;
   final Map<String, ResqUser> _userCache = {};
   final RxBool isLoading = false.obs;
@@ -35,7 +35,7 @@ class ResponseTeamSOSReportViewModel extends GetxController {
   }
 
   Future<void> _initialize() async {
-    await _loadSOSReports();
+    await _fetchSOSAssignments();
     await _initializeLocation();
     _subscribeToSOSEvents();
   }
@@ -63,7 +63,7 @@ class ResponseTeamSOSReportViewModel extends GetxController {
     super.onClose();
   }
 
-  Future<void> _loadSOSReports() async {
+  Future<void> _fetchSOSAssignments() async {
     isLoading.value = true;
     errorMessage.value = null;
     _currentOffset = 0;
@@ -301,7 +301,7 @@ class ResponseTeamSOSReportViewModel extends GetxController {
 
   Future<void> refreshReports() async {
     await _initializeLocation();
-    await _loadSOSReports();
+    await _fetchSOSAssignments();
   }
 
   Future<void> updateLocation(LatLng newLocation) async {

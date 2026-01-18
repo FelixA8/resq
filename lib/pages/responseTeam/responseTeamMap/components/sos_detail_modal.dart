@@ -33,7 +33,7 @@ class SOSDetailModal extends StatelessWidget {
         onFetchAddress: (sosEvent) => viewModel.fetchSOSAddress(sosEvent),
         formatReportTime: (timestamp) => viewModel.formatSOSReportTime(timestamp),
         onShowRoute: () {
-          viewModel.showRouteToSos(updatedSosEvent);
+          viewModel.startSOSOperations(updatedSosEvent);
         },
         isNavigating: isNavigating,
         distanceKm: distanceKm,

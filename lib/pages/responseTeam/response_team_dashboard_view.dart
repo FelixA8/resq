@@ -4,7 +4,7 @@ import 'package:resqapp/components/logout_confirmation_dialog.dart';
 import 'package:resqapp/pages/responseTeam/response_team_dashboard_view_model.dart';
 import 'package:resqapp/pages/responseTeam/responseTeamEvacuationPointPage/response_team_evacuation_point_view.dart';
 import 'package:resqapp/pages/responseTeam/responseTeamMap/response_team_map_view.dart';
-import 'package:resqapp/pages/responseTeam/responseTeamSOSReport/response_team_sos_report_view.dart';
+import 'package:resqapp/pages/responseTeam/responseTeamSOSReport/sos_page_view.dart';
 import 'package:resqapp/theme/theme_app.dart';
 
 class ResponseTeamDashboardView
@@ -110,7 +110,7 @@ class ResponseTeamDashboardView
           case 1:
             return ResponseTeamMapView(instanceCode: instanceCode);
           case 2:
-            return const ResponseTeamSOSReportView();
+            return const SOSPageView();
           default:
             return ResponseTeamMapView(instanceCode: instanceCode);
         }

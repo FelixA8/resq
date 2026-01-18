@@ -4,12 +4,16 @@ import 'dart:ffi';
 import 'dart:math';
 import 'dart:developer' as developer;
 
+import 'package:flutter/widgets.dart';
+import 'package:get/get.dart';
+import 'package:resqapp/theme/theme_app.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/supabase_models.dart';
 
 class SupabaseService {
   static final SupabaseClient _client = Supabase.instance.client;
+  static final theme = ResQTheme();
 
   /// Test Supabase connection
   static Future<bool> testConnection() async {
@@ -259,10 +263,21 @@ class SupabaseService {
       };
 
       final response =
-          await _client.from('sos_events').insert(sosData).select().single();
+          await _client.from('sos_events').insert(sosData).select().single()
+          .timeout(const Duration(seconds: 1));
 
       return SosEvent.fromJson(response);
     } catch (e) {
+      Get.snackbar(
+        'Tidak ada koneksi',
+        'Mohon periksa koneksi internet anda',
+        backgroundColor: theme.colors.primary,
+        snackPosition: SnackPosition.BOTTOM,
+        colorText: Color(0xffFFFFFF),
+        animationDuration: Duration(milliseconds: 500),
+        duration: Duration(seconds: 2),
+        isDismissible: true,
+      ); 
       developer.log('Error creating SOS event: $e');
       return null;
     }
@@ -492,7 +507,7 @@ class SupabaseService {
   }
 
   /// Add evacuation point
-  static Future<EvacuationPoint?> addEvacuationPoint({
+  static Future<EvacuationPoint?> saveNewEvacuationPoint({
     required double locationLat,
     required double locationLng,
     required String responseTeamId,
@@ -528,7 +543,7 @@ class SupabaseService {
   }
 
   /// Update evacuation point
-  static Future<bool> modifyEvacuationPoint(
+  static Future<bool> updateEvacuationPoint(
     EvacuationPoint evacuationPoint,
   ) async {
     try {
@@ -658,7 +673,6 @@ class SupabaseService {
   }
 
   // ==================== Shared Preferences ====================
-  /// Store response team data in shared preferences
   static Future<void> _storeResponseTeamData(ResponseTeam responseTeam) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -669,7 +683,6 @@ class SupabaseService {
     }
   }
 
-  /// Get stored response team data from shared preferences
   static Future<ResponseTeam?> getStoredResponseTeam() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -686,7 +699,6 @@ class SupabaseService {
     }
   }
 
-  /// Clear stored response team data (logout)
   static Future<void> clearStoredResponseTeam() async {
     try {
       final prefs = await SharedPreferences.getInstance();

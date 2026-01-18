@@ -15,7 +15,7 @@ class ResponseLoginPageViewModel extends GetxController {
       codeController.text.trim().isNotEmpty &&
       passwordController.text.isNotEmpty;
 
-  Future<void> handleLogin() async {
+  Future<void> submitLoginCredential() async {
     final code = codeController.text.trim();
     final password = passwordController.text;
 

@@ -84,7 +84,7 @@ class OTPScreen extends StatelessWidget {
                                   phoneNumber:
                                       otpViewModel.otpModel?.phoneNumber ?? '',
                                   onOTPCompleted: (otp) {
-                                    otpViewModel.validateOTP(otp);
+                                    otpViewModel.verifyOTP(otp);
                                   },
                                 ),
 

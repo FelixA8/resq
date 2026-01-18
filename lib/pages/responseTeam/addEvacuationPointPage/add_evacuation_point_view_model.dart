@@ -46,19 +46,12 @@ class AddEvacuationPointViewModel extends GetxController {
       isLoading.value = true;
 
       if (isEditMode && existingEvacuationPoint!.hasLocation()) {
-        currentLocation.value = LatLng(
-          existingEvacuationPoint!.locationLat!,
-          existingEvacuationPoint!.locationLng!,
-        );
-        selectedLocation.value = currentLocation.value;
-        selectedCity.value = existingEvacuationPoint!.city ?? 'Unknown City';
-        selectedLocationDetail.value =
-            existingEvacuationPoint!.locationDetail ?? '';
+        await _getDetails(existingEvacuationPoint!.evacuationId!);
         hasLocationPermission.value = true;
-
+        
         mapController.move(currentLocation.value, 15.0);
       } else {
-        LocationResult result = await LocationHelper.initializeLocation();
+        LocationResult result = await LocationHelper.getCurrentLocation();
 
         currentLocation.value = result.location;
         selectedLocation.value = result.location;
@@ -146,12 +139,59 @@ class AddEvacuationPointViewModel extends GetxController {
     await _initializeLocation();
   }
 
-  Future<void> onConfirmPressed() async {
+  Future<void> _getDetails(String evacuationId) async {
+    try {
+      final point = await SupabaseService.getEvacuationPointById(evacuationId);
+      
+      if (point != null) {
+        currentLocation.value = LatLng(
+          point.locationLat ?? 0.0,
+          point.locationLng ?? 0.0,
+        );
+        selectedLocation.value = currentLocation.value;
+        selectedCity.value = point.city ?? 'Unknown City';
+        selectedLocationDetail.value = point.locationDetail ?? '';
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Gagal mengambil detail poin evakuasi',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  bool validateUpdatedData(EvacuationPoint data) {
+    if (data.locationLat == null || data.locationLng == null) {
+        Get.snackbar(
+          'Error',
+          'Lokasi tidak valid',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return false;
+    }
+    if ((data.city?.isEmpty ?? true) && (data.locationDetail?.isEmpty ?? true)) {
+       Get.snackbar(
+          'Error',
+          'Detail lokasi harus diisi',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      return false;
+    }
+    return true;
+  }
+
+  Future<void> modifyEvacuationPoint() async {
     try {
       isLoading.value = true;
-
       final storedResponseTeam = await SupabaseService.getStoredResponseTeam();
-
+      
       if (storedResponseTeam == null) {
         Get.snackbar(
           'Error',
@@ -179,7 +219,12 @@ class AddEvacuationPointViewModel extends GetxController {
           createdAt: existingEvacuationPoint!.createdAt,
         );
 
-        final success = await SupabaseService.modifyEvacuationPoint(
+        if (!validateUpdatedData(updatedPoint)) {
+          isLoading.value = false;
+          return;
+        }
+
+        final success = await SupabaseService.updateEvacuationPoint(
           updatedPoint,
         );
 
@@ -197,30 +242,7 @@ class AddEvacuationPointViewModel extends GetxController {
           );
         }
       } else {
-        final result = await SupabaseService.addEvacuationPoint(
-          locationLat: selectedLocation.value.latitude,
-          locationLng: selectedLocation.value.longitude,
-          city: selectedCity.value.isNotEmpty ? selectedCity.value : 'Jakarta',
-          locationDetail:
-              selectedLocationDetail.value.isNotEmpty
-                  ? selectedLocationDetail.value
-                  : 'Lat: ${selectedLocation.value.latitude.toStringAsFixed(6)}, Lng: ${selectedLocation.value.longitude.toStringAsFixed(6)}',
-          responseTeamId: storedResponseTeam.responseTeamId,
-        );
-
-        if (result != null) {
-          Get.back(result: true);
-        } else {
-          Get.snackbar(
-            'Error',
-            'Gagal menambahkan poin evakuasi',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.red,
-            colorText: Colors.white,
-            animationDuration: Duration(milliseconds: 500),
-            duration: Duration(seconds: 2),
-          );
-        }
+        await _addNewEvacuationPoint();
       }
     } catch (e) {
       Get.snackbar(
@@ -234,6 +256,36 @@ class AddEvacuationPointViewModel extends GetxController {
       );
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  Future<void> _addNewEvacuationPoint() async {
+     final storedResponseTeam = await SupabaseService.getStoredResponseTeam();
+
+    final result = await SupabaseService.saveNewEvacuationPoint(
+      locationLat: selectedLocation.value.latitude,
+      locationLng: selectedLocation.value.longitude,
+      city: selectedCity.value.isNotEmpty ? selectedCity.value : 'Jakarta',
+      locationDetail:
+          selectedLocationDetail.value.isNotEmpty
+              ? selectedLocationDetail.value
+              : 'Lat: ${selectedLocation.value.latitude.toStringAsFixed(6)}, Lng: ${selectedLocation.value.longitude.toStringAsFixed(6)}',
+      responseTeamId: storedResponseTeam?.responseTeamId ?? "",
+    );
+
+    if (result != null) {
+      Get.back(result: true);
+    } else {
+      Get.snackbar(
+        'Error',
+        'Gagal menambahkan poin evakuasi',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        animationDuration: Duration(milliseconds: 500),
+        duration: Duration(seconds: 2),
+      );
+      throw("Error adding new location. Please try again");
     }
   }
 

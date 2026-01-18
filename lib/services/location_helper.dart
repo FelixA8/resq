@@ -9,7 +9,7 @@ class LocationHelper {
   static const LatLng defaultLocation = LatLng(-6.2088, 106.8456);
   static const theme = ResQTheme();
 
-  static Future<LocationResult> initializeLocation() async {
+  static Future<LocationResult> getCurrentLocation() async {
     try {
       bool locationServiceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!locationServiceEnabled) {

@@ -129,7 +129,7 @@ class ResponseLoginFormSection extends StatelessWidget {
               onPressed: () {
                 if (viewModel.isLoading.value) return;
                 FocusScope.of(context).unfocus();
-                viewModel.handleLogin();
+                viewModel.submitLoginCredential();
               },
               isEnabled: !viewModel.isLoading.value,
               text: viewModel.isLoading.value ? 'Memproses...' : 'Masuk',

@@ -181,7 +181,7 @@ class ResponseTeamMapViewModel extends GetxController
   Future<void> _initializeData() async {
     _loadDisasterPoints();
     _loadEvacuationPoints();
-    await _loadSOSPoints();
+    await _fetchSOSAssignments();
   }
 
   Future<void> _loadDisasterPoints() async {
@@ -206,7 +206,7 @@ class ResponseTeamMapViewModel extends GetxController
     }
   }
 
-  Future<void> _loadSOSPoints() async {
+  Future<void> _fetchSOSAssignments() async {
     try {
       final sosEvents = await SupabaseService.getSoSEvents();
       final activeSOSEvents = sosEvents.where((sos) => sos.isActive).toList();
@@ -268,7 +268,7 @@ class ResponseTeamMapViewModel extends GetxController
 
       if (!hasLocationPermission.value) return;
 
-      LocationResult result = await LocationHelper.initializeLocation();
+      LocationResult result = await LocationHelper.getCurrentLocation();
       currentLocation.value = result.location;
 
       await mapController.animateTo(
@@ -600,7 +600,7 @@ class ResponseTeamMapViewModel extends GetxController
   Future<void> openDisasterShakeMap(Disaster disaster) =>
       MapHelper.launchShakeMap(disaster.shakemap);
 
-  Future<void> showRouteToSos(SosEvent sosEvent) async {
+  Future<void> startSOSOperations(SosEvent sosEvent) async {
     if (sosEvent.locationLat == null || sosEvent.locationLng == null) {
       Get.snackbar(
         'Error',
@@ -672,7 +672,6 @@ class ResponseTeamMapViewModel extends GetxController
       _routeSteps = routeData.steps;
       _currentStepIndex = 0;
       _updateNavigationInstructions();
-
       isNavigating.value = true;
       navigationDestination.value = end;
       currentRouteSegment.value = 0;
@@ -1026,10 +1025,10 @@ class ResponseTeamMapViewModel extends GetxController
   }
 
   void _checkArrival(double distanceKm) {
-    const double arrivalThresholdKm = 0.40; // 30 meters
+    const double arrivalThresholdKm = 0.30; // 30 meters
 
     // Set arrival state when within 30m radius
-    if (distanceKm <= arrivalThresholdKm) {
+    if (distanceKm <= arrivalThresholdKm || distanceToDestination <= arrivalThresholdKm) {
       hasArrived.value = true;
 
       // Show notification only once
@@ -1176,7 +1175,7 @@ class ResponseTeamMapViewModel extends GetxController
     );
   }
 
-  Future<void> _saveNavigationState({
+  Future<void>  _saveNavigationState({
     String? sosId,
     String? evacuationId,
   }) async {

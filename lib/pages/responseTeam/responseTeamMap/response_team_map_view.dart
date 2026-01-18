@@ -116,6 +116,7 @@ class ResponseTeamMapView extends GetView<ResponseTeamMapViewModel> {
                       ),
                   ],
                 ),
+
                 // Evacuation points layer
                 MarkerLayer(
                   markers:
@@ -158,11 +159,11 @@ class ResponseTeamMapView extends GetView<ResponseTeamMapViewModel> {
                         );
                       }).toList(),
                 ),
-                // Disaster (earthquake) points layer
+
+                // Disaster points
                 MarkerLayer(
                   markers:
                       controller.disasterPoints.map((point) {
-                        // Find the disaster data for this point
                         final disaster = controller.findDisasterByLocation(
                           point,
                         );
@@ -204,49 +205,47 @@ class ResponseTeamMapView extends GetView<ResponseTeamMapViewModel> {
                         );
                       }).toList(),
                 ),
-                Obx(() {
-                  return MarkerLayer(
-                    markers:
-                        controller.sosPoints.map((point) {
-                          final sosEvent = controller.findSOSByLocation(point);
-                          return Marker(
-                            point: point,
-                            width: 42,
-                            height: 42,
-                            child: GestureDetector(
-                              onTap: () {
-                                if (sosEvent != null) {
-                                  showModalBottomSheet(
-                                    context: context,
-                                    isScrollControlled: true,
-                                    backgroundColor: Colors.transparent,
-                                    builder: (modalContext) {
-                                      return FractionallySizedBox(
-                                        child: SOSDetailModal(
-                                          sosEvent: sosEvent,
-                                        ),
-                                      );
-                                    },
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.vertical(
-                                        top: Radius.circular(24),
-                                      ),
-                                    ),
-                                  );
-                                }
-                              },
 
-                              child: RadiantMarker(
-                                color: Colors.redAccent,
-                                child: Image.asset(
-                                  'assets/images/icons/sos-logo.png',
-                                ),
+                //SOS Assignment Points
+                MarkerLayer(
+                  markers:
+                      controller.sosPoints.map((point) {
+                        final sosEvent = controller.findSOSByLocation(point);
+                        return Marker(
+                          point: point,
+                          width: 42,
+                          height: 42,
+                          child: GestureDetector(
+                            onTap: () {
+                              if (sosEvent != null) {
+                                showModalBottomSheet(
+                                  context: context,
+                                  isScrollControlled: true,
+                                  backgroundColor: Colors.transparent,
+                                  builder: (modalContext) {
+                                    return FractionallySizedBox(
+                                      child: SOSDetailModal(sosEvent: sosEvent),
+                                    );
+                                  },
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.vertical(
+                                      top: Radius.circular(24),
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+
+                            child: RadiantMarker(
+                              color: Colors.redAccent,
+                              child: Image.asset(
+                                'assets/images/icons/sos-logo.png',
                               ),
                             ),
-                          );
-                        }).toList(),
-                  );
-                }),
+                          ),
+                        );
+                      }).toList(),
+                ),
               ],
             ),
 
@@ -255,7 +254,7 @@ class ResponseTeamMapView extends GetView<ResponseTeamMapViewModel> {
               top: 0,
               left: 0,
               right: 0,
-              child: SafeArea(child: NavigationBanner()),
+              child: SafeArea(child: ResponseTeamNavigationBannerView()),
             ),
 
             if (controller.isLoading.value)
