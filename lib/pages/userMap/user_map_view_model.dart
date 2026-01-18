@@ -13,14 +13,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer' as developer;
 
 import 'package:resqapp/models/supabase_models.dart';
-import 'package:resqapp/service/supabase_service.dart';
-import 'package:resqapp/services/location_helper.dart';
+import 'package:resqapp/services/login_services.dart';
+import 'package:resqapp/services/sos_services.dart';
+import 'package:resqapp/services/disaster_services.dart';
+import 'package:resqapp/services/location_services.dart';
+import 'package:resqapp/services/route_services.dart';
 import 'package:resqapp/pages/SOSWaiting/sos_waiting_view_model.dart';
 import 'package:resqapp/pages/userMap/extensions/map_animation_config.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:resqapp/helpers/map_helper.dart';
-import 'package:resqapp/services/distance_calculator.dart' as distance_calc;
 import 'package:resqapp/pages/userMap/components/evacuation_deleted_dialog.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:resqapp/pages/userMap/components/location_disabled_dialog.dart';
@@ -172,7 +173,7 @@ class UserMapViewModel extends GetxController
       final userId = prefs.getString('userId');
 
       if (userId != null) {
-        final user = await SupabaseService.getUserById(userId);
+        final user = await LoginServices.getUserById(userId);
         _currentUser.value = user;
       }
     } catch (e) {
@@ -186,7 +187,7 @@ class UserMapViewModel extends GetxController
       final savedId = prefs.getString(_kSavedEvacuationId);
 
       if (savedId != null) {
-        final point = await SupabaseService.getEvacuationPointById(savedId);
+        final point = await LocationServices.getEvacuationPointById(savedId);
 
         if (point != null) {
           showRouteToEvacuationPoint(point, saveState: false);
@@ -254,7 +255,7 @@ class UserMapViewModel extends GetxController
 
       if (userId == null) return;
 
-      final sosEvent = await SupabaseService.getUserSosEvents(userId);
+      final sosEvent = await SosServices.getUserSosEvents(userId);
 
       if (sosEvent != null) {
         _activeSosEvent.value = sosEvent;
@@ -288,7 +289,7 @@ class UserMapViewModel extends GetxController
 
   Future<void> _loadDisasterPoints() async {
     try {
-      final disasters = await SupabaseService.getFilteredDisasters();
+      final disasters = await DisasterServices.getFilteredDisasters();
       disasterPointsData.value = disasters;
       _updateDisasterPointsDisplay();
     } catch (e) {
@@ -307,7 +308,7 @@ class UserMapViewModel extends GetxController
 
   Future<void> _loadEvacuationPoints() async {
     try {
-      final points = await SupabaseService.getEvacuationPoints();
+      final points = await LocationServices.getEvacuationPoints();
       evacuationPointsData.value = points;
       _updateEvacuationPointsDisplay();
     } catch (e) {
@@ -538,7 +539,7 @@ class UserMapViewModel extends GetxController
   Future<void> _initializeLocation() async {
     try {
       isLoading.value = true;
-      LocationResult result = await LocationHelper.getCurrentLocation();
+      LocationResult result = await LocationServices.getCurrentLocation();
       currentLocation.value = result.location;
       hasLocationPermission.value = result.hasPermission;
       hasLocationPermission.value = result.hasPermission;
@@ -615,7 +616,10 @@ class UserMapViewModel extends GetxController
 
   //get disaster detail based on location
   Disaster? findDisasterByLocation(LatLng location) {
-    return MapHelper.findDisasterByLocation(disasterPointsData, location);
+    return LocationServices.findDisasterByLocation(
+      disasterPointsData,
+      location,
+    );
   }
 
   //get disaster detail based on id
@@ -625,19 +629,21 @@ class UserMapViewModel extends GetxController
   }
 
   EvacuationPoint? findEvacuationPointByLocation(LatLng location) {
-    return MapHelper.findEvacuationPointByLocation(
+    return LocationServices.findEvacuationPointByLocation(
       evacuationPointsData,
       location,
     );
   }
 
   EvacuationPoint? findEvacuationPointById(String id) {
-    final evacuationPoint = evacuationPointsData.where((e) => e.evacuationId == id);
+    final evacuationPoint = evacuationPointsData.where(
+      (e) => e.evacuationId == id,
+    );
     return evacuationPoint.first;
   }
 
   Future<String> fetchDisasterAddress(Disaster disaster) {
-    return MapHelper.getAddressFromLocation(
+    return LocationServices.getAddressFromLocation(
       disaster.centerLat,
       disaster.centerLng,
       _disasterAddressCache,
@@ -646,14 +652,15 @@ class UserMapViewModel extends GetxController
   }
 
   String formatDisasterDate(double? timestamp) =>
-      MapHelper.formatDisasterDate(timestamp);
+      DisasterServices.formatDisasterDate(timestamp);
   String formatDisasterMagnitude(double? magnitude) =>
-      MapHelper.formatMagnitude(magnitude);
+      DisasterServices.formatMagnitude(magnitude);
   String getTsunamiPotential(double? magnitude) =>
-      MapHelper.getTsunamiPotential(magnitude);
-  String formatDisasterDepth(String? depth) => MapHelper.formatDepth(depth);
+      DisasterServices.getTsunamiPotential(magnitude);
+  String formatDisasterDepth(String? depth) =>
+      DisasterServices.formatDepth(depth);
   Future<void> openDisasterShakeMap(Disaster disaster) =>
-      MapHelper.launchShakeMap(disaster.shakemap);
+      DisasterServices.launchShakeMap(disaster.shakemap);
 
   Future<void> showRouteToEvacuationPoint(
     EvacuationPoint point, {
@@ -688,7 +695,10 @@ class UserMapViewModel extends GetxController
     final end = LatLng(point.locationLat!, point.locationLng!);
 
     try {
-      final routeData = await MapHelper.getRouteWithInstructions(start, end);
+      final routeData = await RouteServices.getRouteWithInstructions(
+        start,
+        end,
+      );
 
       if (routeData != null && routeData.polyline.isNotEmpty) {
         // Store route steps for navigation instructions
@@ -703,7 +713,7 @@ class UserMapViewModel extends GetxController
         _hasShownArrivalNotification = false;
         isMapCentering.value = true;
 
-        final distance = distance_calc.GeoDistanceCalculator.calculateDistance(
+        final distance = GeoDistanceCalculator.calculateDistance(
           currentLocation.value,
           navigationDestination.value!,
         );
@@ -780,7 +790,7 @@ class UserMapViewModel extends GetxController
 
   double calculateDistanceToEvacuationPoint(EvacuationPoint point) {
     if (!point.hasLocation()) return 0.0;
-    return distance_calc.GeoDistanceCalculator.calculateDistance(
+    return GeoDistanceCalculator.calculateDistance(
       currentLocation.value,
       LatLng(point.locationLat!, point.locationLng!),
     );
@@ -793,7 +803,7 @@ class UserMapViewModel extends GetxController
       return;
     }
 
-    bool isOffRoute = MapHelper.isUserOffRoute(
+    bool isOffRoute = RouteServices.isUserOffRoute(
       userLocation,
       routePoints,
       thresholdMeters: 50,
@@ -811,7 +821,7 @@ class UserMapViewModel extends GetxController
   }
 
   Future<void> _silentReroute(LatLng start, LatLng end) async {
-    final routeData = await MapHelper.getRouteWithInstructions(start, end);
+    final routeData = await RouteServices.getRouteWithInstructions(start, end);
     if (routeData != null && routeData.polyline.isNotEmpty) {
       routePoints.value = routeData.polyline;
       remainingRoutePoints.value = routeData.polyline;
@@ -854,7 +864,7 @@ class UserMapViewModel extends GetxController
       }
     }
 
-    final distance = distance_calc.GeoDistanceCalculator.calculateDistance(
+    final distance = GeoDistanceCalculator.calculateDistance(
       userLocation,
       navigationDestination.value!,
     );
@@ -875,7 +885,7 @@ class UserMapViewModel extends GetxController
     double minDistance = double.infinity;
 
     for (int i = 0; i < routePoints.length; i++) {
-      final distance = distance_calc.GeoDistanceCalculator.calculateDistance(
+      final distance = GeoDistanceCalculator.calculateDistance(
         userLocation,
         routePoints[i],
       );
@@ -910,8 +920,7 @@ class UserMapViewModel extends GetxController
     // Find the next step based on current location
     for (int i = _currentStepIndex; i < _routeSteps.length; i++) {
       final step = _routeSteps[i];
-      final distanceToStep = distance_calc
-          .GeoDistanceCalculator.calculateDistance(
+      final distanceToStep = GeoDistanceCalculator.calculateDistance(
         currentLocation.value,
         step.location,
       );
@@ -1057,8 +1066,7 @@ class UserMapViewModel extends GetxController
 
     final mapCenter = mapController.mapController.camera.center;
 
-    final distanceFromUser = distance_calc
-        .GeoDistanceCalculator.calculateDistance(
+    final distanceFromUser = GeoDistanceCalculator.calculateDistance(
       mapCenter,
       currentLocation.value,
     );

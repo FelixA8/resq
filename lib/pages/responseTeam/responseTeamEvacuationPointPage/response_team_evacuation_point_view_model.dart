@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:resqapp/models/supabase_models.dart';
 import 'package:resqapp/pages/responseTeam/addEvacuationPointPage/add_evacuation_point_view.dart';
 import 'package:resqapp/pages/responseTeam/responseTeamEvacuationPointPage/components/evacuation_delete_dialog.dart';
-import 'package:resqapp/service/supabase_service.dart';
+import 'package:resqapp/services/location_services.dart';
 import 'package:resqapp/theme/theme_app.dart';
 
 class ResponseTeamEvacuationPointViewModel extends GetxController {
@@ -28,7 +28,7 @@ class ResponseTeamEvacuationPointViewModel extends GetxController {
       isLoading.value = true;
       errorMessage.value = '';
 
-      final response = await SupabaseService.getEvacuationPoints();
+      final response = await LocationServices.getEvacuationPoints();
       evacuationPoints.value = response;
       totalEvacuationPoints.value = response.length;
     } catch (e) {
@@ -86,7 +86,7 @@ class ResponseTeamEvacuationPointViewModel extends GetxController {
     try {
       isLoading.value = true;
 
-      final success = await SupabaseService.deleteEvacuationPoint(
+      final success = await LocationServices.deleteEvacuationPoint(
         point.evacuationId!,
       );
 

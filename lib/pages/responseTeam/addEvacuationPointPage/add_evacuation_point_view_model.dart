@@ -4,8 +4,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:resqapp/models/supabase_models.dart';
-import 'package:resqapp/service/supabase_service.dart';
-import 'package:resqapp/services/location_helper.dart';
+import 'package:resqapp/services/login_services.dart';
+import 'package:resqapp/services/location_services.dart';
 
 class AddEvacuationPointViewModel extends GetxController {
   final String instanceCode;
@@ -48,10 +48,10 @@ class AddEvacuationPointViewModel extends GetxController {
       if (isEditMode && existingEvacuationPoint!.hasLocation()) {
         await _getDetails(existingEvacuationPoint!.evacuationId!);
         hasLocationPermission.value = true;
-        
+
         mapController.move(currentLocation.value, 15.0);
       } else {
-        LocationResult result = await LocationHelper.getCurrentLocation();
+        LocationResult result = await LocationServices.getCurrentLocation();
 
         currentLocation.value = result.location;
         selectedLocation.value = result.location;
@@ -85,7 +85,7 @@ class AddEvacuationPointViewModel extends GetxController {
     try {
       isGeocodingLoading.value = true;
 
-      LocationDetailResult result = await LocationHelper.getLocationDetails(
+      LocationDetailResult result = await LocationServices.getLocationDetails(
         selectedLocation.value,
       );
 
@@ -125,7 +125,7 @@ class AddEvacuationPointViewModel extends GetxController {
 
     try {
       isLoading.value = true;
-      LocationResult result = await LocationHelper.getCurrentLocationSilent();
+      LocationResult result = await LocationServices.getCurrentLocationSilent();
 
       if (result.hasPermission) {
         currentLocation.value = result.location;
@@ -141,8 +141,8 @@ class AddEvacuationPointViewModel extends GetxController {
 
   Future<void> _getDetails(String evacuationId) async {
     try {
-      final point = await SupabaseService.getEvacuationPointById(evacuationId);
-      
+      final point = await LocationServices.getEvacuationPointById(evacuationId);
+
       if (point != null) {
         currentLocation.value = LatLng(
           point.locationLat ?? 0.0,
@@ -165,23 +165,24 @@ class AddEvacuationPointViewModel extends GetxController {
 
   bool validateUpdatedData(EvacuationPoint data) {
     if (data.locationLat == null || data.locationLng == null) {
-        Get.snackbar(
-          'Error',
-          'Lokasi tidak valid',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
-        return false;
+      Get.snackbar(
+        'Error',
+        'Lokasi tidak valid',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return false;
     }
-    if ((data.city?.isEmpty ?? true) && (data.locationDetail?.isEmpty ?? true)) {
-       Get.snackbar(
-          'Error',
-          'Detail lokasi harus diisi',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+    if ((data.city?.isEmpty ?? true) &&
+        (data.locationDetail?.isEmpty ?? true)) {
+      Get.snackbar(
+        'Error',
+        'Detail lokasi harus diisi',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
       return false;
     }
     return true;
@@ -190,8 +191,8 @@ class AddEvacuationPointViewModel extends GetxController {
   Future<void> modifyEvacuationPoint() async {
     try {
       isLoading.value = true;
-      final storedResponseTeam = await SupabaseService.getStoredResponseTeam();
-      
+      final storedResponseTeam = await LoginServices.getStoredResponseTeam();
+
       if (storedResponseTeam == null) {
         Get.snackbar(
           'Error',
@@ -224,7 +225,7 @@ class AddEvacuationPointViewModel extends GetxController {
           return;
         }
 
-        final success = await SupabaseService.updateEvacuationPoint(
+        final success = await LocationServices.updateEvacuationPoint(
           updatedPoint,
         );
 
@@ -260,9 +261,9 @@ class AddEvacuationPointViewModel extends GetxController {
   }
 
   Future<void> _addNewEvacuationPoint() async {
-     final storedResponseTeam = await SupabaseService.getStoredResponseTeam();
+    final storedResponseTeam = await LoginServices.getStoredResponseTeam();
 
-    final result = await SupabaseService.saveNewEvacuationPoint(
+    final result = await LocationServices.saveNewEvacuationPoint(
       locationLat: selectedLocation.value.latitude,
       locationLng: selectedLocation.value.longitude,
       city: selectedCity.value.isNotEmpty ? selectedCity.value : 'Jakarta',
@@ -285,7 +286,7 @@ class AddEvacuationPointViewModel extends GetxController {
         animationDuration: Duration(milliseconds: 500),
         duration: Duration(seconds: 2),
       );
-      throw("Error adding new location. Please try again");
+      throw ("Error adding new location. Please try again");
     }
   }
 

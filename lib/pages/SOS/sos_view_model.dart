@@ -2,8 +2,7 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:resqapp/pages/userMap/user_map_view_model.dart';
 import 'package:resqapp/pages/SOSWaiting/sos_waiting_view_model.dart';
-import 'package:resqapp/service/supabase_service.dart';
-import 'package:resqapp/services/emergency_sms_service.dart';
+import 'package:resqapp/services/sos_services.dart';
 import 'dart:developer' as developer;
 
 class SOSViewModel extends GetxController {
@@ -43,7 +42,7 @@ class SOSViewModel extends GetxController {
       final currentLat = _userMapViewModel!.currentLocation.value.latitude;
       final currentLng = _userMapViewModel!.currentLocation.value.longitude;
 
-      final sosEvent = await SupabaseService.createSosEvent(
+      final sosEvent = await SosServices.createSosEvent(
         userId: userId,
         lat: currentLat,
         lng: currentLng,

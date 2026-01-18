@@ -9,14 +9,15 @@ import 'package:latlong2/latlong.dart';
 import 'package:resqapp/theme/theme_app.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:resqapp/models/supabase_models.dart';
-import 'package:resqapp/helpers/map_helper.dart';
+import 'package:resqapp/services/login_services.dart';
+import 'package:resqapp/services/sos_services.dart';
+import 'package:resqapp/services/disaster_services.dart';
+import 'package:resqapp/services/location_services.dart';
+import 'package:resqapp/services/route_services.dart';
 import 'package:resqapp/pages/responseTeam/responseTeamMap/components/route_warning_dialog.dart';
 import 'package:resqapp/pages/userMap/components/location_disabled_dialog.dart';
 import 'package:resqapp/pages/responseTeam/responseTeamMap/managers/response_team_map_realtime_manager.dart';
 import 'package:resqapp/pages/responseTeam/responseTeamMap/extensions/map_animation_config.dart';
-import 'package:resqapp/service/supabase_service.dart';
-import 'package:resqapp/services/location_helper.dart';
-import 'package:resqapp/services/distance_calculator.dart' as distance_calc;
 import 'package:geocoding/geocoding.dart';
 import 'dart:developer' as developer;
 
@@ -141,7 +142,7 @@ class ResponseTeamMapViewModel extends GetxController
   }
 
   Future<void> _loadCurrentResponseTeamId() async {
-    final responseTeam = await SupabaseService.getStoredResponseTeam();
+    final responseTeam = await LoginServices.getStoredResponseTeam();
     _currentResponseTeamId = responseTeam?.responseTeamId;
   }
 
@@ -186,7 +187,7 @@ class ResponseTeamMapViewModel extends GetxController
 
   Future<void> _loadDisasterPoints() async {
     try {
-      final disasters = await SupabaseService.getFilteredDisasters();
+      final disasters = await DisasterServices.getFilteredDisasters();
       _disasterPointsData.value = disasters;
       _updateDisasterPointsDisplay();
     } catch (_) {
@@ -197,7 +198,7 @@ class ResponseTeamMapViewModel extends GetxController
 
   Future<void> _loadEvacuationPoints() async {
     try {
-      final points = await SupabaseService.getEvacuationPoints();
+      final points = await LocationServices.getEvacuationPoints();
       _evacuationPointsData.value = points;
       _updateEvacuationPointsDisplay();
     } catch (_) {
@@ -208,7 +209,7 @@ class ResponseTeamMapViewModel extends GetxController
 
   Future<void> _fetchSOSAssignments() async {
     try {
-      final sosEvents = await SupabaseService.getSoSEvents();
+      final sosEvents = await SosServices.getSoSEvents();
       final activeSOSEvents = sosEvents.where((sos) => sos.isActive).toList();
       _sosEventsData.value = activeSOSEvents;
       _updateSOSPointsDisplay();
@@ -235,7 +236,7 @@ class ResponseTeamMapViewModel extends GetxController
     print("SOS EVENt:");
     print(sosEvent);
 
-    final routeData = await MapHelper.getRouteWithInstructions(start, end);
+    final routeData = await RouteServices.getRouteWithInstructions(start, end);
     if (routeData != null && routeData.polyline.isNotEmpty) {
       // Set navigation state before updating route points
       isNavigating.value = true;
@@ -268,7 +269,7 @@ class ResponseTeamMapViewModel extends GetxController
 
       if (!hasLocationPermission.value) return;
 
-      LocationResult result = await LocationHelper.getCurrentLocation();
+      LocationResult result = await LocationServices.getCurrentLocation();
       currentLocation.value = result.location;
 
       await mapController.animateTo(
@@ -480,8 +481,7 @@ class ResponseTeamMapViewModel extends GetxController
 
     final mapCenter = mapController.mapController.camera.center;
 
-    final distanceFromUser = distance_calc
-        .GeoDistanceCalculator.calculateDistance(
+    final distanceFromUser = GeoDistanceCalculator.calculateDistance(
       mapCenter,
       currentLocation.value,
     );
@@ -521,7 +521,7 @@ class ResponseTeamMapViewModel extends GetxController
     if (!hasLocationPermission.value) return;
     try {
       isLoading.value = true;
-      LocationResult result = await LocationHelper.getCurrentLocationSilent();
+      LocationResult result = await LocationServices.getCurrentLocationSilent();
       if (result.hasPermission) {
         currentLocation.value = result.location;
         await mapController.animateTo(
@@ -538,18 +538,21 @@ class ResponseTeamMapViewModel extends GetxController
   }
 
   Disaster? findDisasterByLocation(LatLng location) {
-    return MapHelper.findDisasterByLocation(_disasterPointsData, location);
+    return LocationServices.findDisasterByLocation(
+      _disasterPointsData,
+      location,
+    );
   }
 
   EvacuationPoint? findEvacuationPointByLocation(LatLng location) {
-    return MapHelper.findEvacuationPointByLocation(
+    return LocationServices.findEvacuationPointByLocation(
       _evacuationPointsData,
       location,
     );
   }
 
   SosEvent? findSOSByLocation(LatLng location) {
-    return MapHelper.findSOSByLocation(_sosEventsData, location);
+    return LocationServices.findSOSByLocation(_sosEventsData, location);
   }
 
   SosEvent? findSOSById(String sosId) {
@@ -564,14 +567,14 @@ class ResponseTeamMapViewModel extends GetxController
 
   Future<ResqUser?> fetchUserById(String userId) async {
     try {
-      return await SupabaseService.getUserById(userId);
+      return await LoginServices.getUserById(userId);
     } catch (_) {
       return null;
     }
   }
 
   Future<String> fetchSOSAddress(SosEvent sosEvent) {
-    return MapHelper.getAddressFromLocation(
+    return LocationServices.getAddressFromLocation(
       sosEvent.locationLat,
       sosEvent.locationLng,
       _addressCache,
@@ -580,7 +583,7 @@ class ResponseTeamMapViewModel extends GetxController
   }
 
   Future<String> fetchDisasterAddress(Disaster disaster) {
-    return MapHelper.getAddressFromLocation(
+    return LocationServices.getAddressFromLocation(
       disaster.centerLat,
       disaster.centerLng,
       _addressCache,
@@ -589,16 +592,17 @@ class ResponseTeamMapViewModel extends GetxController
   }
 
   String formatSOSReportTime(double? timestamp) =>
-      MapHelper.formatSOSReportTime(timestamp);
+      DisasterServices.formatSOSReportTime(timestamp);
   String formatDisasterDate(double? timestamp) =>
-      MapHelper.formatDisasterDate(timestamp);
+      DisasterServices.formatDisasterDate(timestamp);
   String formatDisasterMagnitude(double? magnitude) =>
-      MapHelper.formatMagnitude(magnitude);
+      DisasterServices.formatMagnitude(magnitude);
   String getTsunamiPotential(double? magnitude) =>
-      MapHelper.getTsunamiPotential(magnitude);
-  String formatDisasterDepth(String? depth) => MapHelper.formatDepth(depth);
+      DisasterServices.getTsunamiPotential(magnitude);
+  String formatDisasterDepth(String? depth) =>
+      DisasterServices.formatDepth(depth);
   Future<void> openDisasterShakeMap(Disaster disaster) =>
-      MapHelper.launchShakeMap(disaster.shakemap);
+      DisasterServices.launchShakeMap(disaster.shakemap);
 
   Future<void> startSOSOperations(SosEvent sosEvent) async {
     if (sosEvent.locationLat == null || sosEvent.locationLng == null) {
@@ -636,7 +640,7 @@ class ResponseTeamMapViewModel extends GetxController
       _currentNavigatingEvacuationPoint.value = null;
     }
 
-    final success = await SupabaseService.assignSosToTeam(
+    final success = await SosServices.assignSosToTeam(
       sosId: sosEvent.sosId,
       responseTeamId: _currentResponseTeamId!,
     );
@@ -662,7 +666,7 @@ class ResponseTeamMapViewModel extends GetxController
     final start = currentLocation.value;
     final end = LatLng(sosEvent.locationLat!, sosEvent.locationLng!);
 
-    final routeData = await MapHelper.getRouteWithInstructions(start, end);
+    final routeData = await RouteServices.getRouteWithInstructions(start, end);
 
     if (routeData != null && routeData.polyline.isNotEmpty) {
       routePoints.value = routeData.polyline;
@@ -678,7 +682,7 @@ class ResponseTeamMapViewModel extends GetxController
       _hasShownArrivalNotification = false;
       isMapCentering.value = true;
 
-      final distance = distance_calc.GeoDistanceCalculator.calculateDistance(
+      final distance = GeoDistanceCalculator.calculateDistance(
         currentLocation.value,
         navigationDestination.value!,
       );
@@ -721,7 +725,7 @@ class ResponseTeamMapViewModel extends GetxController
 
           // Unassign active SOS
           final sosId = _currentNavigatingSos.value!.sosId;
-          final success = await SupabaseService.unassignSosFromTeam(sosId);
+          final success = await SosServices.unassignSosFromTeam(sosId);
 
           if (success) {
             // Close the bottom sheet if open
@@ -760,7 +764,7 @@ class ResponseTeamMapViewModel extends GetxController
     final start = currentLocation.value;
     final end = LatLng(point.locationLat!, point.locationLng!);
 
-    final routeData = await MapHelper.getRouteWithInstructions(start, end);
+    final routeData = await RouteServices.getRouteWithInstructions(start, end);
 
     if (routeData != null && routeData.polyline.isNotEmpty) {
       routePoints.value = routeData.polyline;
@@ -778,7 +782,7 @@ class ResponseTeamMapViewModel extends GetxController
       _hasShownArrivalNotification = false;
       isMapCentering.value = true;
 
-      final distance = distance_calc.GeoDistanceCalculator.calculateDistance(
+      final distance = GeoDistanceCalculator.calculateDistance(
         currentLocation.value,
         navigationDestination.value!,
       );
@@ -874,7 +878,7 @@ class ResponseTeamMapViewModel extends GetxController
       }
     }
 
-    final distance = distance_calc.GeoDistanceCalculator.calculateDistance(
+    final distance = GeoDistanceCalculator.calculateDistance(
       userLocation,
       navigationDestination.value!,
     );
@@ -895,7 +899,7 @@ class ResponseTeamMapViewModel extends GetxController
     double minDistance = double.infinity;
 
     for (int i = 0; i < routePoints.length; i++) {
-      final distance = distance_calc.GeoDistanceCalculator.calculateDistance(
+      final distance = GeoDistanceCalculator.calculateDistance(
         userLocation,
         routePoints[i],
       );
@@ -930,8 +934,7 @@ class ResponseTeamMapViewModel extends GetxController
     // Find the next step based on current location
     for (int i = _currentStepIndex; i < _routeSteps.length; i++) {
       final step = _routeSteps[i];
-      final distanceToStep = distance_calc
-          .GeoDistanceCalculator.calculateDistance(
+      final distanceToStep = GeoDistanceCalculator.calculateDistance(
         currentLocation.value,
         step.location,
       );
@@ -1028,7 +1031,8 @@ class ResponseTeamMapViewModel extends GetxController
     const double arrivalThresholdKm = 0.30; // 30 meters
 
     // Set arrival state when within 30m radius
-    if (distanceKm <= arrivalThresholdKm || distanceToDestination <= arrivalThresholdKm) {
+    if (distanceKm <= arrivalThresholdKm ||
+        distanceToDestination <= arrivalThresholdKm) {
       hasArrived.value = true;
 
       // Show notification only once
@@ -1046,9 +1050,7 @@ class ResponseTeamMapViewModel extends GetxController
   }
 
   Future<void> completeNavigation() async {
-    await SupabaseService.deleteSosEventById(
-      _currentNavigatingSos.value!.sosId,
-    );
+    await SosServices.deleteSosEventById(_currentNavigatingSos.value!.sosId);
     clearRoute();
 
     if (Get.isBottomSheetOpen ?? false) {
@@ -1064,7 +1066,7 @@ class ResponseTeamMapViewModel extends GetxController
       return;
     }
 
-    bool isOffRoute = MapHelper.isUserOffRoute(
+    bool isOffRoute = RouteServices.isUserOffRoute(
       userLocation,
       routePoints,
       thresholdMeters: 50,
@@ -1092,7 +1094,7 @@ class ResponseTeamMapViewModel extends GetxController
   }
 
   Future<void> _silentReroute(LatLng start, LatLng end) async {
-    final routeData = await MapHelper.getRouteWithInstructions(start, end);
+    final routeData = await RouteServices.getRouteWithInstructions(start, end);
     if (routeData != null && routeData.polyline.isNotEmpty) {
       routePoints.value = routeData.polyline;
       remainingRoutePoints.value = routeData.polyline;
@@ -1136,9 +1138,7 @@ class ResponseTeamMapViewModel extends GetxController
   }
 
   Future<void> cancelRoute(SosEvent sosEvent) async {
-    await SupabaseService.unassignSosFromTeam(
-      _currentNavigatingSos.value!.sosId,
-    );
+    await SosServices.unassignSosFromTeam(_currentNavigatingSos.value!.sosId);
     clearRoute();
     Get.back();
   }
@@ -1161,7 +1161,7 @@ class ResponseTeamMapViewModel extends GetxController
 
   double calculateDistanceToSos(SosEvent sosEvent) {
     if (!sosEvent.hasLocation()) return 0.0;
-    return distance_calc.GeoDistanceCalculator.calculateDistance(
+    return GeoDistanceCalculator.calculateDistance(
       currentLocation.value,
       LatLng(sosEvent.locationLat!, sosEvent.locationLng!),
     );
@@ -1169,13 +1169,13 @@ class ResponseTeamMapViewModel extends GetxController
 
   double calculateDistanceToEvacuationPoint(EvacuationPoint point) {
     if (!point.hasLocation()) return 0.0;
-    return distance_calc.GeoDistanceCalculator.calculateDistance(
+    return GeoDistanceCalculator.calculateDistance(
       currentLocation.value,
       LatLng(point.locationLat!, point.locationLng!),
     );
   }
 
-  Future<void>  _saveNavigationState({
+  Future<void> _saveNavigationState({
     String? sosId,
     String? evacuationId,
   }) async {
@@ -1262,7 +1262,7 @@ class ResponseTeamMapViewModel extends GetxController
 
     navigationDestination.value = end;
 
-    final routeData = await MapHelper.getRouteWithInstructions(start, end);
+    final routeData = await RouteServices.getRouteWithInstructions(start, end);
     if (routeData != null && routeData.polyline.isNotEmpty) {
       isNavigating.value = true;
       currentRouteSegment.value = 0;

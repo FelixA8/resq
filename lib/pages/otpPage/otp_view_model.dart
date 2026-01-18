@@ -6,7 +6,7 @@ import 'package:get/get.dart';
 import 'package:resqapp/theme/theme_app.dart';
 import 'package:uuid/uuid.dart';
 import 'models/otp_model.dart';
-import '../../service/supabase_service.dart';
+import '../../services/login_services.dart';
 import '../../models/supabase_models.dart';
 import '../../services/sms_service.dart';
 import '../../services/message_central_service.dart';
@@ -103,14 +103,14 @@ class OTPViewModel extends ChangeNotifier {
           ),
         );
 
-        final connectionOk = await SupabaseService.testConnection();
+        final connectionOk = await LoginServices.testConnection();
 
         OtpCode? result;
 
         if (!connectionOk) {
           result = otpCode;
         } else {
-          result = await SupabaseService.createOtpCode(otpCode);
+          result = await LoginServices.createOtpCode(otpCode);
         }
 
         if (result != null) {
@@ -191,10 +191,10 @@ class OTPViewModel extends ChangeNotifier {
         isValid = result['success'];
       } else {
         try {
-          isValid = await SupabaseService.verifyOtpCode(_verificationId!, code);
+          isValid = await LoginServices.verifyOtpCode(_verificationId!, code);
 
           if (isValid) {
-            await SupabaseService.invalidateOtpCode(_verificationId!);
+            await LoginServices.invalidateOtpCode(_verificationId!);
           }
         } catch (e) {
           isValid = _generatedOtpCode == code;
@@ -204,7 +204,7 @@ class OTPViewModel extends ChangeNotifier {
       if (isValid) {
         _otpModel = _otpModel?.copyWith(otpCode: code);
 
-        final existingUser = await SupabaseService.getUserByPhone(
+        final existingUser = await LoginServices.getUserByPhone(
           _otpModel!.phoneNumber,
         );
 
@@ -258,7 +258,7 @@ class OTPViewModel extends ChangeNotifier {
 
     try {
       if (_verificationId != null) {
-        await SupabaseService.invalidateOtpCode(_verificationId!);
+        await LoginServices.invalidateOtpCode(_verificationId!);
       }
       await _getOtp(_otpModel!.phoneNumber);
 
@@ -339,7 +339,7 @@ class OTPViewModel extends ChangeNotifier {
         role: 'citizen',
       );
 
-      final result = await SupabaseService.createUser(newUser);
+      final result = await LoginServices.createUser(newUser);
 
       if (result != null) {
         this.userId = userId;
