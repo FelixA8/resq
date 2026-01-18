@@ -34,7 +34,7 @@ class EmergencySmsService {
         return {'sent': 0, 'failed': 0, 'total': 0};
       }
 
-      final contacts = await SupabaseService.getUserContacts(userId);
+      final contacts = await SupabaseService.getContactList(userId);
       if (contacts.isEmpty) {
         developer.log('Emergency SMS: No emergency contacts configured');
         return {'sent': 0, 'failed': 0, 'total': 0};

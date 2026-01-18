@@ -33,7 +33,7 @@ class SettingsViewModel extends GetxController {
       if (userId != null) {
         _user.value = await SupabaseService.getUserById(userId);
 
-        final contacts = await SupabaseService.getUserContacts(userId);
+        final contacts = await SupabaseService.getContactList(userId);
 
         contactNumbers.value = [null, null, null];
 
@@ -76,6 +76,7 @@ class SettingsViewModel extends GetxController {
   void validateUsername(String username) {
     final trimmedUsername = username.trim();
     final RegExp alphaHyphen = RegExp(r'^[a-zA-Z-]+$');
+
     if (trimmedUsername.length >= 3 && alphaHyphen.hasMatch(trimmedUsername)) {
       showUsernameConfirmationDialog(trimmedUsername);
     } else {
@@ -113,6 +114,7 @@ class SettingsViewModel extends GetxController {
     if (user == null) return;
 
     final contactName = 'Contact ${index + 1}';
+    final oldNumber = contactNumbers[index];
 
     if (number == null || number.isEmpty) {
       final success = await SupabaseService.deleteContact(
@@ -131,7 +133,12 @@ class SettingsViewModel extends GetxController {
       phoneNumber: number,
     );
 
-    final success = await SupabaseService.upsertContact(contact);
+    bool success;
+    if (oldNumber == null) {
+      success = await SupabaseService.addContact(contact);
+    } else {
+      success = await SupabaseService.updateContact(contact);
+    }
 
     if (success) {
       contactNumbers[index] = number;
@@ -144,6 +151,27 @@ class SettingsViewModel extends GetxController {
     Function() onSuccess,
   ) {
     String newNumber = rawNumber.trim();
+    String oldNumber = contactNumbers.value[index] ?? "";
+
+    print("old: ${oldNumber}");
+    print("new: ${newNumber}");
+
+    if (oldNumber.isNotEmpty && newNumber.isEmpty) {
+      Get.dialog(
+        ConfirmationDialog(
+          onConfirm: () {
+            updateContact(index, newNumber).then((_) {
+              onSuccess();
+              Get.back();
+            });
+          },
+          title: 'Apakah kamu yakin?',
+          caption:
+              'Penekanan tombol SOS akan menghapus nomor telepon yang sudah terhubung.',
+        ),
+      );
+      return;
+    }
 
     if (newNumber.startsWith('+')) {
       newNumber = newNumber.substring(1);

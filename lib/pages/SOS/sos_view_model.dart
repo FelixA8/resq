@@ -22,7 +22,7 @@ class SOSViewModel extends GetxController {
     }
   }
 
-  Future<Map<String, dynamic>> handleSOSButtonPress() async {
+  Future<Map<String, dynamic>> sosReport() async {
     try {
       isLoading.value = true;
 

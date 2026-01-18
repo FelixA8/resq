@@ -51,7 +51,7 @@ class SOSView extends StatelessWidget {
                           SOSButtonSection(
                             onPressed: () async {
                               final result =
-                                  await sosViewModel.handleSOSButtonPress();
+                                  await sosViewModel.sosReport();
 
                               if (result['success'] == true) {
                                 Navigator.of(context).pop();

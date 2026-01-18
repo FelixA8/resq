@@ -150,7 +150,7 @@ class SupabaseService {
 
   // ==================== Contacts ====================
   /// Get user's emergency contacts
-  static Future<List<Contact>> getUserContacts(String userId) async {
+  static Future<List<Contact>> getContactList(String userId) async {
     try {
       final response = await _client
           .from('contacts')
@@ -177,7 +177,6 @@ class SupabaseService {
 
   static Future<bool> upsertContact(Contact contact) async {
     try {
-      // Delete existing contact with same name for this user
       await _client
           .from('contacts')
           .delete()
@@ -189,6 +188,21 @@ class SupabaseService {
       return true;
     } catch (e) {
       developer.log('Error upserting contact: $e');
+      return false;
+    }
+  }
+
+  /// Update emergency contact
+  static Future<bool> updateContact(Contact contact) async {
+    try {
+      await _client
+          .from('contacts')
+          .update(contact.toJson())
+          .eq('user_id', contact.userId)
+          .eq('contact_name', contact.contactName);
+      return true;
+    } catch (e) {
+      developer.log('Error updating contact: $e');
       return false;
     }
   }
