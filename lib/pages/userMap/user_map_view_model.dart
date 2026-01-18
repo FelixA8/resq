@@ -38,10 +38,10 @@ class UserMapViewModel extends GetxController
   final RxBool isLoading = false.obs;
   final RxBool hasLocationPermission = false.obs;
 
-  final RxList<Disaster> _disasterPointsData = <Disaster>[].obs;
+  final RxList<Disaster> disasterPointsData = <Disaster>[].obs;
   final RxList<LatLng> disasterPoints = <LatLng>[].obs;
 
-  final RxList<EvacuationPoint> _evacuationPointsData = <EvacuationPoint>[].obs;
+  final RxList<EvacuationPoint> evacuationPointsData = <EvacuationPoint>[].obs;
   final RxList<LatLng> evacuationPoints = <LatLng>[].obs;
 
   final Rx<SOSWaitingViewModel?> _sosWaitingViewModel =
@@ -273,7 +273,7 @@ class UserMapViewModel extends GetxController
 
   void _updateDisasterPointsDisplay() {
     final validDisasters =
-        _disasterPointsData
+        disasterPointsData
             .where(
               (disaster) =>
                   disaster.centerLat != null && disaster.centerLng != null,
@@ -289,17 +289,17 @@ class UserMapViewModel extends GetxController
   Future<void> _loadDisasterPoints() async {
     try {
       final disasters = await SupabaseService.getFilteredDisasters();
-      _disasterPointsData.value = disasters;
+      disasterPointsData.value = disasters;
       _updateDisasterPointsDisplay();
     } catch (e) {
-      _disasterPointsData.clear();
+      disasterPointsData.clear();
       _updateDisasterPointsDisplay();
     }
   }
 
   void _updateEvacuationPointsDisplay() {
     evacuationPoints.value =
-        _evacuationPointsData
+        evacuationPointsData
             .where((point) => point.hasLocation())
             .map((point) => LatLng(point.locationLat!, point.locationLng!))
             .toList();
@@ -308,10 +308,10 @@ class UserMapViewModel extends GetxController
   Future<void> _loadEvacuationPoints() async {
     try {
       final points = await SupabaseService.getEvacuationPoints();
-      _evacuationPointsData.value = points;
+      evacuationPointsData.value = points;
       _updateEvacuationPointsDisplay();
     } catch (e) {
-      _evacuationPointsData.clear();
+      evacuationPointsData.clear();
       _updateEvacuationPointsDisplay();
     }
   }
@@ -379,11 +379,11 @@ class UserMapViewModel extends GetxController
     try {
       final point = EvacuationPoint.fromJson(record);
       if (point.evacuationId != null) {
-        final exists = _evacuationPointsData.any(
+        final exists = evacuationPointsData.any(
           (p) => p.evacuationId == point.evacuationId,
         );
         if (!exists) {
-          _evacuationPointsData.add(point);
+          evacuationPointsData.add(point);
           _updateEvacuationPointsDisplay();
         }
       }
@@ -399,14 +399,14 @@ class UserMapViewModel extends GetxController
     try {
       final newPoint = EvacuationPoint.fromJson(newRecord);
       if (newPoint.evacuationId != null) {
-        final index = _evacuationPointsData.indexWhere(
+        final index = evacuationPointsData.indexWhere(
           (p) => p.evacuationId == newPoint.evacuationId,
         );
         if (index != -1) {
-          _evacuationPointsData[index] = newPoint;
+          evacuationPointsData[index] = newPoint;
           _updateEvacuationPointsDisplay();
         } else {
-          _evacuationPointsData.add(newPoint);
+          evacuationPointsData.add(newPoint);
           _updateEvacuationPointsDisplay();
         }
       }
@@ -426,7 +426,7 @@ class UserMapViewModel extends GetxController
           cancelEvacuationRoute();
         }
 
-        _evacuationPointsData.removeWhere(
+        evacuationPointsData.removeWhere(
           (p) => p.evacuationId == point.evacuationId,
         );
         _updateEvacuationPointsDisplay();
@@ -475,11 +475,11 @@ class UserMapViewModel extends GetxController
       final disaster = Disaster.fromJson(record);
       if (disaster.disasterId != null) {
         if (!_isDisasterFromToday(disaster)) return;
-        final exists = _disasterPointsData.any(
+        final exists = disasterPointsData.any(
           (d) => d.disasterId == disaster.disasterId,
         );
         if (!exists) {
-          _disasterPointsData.add(disaster);
+          disasterPointsData.add(disaster);
           _updateDisasterPointsDisplay();
         }
       }
@@ -496,23 +496,23 @@ class UserMapViewModel extends GetxController
       final newDisaster = Disaster.fromJson(newRecord);
       if (newDisaster.disasterId != null) {
         if (!_isDisasterFromToday(newDisaster)) {
-          final index = _disasterPointsData.indexWhere(
+          final index = disasterPointsData.indexWhere(
             (d) => d.disasterId == newDisaster.disasterId,
           );
           if (index != -1) {
-            _disasterPointsData.removeAt(index);
+            disasterPointsData.removeAt(index);
             _updateDisasterPointsDisplay();
           }
           return;
         }
-        final index = _disasterPointsData.indexWhere(
+        final index = disasterPointsData.indexWhere(
           (d) => d.disasterId == newDisaster.disasterId,
         );
         if (index != -1) {
-          _disasterPointsData[index] = newDisaster;
+          disasterPointsData[index] = newDisaster;
           _updateDisasterPointsDisplay();
         } else {
-          _disasterPointsData.add(newDisaster);
+          disasterPointsData.add(newDisaster);
           _updateDisasterPointsDisplay();
         }
       }
@@ -525,7 +525,7 @@ class UserMapViewModel extends GetxController
     try {
       final disaster = Disaster.fromJson(record);
       if (disaster.disasterId != null) {
-        _disasterPointsData.removeWhere(
+        disasterPointsData.removeWhere(
           (d) => d.disasterId == disaster.disasterId,
         );
         _updateDisasterPointsDisplay();
@@ -538,7 +538,7 @@ class UserMapViewModel extends GetxController
   Future<void> _initializeLocation() async {
     try {
       isLoading.value = true;
-      LocationResult result = await LocationHelper.initializeLocation();
+      LocationResult result = await LocationHelper.getCurrentLocation();
       currentLocation.value = result.location;
       hasLocationPermission.value = result.hasPermission;
       hasLocationPermission.value = result.hasPermission;
@@ -613,15 +613,27 @@ class UserMapViewModel extends GetxController
     );
   }
 
+  //get disaster detail based on location
   Disaster? findDisasterByLocation(LatLng location) {
-    return MapHelper.findDisasterByLocation(_disasterPointsData, location);
+    return MapHelper.findDisasterByLocation(disasterPointsData, location);
+  }
+
+  //get disaster detail based on id
+  Disaster? findDisasterById(String id) {
+    final disaster = disasterPointsData.where((d) => d.disasterId == id);
+    return disaster.first;
   }
 
   EvacuationPoint? findEvacuationPointByLocation(LatLng location) {
     return MapHelper.findEvacuationPointByLocation(
-      _evacuationPointsData,
+      evacuationPointsData,
       location,
     );
+  }
+
+  EvacuationPoint? findEvacuationPointById(String id) {
+    final evacuationPoint = evacuationPointsData.where((e) => e.evacuationId == id);
+    return evacuationPoint.first;
   }
 
   Future<String> fetchDisasterAddress(Disaster disaster) {
