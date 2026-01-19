@@ -5,7 +5,7 @@ import 'package:resqapp/pages/SOSWaiting/sos_waiting_view_model.dart';
 import 'package:resqapp/services/sos_services.dart';
 import 'dart:developer' as developer;
 
-class SOSViewModel extends GetxController {
+class UserSOSViewModel extends GetxController {
   final RxBool isSOSActive = false.obs;
   final RxBool isLoading = false.obs;
 

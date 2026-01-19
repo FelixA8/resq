@@ -12,7 +12,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'models/sos_report_item.dart';
 import 'dart:developer' as developer;
 
-class SOSPageViewModel extends GetxController {
+class ResponseTeamSOSListViewModel extends GetxController {
   final RxList<SosReportItem> sosReports = <SosReportItem>[].obs;
   final Map<String, ResqUser> _userCache = {};
   final RxBool isLoading = false.obs;
@@ -35,7 +35,7 @@ class SOSPageViewModel extends GetxController {
   }
 
   Future<void> _initialize() async {
-    await _fetchSOSAssignments();
+    await _fetchSOSEvents();
     await _initializeLocation();
     _subscribeToSOSEvents();
   }
@@ -63,7 +63,7 @@ class SOSPageViewModel extends GetxController {
     super.onClose();
   }
 
-  Future<void> _fetchSOSAssignments() async {
+  Future<void> _fetchSOSEvents() async {
     isLoading.value = true;
     errorMessage.value = null;
     _currentOffset = 0;
@@ -301,7 +301,7 @@ class SOSPageViewModel extends GetxController {
 
   Future<void> refreshReports() async {
     await _initializeLocation();
-    await _fetchSOSAssignments();
+    await _fetchSOSEvents();
   }
 
   Future<void> updateLocation(LatLng newLocation) async {
@@ -344,7 +344,7 @@ class SOSPageViewModel extends GetxController {
       final location = LatLng(sosEvent.locationLat!, sosEvent.locationLng!);
 
       final instanceCode =
-          await ResponseLoginPageViewModel.getSavedInstanceCode();
+          await ResponseTeamLoginViewModel.getSavedInstanceCode();
       if (instanceCode == null || instanceCode.isEmpty) {
         developer.log('⚠️ Instance code not found');
         return;

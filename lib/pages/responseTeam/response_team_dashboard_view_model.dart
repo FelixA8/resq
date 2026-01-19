@@ -27,6 +27,6 @@ class ResponseTeamDashboardViewModel extends GetxController {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.clear();
 
-    Get.offAll(LoginPageView());
+    Get.offAll(LoginView());
   }
 }

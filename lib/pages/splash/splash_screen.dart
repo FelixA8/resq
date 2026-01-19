@@ -26,7 +26,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
     // Check if there's a saved instanceCode
     final savedInstanceCode =
-        await ResponseLoginPageViewModel.getSavedInstanceCode();
+        await ResponseTeamLoginViewModel.getSavedInstanceCode();
 
     if (savedInstanceCode != null && savedInstanceCode.isNotEmpty) {
       // Navigate to Response Team Dashboard if instanceCode exists
@@ -48,7 +48,7 @@ class _SplashScreenState extends State<SplashScreen> {
       } else {
         // Not logged in; show login page
         Get.off(
-          () => const LoginPageView(),
+          () => const LoginView(),
           transition: Transition.fadeIn,
         );
       }

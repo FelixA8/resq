@@ -9,7 +9,7 @@ class ResponseLoginFormSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = Get.find<ResponseLoginPageViewModel>();
+    final viewModel = Get.find<ResponseTeamLoginViewModel>();
     var theme = ResQTheme();
 
     final isPasswordVisible = false.obs;

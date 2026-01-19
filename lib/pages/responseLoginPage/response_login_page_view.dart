@@ -5,13 +5,13 @@ import 'package:resqapp/pages/responseLoginPage/component/response_login_logo.da
 import 'response_login_page_view_model.dart';
 import 'sections/response_login_form_section.dart';
 
-class ResponseLoginPageView extends GetView<ResponseLoginPageViewModel> {
-  const ResponseLoginPageView({super.key});
+class ResponseTeamLoginView extends GetView<ResponseTeamLoginViewModel> {
+  const ResponseTeamLoginView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    if (!Get.isRegistered<ResponseLoginPageViewModel>()) {
-      Get.put(ResponseLoginPageViewModel(), permanent: false);
+    if (!Get.isRegistered<ResponseTeamLoginViewModel>()) {
+      Get.put(ResponseTeamLoginViewModel(), permanent: false);
     }
 
     final screenHeight = MediaQuery.of(context).size.height;

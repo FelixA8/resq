@@ -11,7 +11,7 @@ class LoginFormSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = Provider.of<LoginPageViewModel>(context);
+    final viewModel = Provider.of<LoginViewModel>(context);
     const theme = ResQTheme();
 
     return Padding(

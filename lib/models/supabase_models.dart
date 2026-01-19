@@ -191,7 +191,7 @@ class Disaster {
 class ResponseTeam {
   final String responseTeamId;
   final String? role;
-  final String? password; // Should be hashed
+  final String? password;
   final String? instanceCode;
 
   ResponseTeam({

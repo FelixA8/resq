@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class LoginPageViewModel extends ChangeNotifier {
+class LoginViewModel extends ChangeNotifier {
   final TextEditingController phoneController = TextEditingController();
   bool isResponseTeam = false;
   final FocusNode phoneFocus = FocusNode();

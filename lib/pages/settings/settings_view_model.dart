@@ -12,6 +12,7 @@ import 'dart:developer' as developer;
 class SettingsViewModel extends GetxController {
   final Rx<ResqUser?> _user = Rx<ResqUser?>(null);
   ResqUser? get user => _user.value;
+  List<Contact> contacts = []; 
   final theme = ResQTheme();
 
   final RxList<String?> contactNumbers = <String?>[null, null, null].obs;
@@ -34,7 +35,7 @@ class SettingsViewModel extends GetxController {
       if (userId != null) {
         _user.value = await LoginServices.getUserById(userId);
 
-        final contacts = await SosServices.getContactList(userId);
+        contacts = await SosServices.getContactList(userId);
 
         contactNumbers.value = [null, null, null];
 

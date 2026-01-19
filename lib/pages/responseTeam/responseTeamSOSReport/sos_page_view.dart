@@ -5,12 +5,12 @@ import 'sos_page_view_model.dart';
 import 'components/title_section.dart';
 import 'components/sos_report_card.dart';
 
-class SOSPageView extends StatelessWidget {
-  const SOSPageView({super.key});
+class ResponseTeamSOSListView extends StatelessWidget {
+  const ResponseTeamSOSListView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = Get.put(SOSPageViewModel());
+    final viewModel = Get.put(ResponseTeamSOSListViewModel());
 
     return Column(
       children: [

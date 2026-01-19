@@ -5,7 +5,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:resqapp/services/location_services.dart';
 
 class RouteServices {
-  static Future<RouteData?> getRouteWithInstructions(
+  static Future<RouteData?> createRoute(
     LatLng start,
     LatLng end,
   ) async {

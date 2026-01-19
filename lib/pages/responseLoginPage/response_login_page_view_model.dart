@@ -4,7 +4,7 @@ import 'package:resqapp/pages/responseTeam/response_team_dashboard_view.dart';
 import 'package:resqapp/services/login_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class ResponseLoginPageViewModel extends GetxController {
+class ResponseTeamLoginViewModel extends GetxController {
   final TextEditingController codeController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 

@@ -110,7 +110,7 @@ class ResponseTeamDashboardView
           case 1:
             return ResponseTeamMapView(instanceCode: instanceCode);
           case 2:
-            return const SOSPageView();
+            return const ResponseTeamSOSListView();
           default:
             return ResponseTeamMapView(instanceCode: instanceCode);
         }

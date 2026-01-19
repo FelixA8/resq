@@ -695,7 +695,7 @@ class UserMapViewModel extends GetxController
     final end = LatLng(point.locationLat!, point.locationLng!);
 
     try {
-      final routeData = await RouteServices.getRouteWithInstructions(
+      final routeData = await RouteServices.createRoute(
         start,
         end,
       );
@@ -821,7 +821,7 @@ class UserMapViewModel extends GetxController
   }
 
   Future<void> _silentReroute(LatLng start, LatLng end) async {
-    final routeData = await RouteServices.getRouteWithInstructions(start, end);
+    final routeData = await RouteServices.createRoute(start, end);
     if (routeData != null && routeData.polyline.isNotEmpty) {
       routePoints.value = routeData.polyline;
       remainingRoutePoints.value = routeData.polyline;

@@ -64,8 +64,8 @@ class MyApp extends StatelessWidget {
 
       //Old Routing Method (Still need /login, hence do not delete).
       routes: {
-        '/login': (context) => const LoginPageView(),
-        '/responseLogin': (context) => const ResponseLoginPageView(),
+        '/login': (context) => const LoginView(),
+        '/responseLogin': (context) => const ResponseTeamLoginView(),
         '/otpView': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as Map?;
           final phone = args?['phone'] ?? '';

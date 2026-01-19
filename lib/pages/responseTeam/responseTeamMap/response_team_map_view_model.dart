@@ -37,13 +37,13 @@ class ResponseTeamMapViewModel extends GetxController
   // Response team location address
   final RxString currentAddress = 'Loading...'.obs;
 
-  final RxList<Disaster> _disasterPointsData = <Disaster>[].obs;
+  final RxList<Disaster> disasterPointsData = <Disaster>[].obs;
   final RxList<LatLng> disasterPoints = <LatLng>[].obs;
 
-  final RxList<EvacuationPoint> _evacuationPointsData = <EvacuationPoint>[].obs;
+  final RxList<EvacuationPoint> evacuationPointsData = <EvacuationPoint>[].obs;
   final RxList<LatLng> evacuationPoints = <LatLng>[].obs;
 
-  final RxList<SosEvent> _sosEventsData = <SosEvent>[].obs;
+  final RxList<SosEvent> sosEventsData = <SosEvent>[].obs;
   final RxList<LatLng> sosPoints = <LatLng>[].obs;
 
   final RxList<LatLng> routePoints = <LatLng>[].obs;
@@ -182,16 +182,16 @@ class ResponseTeamMapViewModel extends GetxController
   Future<void> _initializeData() async {
     _loadDisasterPoints();
     _loadEvacuationPoints();
-    await _fetchSOSAssignments();
+    await _fetchSOSEvents();
   }
 
   Future<void> _loadDisasterPoints() async {
     try {
       final disasters = await DisasterServices.getFilteredDisasters();
-      _disasterPointsData.value = disasters;
+      disasterPointsData.value = disasters;
       _updateDisasterPointsDisplay();
     } catch (_) {
-      _disasterPointsData.clear();
+      disasterPointsData.clear();
       _updateDisasterPointsDisplay();
     }
   }
@@ -199,22 +199,22 @@ class ResponseTeamMapViewModel extends GetxController
   Future<void> _loadEvacuationPoints() async {
     try {
       final points = await LocationServices.getEvacuationPoints();
-      _evacuationPointsData.value = points;
+      evacuationPointsData.value = points;
       _updateEvacuationPointsDisplay();
     } catch (_) {
-      _evacuationPointsData.clear();
+      evacuationPointsData.clear();
       _updateEvacuationPointsDisplay();
     }
   }
 
-  Future<void> _fetchSOSAssignments() async {
+  Future<void> _fetchSOSEvents() async {
     try {
       final sosEvents = await SosServices.getSoSEvents();
       final activeSOSEvents = sosEvents.where((sos) => sos.isActive).toList();
-      _sosEventsData.value = activeSOSEvents;
+      sosEventsData.value = activeSOSEvents;
       _updateSOSPointsDisplay();
     } catch (_) {
-      _sosEventsData.clear();
+      sosEventsData.clear();
       _updateSOSPointsDisplay();
     }
   }
@@ -236,7 +236,7 @@ class ResponseTeamMapViewModel extends GetxController
     print("SOS EVENt:");
     print(sosEvent);
 
-    final routeData = await RouteServices.getRouteWithInstructions(start, end);
+    final routeData = await RouteServices.createRoute(start, end);
     if (routeData != null && routeData.polyline.isNotEmpty) {
       // Set navigation state before updating route points
       isNavigating.value = true;
@@ -289,7 +289,7 @@ class ResponseTeamMapViewModel extends GetxController
 
   void _updateDisasterPointsDisplay() {
     disasterPoints.value =
-        _disasterPointsData
+        disasterPointsData
             .where((d) => d.centerLat != null && d.centerLng != null)
             .map((d) => LatLng(d.centerLat!, d.centerLng!))
             .toList();
@@ -297,7 +297,7 @@ class ResponseTeamMapViewModel extends GetxController
 
   void _updateEvacuationPointsDisplay() {
     evacuationPoints.value =
-        _evacuationPointsData
+        evacuationPointsData
             .where((p) => p.hasLocation())
             .map((p) => LatLng(p.locationLat!, p.locationLng!))
             .toList();
@@ -305,7 +305,7 @@ class ResponseTeamMapViewModel extends GetxController
 
   void _updateSOSPointsDisplay() {
     sosPoints.value =
-        _sosEventsData
+        sosEventsData
             .where((s) => s.hasLocation() && s.isActive)
             .map((s) => LatLng(s.locationLat!, s.locationLng!))
             .toList();
@@ -351,22 +351,22 @@ class ResponseTeamMapViewModel extends GetxController
 
   void _onEvacuationInsert(EvacuationPoint point) {
     if (point.evacuationId == null) return;
-    final exists = _evacuationPointsData.any(
+    final exists = evacuationPointsData.any(
       (p) => p.evacuationId == point.evacuationId,
     );
     if (!exists) {
-      _evacuationPointsData.add(point);
+      evacuationPointsData.add(point);
       _updateEvacuationPointsDisplay();
     }
   }
 
   void _onEvacuationUpdate(EvacuationPoint point) {
     if (point.evacuationId == null) return;
-    final index = _evacuationPointsData.indexWhere(
+    final index = evacuationPointsData.indexWhere(
       (p) => p.evacuationId == point.evacuationId,
     );
     if (index != -1) {
-      _evacuationPointsData[index] = point;
+      evacuationPointsData[index] = point;
       _updateEvacuationPointsDisplay();
 
       // Update route if currently navigating to this evacuation point
@@ -375,14 +375,14 @@ class ResponseTeamMapViewModel extends GetxController
         _restoreEvacuationRoute(point);
       }
     } else {
-      _evacuationPointsData.add(point);
+      evacuationPointsData.add(point);
       _updateEvacuationPointsDisplay();
     }
   }
 
   void _onEvacuationDelete(EvacuationPoint point) {
     if (point.evacuationId == null) return;
-    _evacuationPointsData.removeWhere(
+    evacuationPointsData.removeWhere(
       (p) => p.evacuationId == point.evacuationId,
     );
 
@@ -397,40 +397,40 @@ class ResponseTeamMapViewModel extends GetxController
 
   void _onDisasterInsert(Disaster disaster) {
     if (disaster.disasterId == null) return;
-    final exists = _disasterPointsData.any(
+    final exists = disasterPointsData.any(
       (d) => d.disasterId == disaster.disasterId,
     );
     if (!exists) {
-      _disasterPointsData.add(disaster);
+      disasterPointsData.add(disaster);
       _updateDisasterPointsDisplay();
     }
   }
 
   void _onDisasterUpdate(Disaster disaster) {
     if (disaster.disasterId == null) return;
-    final index = _disasterPointsData.indexWhere(
+    final index = disasterPointsData.indexWhere(
       (d) => d.disasterId == disaster.disasterId,
     );
     if (index != -1) {
-      _disasterPointsData[index] = disaster;
+      disasterPointsData[index] = disaster;
       _updateDisasterPointsDisplay();
     } else {
-      _disasterPointsData.add(disaster);
+      disasterPointsData.add(disaster);
       _updateDisasterPointsDisplay();
     }
   }
 
   void _onDisasterDelete(Disaster disaster) {
     if (disaster.disasterId == null) return;
-    _disasterPointsData.removeWhere((d) => d.disasterId == disaster.disasterId);
+    disasterPointsData.removeWhere((d) => d.disasterId == disaster.disasterId);
     _updateDisasterPointsDisplay();
   }
 
   void _onSosInsert(SosEvent sos) {
     if (sos.sosId.isNotEmpty && sos.isActive) {
-      final exists = _sosEventsData.any((s) => s.sosId == sos.sosId);
+      final exists = sosEventsData.any((s) => s.sosId == sos.sosId);
       if (!exists) {
-        _sosEventsData.add(sos);
+        sosEventsData.add(sos);
         _updateSOSPointsDisplay();
         HapticFeedback.heavyImpact();
       }
@@ -439,12 +439,12 @@ class ResponseTeamMapViewModel extends GetxController
 
   void _onSosUpdate(SosEvent sos) {
     if (sos.sosId.isEmpty) return;
-    final index = _sosEventsData.indexWhere((s) => s.sosId == sos.sosId);
+    final index = sosEventsData.indexWhere((s) => s.sosId == sos.sosId);
     if (index != -1) {
-      _sosEventsData[index] = sos;
+      sosEventsData[index] = sos;
       _updateSOSPointsDisplay();
     } else if (sos.isActive) {
-      _sosEventsData.add(sos);
+      sosEventsData.add(sos);
       _updateSOSPointsDisplay();
       HapticFeedback.heavyImpact();
     }
@@ -453,7 +453,7 @@ class ResponseTeamMapViewModel extends GetxController
   void _onSosDelete(SosEvent sos) {
     if (sos.sosId.isEmpty) return;
 
-    _sosEventsData.removeWhere((s) => s.sosId == sos.sosId);
+    sosEventsData.removeWhere((s) => s.sosId == sos.sosId);
 
     if (_currentNavigatingSos.value?.sosId == sos.sosId) {
       clearRoute();
@@ -539,31 +539,31 @@ class ResponseTeamMapViewModel extends GetxController
 
   Disaster? findDisasterByLocation(LatLng location) {
     return LocationServices.findDisasterByLocation(
-      _disasterPointsData,
+      disasterPointsData,
       location,
     );
   }
 
   EvacuationPoint? findEvacuationPointByLocation(LatLng location) {
     return LocationServices.findEvacuationPointByLocation(
-      _evacuationPointsData,
+      evacuationPointsData,
       location,
     );
   }
 
   SosEvent? findSOSByLocation(LatLng location) {
-    return LocationServices.findSOSByLocation(_sosEventsData, location);
+    return LocationServices.findSOSByLocation(sosEventsData, location);
   }
 
   SosEvent? findSOSById(String sosId) {
     try {
-      return _sosEventsData.firstWhere((s) => s.sosId == sosId);
+      return sosEventsData.firstWhere((s) => s.sosId == sosId);
     } catch (_) {
       return null;
     }
   }
 
-  int get sosEventsCount => _sosEventsData.length;
+  int get sosEventsCount => sosEventsData.length;
 
   Future<ResqUser?> fetchUserById(String userId) async {
     try {
@@ -666,7 +666,7 @@ class ResponseTeamMapViewModel extends GetxController
     final start = currentLocation.value;
     final end = LatLng(sosEvent.locationLat!, sosEvent.locationLng!);
 
-    final routeData = await RouteServices.getRouteWithInstructions(start, end);
+    final routeData = await RouteServices.createRoute(start, end);
 
     if (routeData != null && routeData.polyline.isNotEmpty) {
       routePoints.value = routeData.polyline;
@@ -764,7 +764,7 @@ class ResponseTeamMapViewModel extends GetxController
     final start = currentLocation.value;
     final end = LatLng(point.locationLat!, point.locationLng!);
 
-    final routeData = await RouteServices.getRouteWithInstructions(start, end);
+    final routeData = await RouteServices.createRoute(start, end);
 
     if (routeData != null && routeData.polyline.isNotEmpty) {
       routePoints.value = routeData.polyline;
@@ -909,15 +909,11 @@ class ResponseTeamMapViewModel extends GetxController
       }
     }
 
-    // Update current segment and remaining route
     if (nearestIndex != currentRouteSegment.value) {
       currentRouteSegment.value = nearestIndex;
-
-      // If user is at or past the last point, clear the remaining route
       if (nearestIndex >= routePoints.length - 1) {
         remainingRoutePoints.clear();
       } else {
-        // Update remaining route points (from current position to end)
         remainingRoutePoints.value = routePoints.sublist(nearestIndex);
       }
     }
@@ -939,30 +935,24 @@ class ResponseTeamMapViewModel extends GetxController
         step.location,
       );
 
-      // If we're close to this step's location (within 50m), move to next step
       if (distanceToStep < 0.02 && i < _routeSteps.length - 1) {
         _currentStepIndex = i + 1;
         continue;
       }
 
-      // This is our current step
       _currentStepIndex = i;
       distanceToNextTurn.value = distanceToStep * 1000;
 
-      // Set turn type based on maneuver type and modifier
       final maneuverType = step.maneuverType.toLowerCase();
       final modifier = step.maneuverModifier?.toLowerCase() ?? '';
 
-      // Handle U-turns specifically
       if (modifier == 'uturn' || maneuverType == 'uturn') {
         turnType.value = 'uturn';
       }
-      // Handle roundabouts
       else if (maneuverType.contains('roundabout') ||
           maneuverType == 'rotary') {
         turnType.value = 'roundabout';
       }
-      // Handle regular turns
       else if (modifier.contains('left')) {
         turnType.value = 'left';
       } else if (modifier.contains('right')) {
@@ -970,10 +960,9 @@ class ResponseTeamMapViewModel extends GetxController
       } else if (modifier.contains('straight') || maneuverType == 'continue') {
         turnType.value = 'straight';
       } else {
-        turnType.value = 'straight'; // Default
+        turnType.value = 'straight';
       }
 
-      // Format instruction text
       final distanceText = _formatDistance(distanceToStep * 1000);
       final direction = _getDirectionText(maneuverType, modifier);
       currentInstruction.value = '$distanceText $direction';
@@ -991,12 +980,10 @@ class ResponseTeamMapViewModel extends GetxController
   }
 
   String _getDirectionText(String maneuverType, String modifier) {
-    // Handle U-turns first
     if (modifier == 'uturn' || maneuverType == 'uturn') {
       return 'putar balik';
     }
 
-    // Handle roundabouts
     if (maneuverType.contains('roundabout') || maneuverType == 'rotary') {
       if (modifier.contains('left')) {
         return 'keluar bundaran ke kiri';
@@ -1007,7 +994,6 @@ class ResponseTeamMapViewModel extends GetxController
       }
     }
 
-    // Handle regular turns
     if (modifier.contains('slight left')) {
       return 'belok kiri sedikit';
     } else if (modifier.contains('sharp left')) {
@@ -1028,14 +1014,12 @@ class ResponseTeamMapViewModel extends GetxController
   }
 
   void _checkArrival(double distanceKm) {
-    const double arrivalThresholdKm = 0.30; // 30 meters
+    const double arrivalThresholdKm = 0.30;
 
-    // Set arrival state when within 30m radius
     if (distanceKm <= arrivalThresholdKm ||
         distanceToDestination <= arrivalThresholdKm) {
       hasArrived.value = true;
 
-      // Show notification only once
       if (!_hasShownArrivalNotification) {
         _hasShownArrivalNotification = true;
         _onArrival();
@@ -1094,7 +1078,7 @@ class ResponseTeamMapViewModel extends GetxController
   }
 
   Future<void> _silentReroute(LatLng start, LatLng end) async {
-    final routeData = await RouteServices.getRouteWithInstructions(start, end);
+    final routeData = await RouteServices.createRoute(start, end);
     if (routeData != null && routeData.polyline.isNotEmpty) {
       routePoints.value = routeData.polyline;
       remainingRoutePoints.value = routeData.polyline;
@@ -1214,7 +1198,7 @@ class ResponseTeamMapViewModel extends GetxController
       final savedEvacuationId = navigationState['evacuationId'];
 
       if (savedSosId != null) {
-        final assignedSos = _sosEventsData.firstWhere(
+        final assignedSos = sosEventsData.firstWhere(
           (sos) =>
               sos.sosId == savedSosId &&
               sos.responseTeamId == _currentResponseTeamId &&
@@ -1232,7 +1216,7 @@ class ResponseTeamMapViewModel extends GetxController
       }
 
       if (savedEvacuationId != null) {
-        final evacuationPoint = _evacuationPointsData.firstWhere(
+        final evacuationPoint = evacuationPointsData.firstWhere(
           (point) =>
               point.evacuationId == savedEvacuationId && point.hasLocation(),
           orElse: () => EvacuationPoint(evacuationId: null),
@@ -1262,7 +1246,7 @@ class ResponseTeamMapViewModel extends GetxController
 
     navigationDestination.value = end;
 
-    final routeData = await RouteServices.getRouteWithInstructions(start, end);
+    final routeData = await RouteServices.createRoute(start, end);
     if (routeData != null && routeData.polyline.isNotEmpty) {
       isNavigating.value = true;
       currentRouteSegment.value = 0;
