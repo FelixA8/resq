@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:resqapp/pages/responseLoginPage/response_login_page_view_model.dart';
 import 'package:resqapp/pages/responseTeam/response_team_dashboard_view.dart';
-import 'package:resqapp/pages/loginPage/login_page_view.dart';
+import 'package:resqapp/pages/LoginPage/login_page_view.dart';
 import 'package:resqapp/pages/userMap/user_map_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

@@ -151,7 +151,7 @@ class UserMapView extends GetView<UserMapViewModel> {
                                       enableDrag: true,
                                       backgroundColor: Colors.transparent,
                                       builder: (modalContext) {
-                                        return const SOSView();
+                                        return const UserSOSView();
                                       },
                                       shape: const RoundedRectangleBorder(
                                         borderRadius: BorderRadius.vertical(

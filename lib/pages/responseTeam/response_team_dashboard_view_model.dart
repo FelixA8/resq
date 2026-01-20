@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:resqapp/pages/responseTeam/responseTeamMap/response_team_map_view_model.dart';
-import 'package:resqapp/pages/loginPage/login_page_view.dart';
+import 'package:resqapp/pages/LoginPage/login_page_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ResponseTeamDashboardViewModel extends GetxController {

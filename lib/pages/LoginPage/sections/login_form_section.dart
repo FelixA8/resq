@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:resqapp/pages/loginPage/login_page_view_model.dart';
+import 'package:resqapp/pages/LoginPage/login_page_view_model.dart';
 import '../../../theme/theme_app.dart';
 import '../../../components/confirmation_button.dart';
 

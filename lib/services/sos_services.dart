@@ -316,7 +316,7 @@ class SosServices {
 // ============================================================
 // Set to true to send SMS alerts to emergency contacts
 // Set to false to disable SMS sending (save costs during development)
-const bool SEND_EMERGENCY_SMS = false;
+const bool SEND_EMERGENCY_SMS = true;
 // ============================================================
 
 /// Service for sending emergency SMS alerts to user's emergency contacts
