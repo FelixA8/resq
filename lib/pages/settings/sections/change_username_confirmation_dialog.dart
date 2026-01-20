@@ -41,9 +41,9 @@ class ConfirmationDialog extends StatelessWidget {
                 color: Colors.red.shade400,
               ),
             ),
+
             const SizedBox(height: 20),
 
-            // Title
             Text(
               title,
               style: TextStyle(
@@ -54,6 +54,7 @@ class ConfirmationDialog extends StatelessWidget {
               ),
               textAlign: TextAlign.center,
             ),
+
             const SizedBox(height: 12),
 
             Text(
@@ -66,9 +67,9 @@ class ConfirmationDialog extends StatelessWidget {
               ),
               textAlign: TextAlign.center,
             ),
+
             const SizedBox(height: 20),
 
-            // Action Buttons
             _buildActionButtons(),
           ],
         ),
@@ -76,12 +77,10 @@ class ConfirmationDialog extends StatelessWidget {
     );
   }
 
-  /// Build the action buttons row
   Widget _buildActionButtons() {
     const theme = ResQTheme();
     return Row(
       children: [
-        // Cancel Button
         Expanded(
           child: Container(
             height: 48,
@@ -108,9 +107,9 @@ class ConfirmationDialog extends StatelessWidget {
             ),
           ),
         ),
+        
         const SizedBox(width: 12),
 
-        // Delete Button
         Expanded(
           child: Container(
             height: 48,

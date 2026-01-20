@@ -3,24 +3,24 @@ import 'package:get/get.dart';
 import 'package:resqapp/pages/userMap/user_map_view_model.dart';
 import 'package:resqapp/theme/theme_app.dart';
 
-class NavigationBanner extends StatelessWidget {
-  const NavigationBanner({Key? key}) : super(key: key);
+class UserNavigationBanner extends StatelessWidget {
+  const UserNavigationBanner({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     var theme = ResQTheme();
-    
+
     return GetX<UserMapViewModel>(
       builder: (controller) {
         if (!controller.isNavigating.value) {
           return SizedBox.shrink();
         }
-        
+
         // Show arrival UI when user has arrived
         if (controller.hasArrived.value) {
           return _buildArrivalBanner(controller, theme);
         }
-        
+
         // Show navigation UI when navigating
         return _buildNavigationBanner(controller, theme);
       },
@@ -136,16 +136,15 @@ class NavigationBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Turn Direction Icon
           _buildTurnIcon(controller.turnType.value, theme),
+
           SizedBox(width: 12),
-          // Navigation Instructions
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Next turn instruction
                 if (controller.currentInstruction.value.isNotEmpty)
                   Text(
                     controller.currentInstruction.value,
@@ -158,8 +157,9 @@ class NavigationBanner extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+
                 SizedBox(height: 2),
-                // Total distance remaining
+
                 Text(
                   'Jarak menuju lokasi: ${_formatDistance(controller.distanceToDestination.value * 1000)}',
                   style: TextStyle(
@@ -179,7 +179,7 @@ class NavigationBanner extends StatelessWidget {
 
   Widget _buildTurnIcon(String turnType, ResQTheme theme) {
     IconData iconData;
-    
+
     switch (turnType.toLowerCase()) {
       case 'left':
         iconData = Icons.turn_left;
@@ -199,7 +199,7 @@ class NavigationBanner extends StatelessWidget {
       default:
         iconData = Icons.navigation;
     }
-    
+
     return Container(
       width: 50,
       height: 50,
@@ -214,11 +214,7 @@ class NavigationBanner extends StatelessWidget {
           ),
         ],
       ),
-      child: Icon(
-        iconData,
-        color: theme.colors.primary,
-        size: 28,
-      ),
+      child: Icon(iconData, color: theme.colors.primary, size: 28),
     );
   }
 

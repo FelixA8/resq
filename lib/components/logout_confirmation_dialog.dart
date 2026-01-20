@@ -34,9 +34,9 @@ class LogoutConfirmationDialog extends StatelessWidget {
                 color: Colors.red.shade400,
               ),
             ),
+
             const SizedBox(height: 20),
 
-            // Title
             const Text(
               'Konfirmasi Logout',
               style: TextStyle(
@@ -49,7 +49,6 @@ class LogoutConfirmationDialog extends StatelessWidget {
             ),
             const SizedBox(height: 12),
 
-            // Main message
             const Text(
               'Apakah anda yakin ingin keluar akun?',
               style: TextStyle(
@@ -60,9 +59,9 @@ class LogoutConfirmationDialog extends StatelessWidget {
               ),
               textAlign: TextAlign.center,
             ),
+
             const SizedBox(height: 20),
 
-            // Action Buttons
             _buildActionButtons(),
           ],
         ),

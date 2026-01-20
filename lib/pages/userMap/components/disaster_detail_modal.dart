@@ -8,9 +8,9 @@ class DisasterDetailModal extends StatelessWidget {
   final Disaster disaster;
 
   const DisasterDetailModal({
-    Key? key,
+    super.key,
     required this.disaster,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

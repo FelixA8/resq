@@ -1,28 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:resqapp/theme/theme_app.dart';
 
-/// Dynamic button component for SOS report cards
-/// Can be either red (with icon) or grey (with text)
 class ReportCardButton extends StatelessWidget {
   final bool isAssigned;
   final String? assignedUnitId;
   final VoidCallback? onPressed;
 
   const ReportCardButton({
-    Key? key,
+    super.key,
     required this.isAssigned,
     this.assignedUnitId,
     this.onPressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = ResQTheme();
 
     if (isAssigned) {
-      // Grey button showing assigned unit
       return ElevatedButton(
-        onPressed: null, // Disabled when assigned
+        onPressed: null,
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.grey.shade400,
           foregroundColor: Colors.white,
@@ -44,7 +41,6 @@ class ReportCardButton extends StatelessWidget {
         ),
       );
     } else {
-      // Red button with icon for viewing on map
       return ElevatedButton.icon(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
@@ -56,10 +52,7 @@ class ReportCardButton extends StatelessWidget {
           ),
           elevation: 0,
         ),
-        icon: const Icon(
-          Icons.map,
-          size: 16,
-        ),
+        icon: const Icon(Icons.map, size: 16),
         label: const Text(
           'Lihat Pada Peta',
           style: TextStyle(
@@ -73,4 +66,3 @@ class ReportCardButton extends StatelessWidget {
     }
   }
 }
-

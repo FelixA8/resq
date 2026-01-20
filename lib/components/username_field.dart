@@ -15,7 +15,6 @@ class UsernameField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextField(
-      // controller: TextEditingController(text: value),
       onChanged: onChanged,
       decoration: InputDecoration(
         filled: true,

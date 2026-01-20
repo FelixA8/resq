@@ -3,13 +3,14 @@ import 'package:flutter/material.dart';
 class RadiantMarker extends StatefulWidget {
   final Widget child;
   final Color color;
-  const RadiantMarker({Key? key, required this.child, required this.color}) : super(key: key);
+  const RadiantMarker({super.key, required this.child, required this.color});
 
   @override
   State<RadiantMarker> createState() => _RadiantMarkerState();
 }
 
-class _RadiantMarkerState extends State<RadiantMarker> with SingleTickerProviderStateMixin {
+class _RadiantMarkerState extends State<RadiantMarker>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
 
@@ -21,9 +22,10 @@ class _RadiantMarkerState extends State<RadiantMarker> with SingleTickerProvider
       duration: const Duration(milliseconds: 1000),
     )..repeat(reverse: true);
 
-    _animation = Tween<double>(begin: 0.4, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _animation = Tween<double>(
+      begin: 0.4,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -55,7 +57,6 @@ class _RadiantMarkerState extends State<RadiantMarker> with SingleTickerProvider
                 ],
               ),
             ),
-            // Main marker image
             child!,
           ],
         );

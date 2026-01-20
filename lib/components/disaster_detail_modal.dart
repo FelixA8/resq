@@ -2,6 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:resqapp/models/supabase_models.dart';
 import 'package:resqapp/theme/theme_app.dart';
 
+class DisasterActionException implements Exception {
+  final String message;
+
+  const DisasterActionException(this.message);
+
+  @override
+  String toString() => message;
+}
+
 class DisasterDetailModal extends StatefulWidget {
   final Disaster disaster;
   final Future<String> Function(Disaster) onFetchAddress;
@@ -12,7 +21,7 @@ class DisasterDetailModal extends StatefulWidget {
   final String Function(String?) formatDepth;
 
   const DisasterDetailModal({
-    Key? key,
+    super.key,
     required this.disaster,
     required this.onFetchAddress,
     required this.onDownloadShakeMap,
@@ -20,7 +29,7 @@ class DisasterDetailModal extends StatefulWidget {
     required this.formatMagnitude,
     required this.getTsunamiPotential,
     required this.formatDepth,
-  }) : super(key: key);
+  });
 
   @override
   State<DisasterDetailModal> createState() => _DisasterDetailModalState();
@@ -39,7 +48,6 @@ class _DisasterDetailModalState extends State<DisasterDetailModal> {
 
   Future<void> _loadAddress() async {
     setState(() => _isLoadingAddress = true);
-
     try {
       final address = await widget.onFetchAddress(widget.disaster);
       if (!mounted) return;
@@ -56,28 +64,11 @@ class _DisasterDetailModalState extends State<DisasterDetailModal> {
     }
   }
 
-  // Future<void> _downloadShakeMap() async {
-  //   try {
-  //     await widget.onDownloadShakeMap(widget.disaster);
-  //   } on DisasterActionException catch (e) {
-  //     _showSnackBar(e.message);
-  //   } catch (e) {
-  //     _showSnackBar('Error: ${e.toString()}');
-  //   }
-  // }
-
-  void _showSnackBar(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
-    );
-  }
-
   Widget _buildDivider() => Container(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        height: 1.5,
-        color: Colors.grey.shade200,
-      );
+    margin: const EdgeInsets.symmetric(vertical: 8),
+    height: 1.5,
+    color: Colors.grey.shade200,
+  );
 
   Widget _buildInfoRow({
     required String icon,
@@ -87,16 +78,10 @@ class _DisasterDetailModalState extends State<DisasterDetailModal> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center, // center vertically
       children: [
-        // Icon section
-        Image.asset(
-          icon,
-          width: 30,
-          height: 30,
-          color: theme.colors.primary,
-        ),
+        Image.asset(icon, width: 30, height: 30, color: theme.colors.primary),
+
         const SizedBox(width: 16),
 
-        // Text section
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,7 +96,9 @@ class _DisasterDetailModalState extends State<DisasterDetailModal> {
                   color: Colors.grey[600],
                 ),
               ),
+
               const SizedBox(height: 1),
+
               Text(
                 value,
                 style: TextStyle(
@@ -137,7 +124,6 @@ class _DisasterDetailModalState extends State<DisasterDetailModal> {
       ),
       child: Stack(
         children: [
-          // Scrollable content
           Padding(
             padding: const EdgeInsets.only(top: 18), // spacing below handle bar
             child: SingleChildScrollView(
@@ -149,34 +135,46 @@ class _DisasterDetailModalState extends State<DisasterDetailModal> {
                   children: [
                     const SizedBox(height: 20),
 
-                    // Title
                     _buildHeader(),
+
                     const SizedBox(height: 18),
 
-                    // Disaster Info List
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Column(
                         children: [
                           _buildDivider(),
+
                           _buildInfoRow(
                             icon: 'assets/images/icons/earthquake-scale.png',
                             label: 'Kekuatan Gempa',
-                            value: widget.formatMagnitude(widget.disaster.magnitude),
+                            value: widget.formatMagnitude(
+                              widget.disaster.magnitude,
+                            ),
                           ),
+
                           _buildDivider(),
+
                           _buildInfoRow(
                             icon: 'assets/images/icons/date.png',
                             label: 'Waktu Kejadian',
-                            value: widget.formatDate(widget.disaster.occurredAt),
+                            value: widget.formatDate(
+                              widget.disaster.occurredAt,
+                            ),
                           ),
+
                           _buildDivider(),
+
                           _buildInfoRow(
                             icon: 'assets/images/icons/tsunami.png',
                             label: 'Potensi Terjadinya Tsunami',
-                            value: widget.getTsunamiPotential(widget.disaster.magnitude),
+                            value: widget.getTsunamiPotential(
+                              widget.disaster.magnitude,
+                            ),
                           ),
+
                           _buildDivider(),
+
                           _buildInfoRow(
                             icon: 'assets/images/icons/depth.png',
                             label: 'Kedalaman',
@@ -191,7 +189,6 @@ class _DisasterDetailModalState extends State<DisasterDetailModal> {
             ),
           ),
 
-          // Fixed handle bar
           Positioned(
             top: 12,
             left: 0,
@@ -199,7 +196,7 @@ class _DisasterDetailModalState extends State<DisasterDetailModal> {
             child: GestureDetector(
               onVerticalDragUpdate: (details) {
                 if (details.primaryDelta != null && details.primaryDelta! > 8) {
-                  Navigator.pop(context); // pull down to dismiss
+                  Navigator.pop(context);
                 }
               },
               child: _buildHandleBar(),
@@ -210,60 +207,46 @@ class _DisasterDetailModalState extends State<DisasterDetailModal> {
     );
   }
 
-  // -----------------------------
-  // Subcomponents
-  // -----------------------------
   Widget _buildHandleBar() => Center(
-        child: Container(
-          width: 40,
-          height: 4,
-          decoration: BoxDecoration(
-            color: Colors.grey.shade300,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-      );
+    child: Container(
+      width: 40,
+      height: 4,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade300,
+        borderRadius: BorderRadius.circular(2),
+      ),
+    ),
+  );
 
   Widget _buildHeader() => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Gempa Bumi',
+    padding: const EdgeInsets.symmetric(horizontal: 20),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Gempa Bumi',
+          style: TextStyle(
+            fontFamily: 'SF Pro',
+            fontWeight: FontWeight.w600,
+            fontSize: 20,
+            color: Colors.black,
+          ),
+        ),
+        const SizedBox(height: 2),
+        _isLoadingAddress
+            ? CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(theme.colors.primary),
+            )
+            : Text(
+              _address ?? 'Lokasi tidak tersedia',
               style: TextStyle(
                 fontFamily: 'SF Pro',
-                fontWeight: FontWeight.w600,
-                fontSize: 20,
-                color: Colors.black,
+                fontWeight: FontWeight.w400,
+                fontSize: 13,
+                color: Colors.grey[600],
               ),
             ),
-            const SizedBox(height: 2),
-            _isLoadingAddress
-                ? CircularProgressIndicator(
-                    valueColor:
-                        AlwaysStoppedAnimation<Color>(theme.colors.primary),
-                  )
-                : Text(
-                    _address ?? 'Lokasi tidak tersedia',
-                    style: TextStyle(
-                      fontFamily: 'SF Pro',
-                      fontWeight: FontWeight.w400,
-                      fontSize: 13,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-          ],
-        ),
-      );
+      ],
+    ),
+  );
 }
-
-class DisasterActionException implements Exception {
-  final String message;
-
-  const DisasterActionException(this.message);
-
-  @override
-  String toString() => message;
-}
-

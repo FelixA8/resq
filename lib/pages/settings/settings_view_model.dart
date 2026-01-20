@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:resqapp/pages/SOSWaiting/sos_waiting_view_model.dart';
 import 'package:resqapp/pages/settings/components/settings_error_dialog.dart';
 import 'package:resqapp/pages/settings/sections/change_username_confirmation_dialog.dart';
-import 'package:resqapp/pages/userMap/user_map_view_model.dart';
 import 'package:resqapp/theme/theme_app.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:resqapp/service/supabase_service.dart';
+import 'package:resqapp/services/login_services.dart';
+import 'package:resqapp/services/sos_services.dart';
 import 'package:resqapp/models/supabase_models.dart';
 import 'dart:developer' as developer;
 
 class SettingsViewModel extends GetxController {
   final Rx<ResqUser?> _user = Rx<ResqUser?>(null);
   ResqUser? get user => _user.value;
+  List<Contact> contacts = []; 
   final theme = ResQTheme();
 
   final RxList<String?> contactNumbers = <String?>[null, null, null].obs;
@@ -33,9 +33,9 @@ class SettingsViewModel extends GetxController {
       final userId = prefs.getString('userId');
 
       if (userId != null) {
-        _user.value = await SupabaseService.getUserById(userId);
+        _user.value = await LoginServices.getUserById(userId);
 
-        final contacts = await SupabaseService.getUserContacts(userId);
+        contacts = await SosServices.getContactList(userId);
 
         contactNumbers.value = [null, null, null];
 
@@ -60,7 +60,7 @@ class SettingsViewModel extends GetxController {
     if (user == null) return;
 
     final updatedUser = user!.copyWith(username: newName);
-    final success = await SupabaseService.updateUser(updatedUser);
+    final success = await LoginServices.updateUser(updatedUser);
 
     if (success) {
       _user.value = updatedUser;
@@ -78,6 +78,7 @@ class SettingsViewModel extends GetxController {
   void validateUsername(String username) {
     final trimmedUsername = username.trim();
     final RegExp alphaHyphen = RegExp(r'^[a-zA-Z-]+$');
+
     if (trimmedUsername.length >= 3 && alphaHyphen.hasMatch(trimmedUsername)) {
       showUsernameConfirmationDialog(trimmedUsername);
     } else {
@@ -114,11 +115,11 @@ class SettingsViewModel extends GetxController {
   Future<void> updateContact(int index, String? number) async {
     if (user == null) return;
 
-    // 1-based index for contact name
     final contactName = 'Contact ${index + 1}';
+    final oldNumber = contactNumbers[index];
 
     if (number == null || number.isEmpty) {
-      final success = await SupabaseService.deleteContact(
+      final success = await SosServices.deleteContact(
         user!.userId,
         contactName,
       );
@@ -134,7 +135,12 @@ class SettingsViewModel extends GetxController {
       phoneNumber: number,
     );
 
-    final success = await SupabaseService.upsertContact(contact);
+    bool success;
+    if (oldNumber == null) {
+      success = await SosServices.addContact(contact);
+    } else {
+      success = await SosServices.updateContact(contact);
+    }
 
     if (success) {
       contactNumbers[index] = number;
@@ -147,6 +153,27 @@ class SettingsViewModel extends GetxController {
     Function() onSuccess,
   ) {
     String newNumber = rawNumber.trim();
+    String oldNumber = contactNumbers.value[index] ?? "";
+
+    print("old: ${oldNumber}");
+    print("new: ${newNumber}");
+
+    if (oldNumber.isNotEmpty && newNumber.isEmpty) {
+      Get.dialog(
+        ConfirmationDialog(
+          onConfirm: () {
+            updateContact(index, newNumber).then((_) {
+              onSuccess();
+              Get.back();
+            });
+          },
+          title: 'Apakah kamu yakin?',
+          caption:
+              'Penekanan tombol SOS akan menghapus nomor telepon yang sudah terhubung.',
+        ),
+      );
+      return;
+    }
 
     if (newNumber.startsWith('+')) {
       newNumber = newNumber.substring(1);
@@ -193,7 +220,8 @@ class SettingsViewModel extends GetxController {
           });
         },
         title: 'Apakah kamu yakin?',
-        caption: 'Penekanan tombol SOS akan menyebabkan nomor telepon terhubung dengan pihak terkait.',
+        caption:
+            'Penekanan tombol SOS akan menyebabkan nomor telepon terhubung dengan pihak terkait.',
       ),
     );
   }

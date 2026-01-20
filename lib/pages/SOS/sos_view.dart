@@ -5,12 +5,12 @@ import 'sections/sos_confirmation_section.dart';
 import 'sections/sos_button_section.dart';
 import '../SOSWaiting/sos_waiting_view.dart';
 
-class SOSView extends StatelessWidget {
-  const SOSView({Key? key}) : super(key: key);
+class UserSOSView extends StatelessWidget {
+  const UserSOSView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final sosViewModel = Get.put(SOSViewModel(), tag: 'sos_modal');
+    final sosViewModel = Get.put(UserSOSViewModel(), tag: 'sos_modal');
 
     return Stack(
       children: [
@@ -51,12 +51,12 @@ class SOSView extends StatelessWidget {
                           SOSButtonSection(
                             onPressed: () async {
                               final result =
-                                  await sosViewModel.handleSOSButtonPress();
+                                  await sosViewModel.sosReport();
 
                               if (result['success'] == true) {
                                 Navigator.of(context).pop();
                                 sosViewModel.cleanup();
-                                Get.delete<SOSViewModel>(tag: 'sos_modal');
+                                Get.delete<UserSOSViewModel>(tag: 'sos_modal');
 
                                 final vm = result['sosWaitingViewModel'];
                                 if (vm != null) {

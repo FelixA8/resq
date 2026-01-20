@@ -4,9 +4,9 @@ class SOSWaitingHeaderSection extends StatelessWidget {
   final bool isResponseTeamAssigned;
   
   const SOSWaitingHeaderSection({
-    Key? key,
+    super.key,
     this.isResponseTeamAssigned = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

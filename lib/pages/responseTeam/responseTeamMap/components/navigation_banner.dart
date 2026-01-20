@@ -3,8 +3,8 @@ import 'package:get/get.dart';
 import 'package:resqapp/pages/responseTeam/responseTeamMap/response_team_map_view_model.dart';
 import 'package:resqapp/theme/theme_app.dart';
 
-class NavigationBanner extends StatelessWidget {
-  const NavigationBanner({Key? key}) : super(key: key);
+class ResponseTeamNavigationBannerView extends StatelessWidget {
+  const ResponseTeamNavigationBannerView({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

@@ -1,13 +1,12 @@
 import 'dart:async';
 import 'dart:math';
 import 'dart:developer' as developer;
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:resqapp/theme/theme_app.dart';
 import 'package:uuid/uuid.dart';
 import 'models/otp_model.dart';
-import '../../service/supabase_service.dart';
+import '../../services/login_services.dart';
 import '../../models/supabase_models.dart';
 import '../../services/sms_service.dart';
 import '../../services/message_central_service.dart';
@@ -32,11 +31,10 @@ class OTPViewModel extends ChangeNotifier {
   Timer? _expiryTimer;
   ViewState _currentState = ViewState.otpInput;
 
-  String? _verificationId; // For both local and Message Central
-  String? _generatedOtpCode; // Only used for local SMS method
-  String userId = ""; // Store userId after saving username
+  String? _verificationId;
+  String? _generatedOtpCode;
+  String userId = "";
 
-  // Getters
   OTPModel? get otpModel => _otpModel;
   bool get isLoading => _isLoading;
 
@@ -51,28 +49,25 @@ class OTPViewModel extends ChangeNotifier {
     return (100000 + random.nextInt(900000)).toString();
   }
 
-  // Username-related getters
   String get username => _otpModel?.username ?? '';
   bool get isUsernameValid => _otpModel?.isUsernameValid ?? false;
 
-  // Initialize with phone number
   Future<void> initialize(String phoneNumber) async {
     _otpModel = OTPModel(phoneNumber: phoneNumber, sentTime: DateTime.now());
 
-    await _createAndStoreOtpCode(phoneNumber);
+    await _getOtp(phoneNumber);
 
     _startResendTimer();
     _startExpiryTimer();
     notifyListeners();
   }
 
-  Future<void> _createAndStoreOtpCode(String phoneNumber) async {
+  Future<void> _getOtp(String phoneNumber) async {
     try {
       _isLoading = true;
       notifyListeners();
 
       if (USE_MESSAGE_CENTRAL) {
-        // ========== MESSAGE CENTRAL API METHOD ==========
         final result = await MessageCentralService.sendOtp(
           phoneNumber: phoneNumber,
           otpLength: 6,
@@ -93,9 +88,8 @@ class OTPViewModel extends ChangeNotifier {
           );
         }
       } else {
-        developer.log("[log] otp_view_model.dart:USE_MESSAGE_CENTRAL=false");
-        // ========== LOCAL SMS METHOD ==========
         _generatedOtpCode = _generateOtpCode();
+        print("OTP Code: ${_generatedOtpCode}");
         _verificationId =
             'otp_${DateTime.now().millisecondsSinceEpoch}_${phoneNumber.replaceAll('+', '')}';
 
@@ -109,25 +103,32 @@ class OTPViewModel extends ChangeNotifier {
           ),
         );
 
-        final connectionOk = await SupabaseService.testConnection();
+        final connectionOk = await LoginServices.testConnection();
 
         OtpCode? result;
 
         if (!connectionOk) {
           result = otpCode;
         } else {
-          result = await SupabaseService.createOtpCode(otpCode);
-          developer.log("[log] otp code generated: ${otpCode.otpCode}");
+          result = await LoginServices.createOtpCode(otpCode);
         }
 
         if (result != null) {
-          // Send SMS with OTP code (opens SMS app)
           final smsSent = await SmsService.sendOtpSms(
             phoneNumber: phoneNumber,
             otpCode: _generatedOtpCode!,
           );
 
-          if (smsSent) {}
+          if (smsSent) {
+            Get.snackbar(
+              'OTP',
+              'Kode telah dikirimkan',
+              snackPosition: SnackPosition.BOTTOM,
+              colorText: Colors.white,
+              animationDuration: Duration(milliseconds: 500),
+              duration: Duration(seconds: 2),
+            );
+          }
         } else {
           Get.snackbar(
             'Error',
@@ -154,14 +155,15 @@ class OTPViewModel extends ChangeNotifier {
         animationDuration: Duration(milliseconds: 500),
         duration: Duration(seconds: 2),
       );
+
       notifyListeners();
     }
   }
 
-  Future<bool> validateOTP(String code) async {
+  Future<bool> verifyOTP(String code) async {
     if (isOTPExpired) {
       Get.snackbar(
-        'OTP Kadaluarse',
+        'OTP Kadaluarsa',
         'Kode OTP telah kadaluarsa, silahkan meminta ulang kode OTP.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: theme.colors.primary,
@@ -169,6 +171,7 @@ class OTPViewModel extends ChangeNotifier {
         animationDuration: Duration(milliseconds: 500),
         duration: Duration(seconds: 2),
       );
+
       notifyListeners();
       return false;
     }
@@ -180,26 +183,18 @@ class OTPViewModel extends ChangeNotifier {
       bool isValid = false;
 
       if (USE_MESSAGE_CENTRAL) {
-        // ========== MESSAGE CENTRAL API VALIDATION ==========
         final result = await MessageCentralService.validateOtp(
           verificationId: _verificationId!,
           code: code,
           phoneNumber: _otpModel!.phoneNumber,
         );
         isValid = result['success'];
-
-        if (!isValid) {
-          developer.log(
-            'Message Central validation failed: ${result['message']}',
-          );
-        }
       } else {
-        // ========== LOCAL SMS VALIDATION ==========
         try {
-          isValid = await SupabaseService.verifyOtpCode(_verificationId!, code);
+          isValid = await LoginServices.verifyOtpCode(_verificationId!, code);
 
           if (isValid) {
-            await SupabaseService.invalidateOtpCode(_verificationId!);
+            await LoginServices.invalidateOtpCode(_verificationId!);
           }
         } catch (e) {
           isValid = _generatedOtpCode == code;
@@ -209,11 +204,12 @@ class OTPViewModel extends ChangeNotifier {
       if (isValid) {
         _otpModel = _otpModel?.copyWith(otpCode: code);
 
-        final existingUser = await SupabaseService.getUserByPhone(
+        final existingUser = await LoginServices.getUserByPhone(
           _otpModel!.phoneNumber,
         );
+
         if (existingUser != null) {
-          this.userId = existingUser.userId;
+          userId = existingUser.userId;
           _otpModel = _otpModel?.copyWith(username: existingUser.username);
           _currentState = ViewState.authenticated;
         } else {
@@ -233,10 +229,9 @@ class OTPViewModel extends ChangeNotifier {
 
       _isLoading = false;
       notifyListeners();
+
       return isValid;
     } catch (e) {
-      _isLoading = false;
-      print('Verifikasi gagal: ${e}');
       Get.snackbar(
         'Verifikasi',
         'Verifikasi gagal, silahkan coba lagi.',
@@ -246,12 +241,14 @@ class OTPViewModel extends ChangeNotifier {
         animationDuration: Duration(milliseconds: 500),
         duration: Duration(seconds: 2),
       );
+
+      _isLoading = false;
       notifyListeners();
+
       return false;
     }
   }
 
-  // Resend OTP
   Future<void> resendOTP() async {
     if (!canResendOTP || _otpModel?.phoneNumber == null) return;
 
@@ -261,9 +258,9 @@ class OTPViewModel extends ChangeNotifier {
 
     try {
       if (_verificationId != null) {
-        await SupabaseService.invalidateOtpCode(_verificationId!);
+        await LoginServices.invalidateOtpCode(_verificationId!);
       }
-      await _createAndStoreOtpCode(_otpModel!.phoneNumber);
+      await _getOtp(_otpModel!.phoneNumber);
 
       _otpModel = _otpModel?.copyWith(
         resendAttempts: (_otpModel?.resendAttempts ?? 0) + 1,
@@ -276,10 +273,9 @@ class OTPViewModel extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _isLoading = false;
-      print('Gagal mengirim OTP: ${e}');
       Get.snackbar(
-        'Gagal', // Title
-        'Gagal mengirim OTP. Silahkan coba lagi nanti.', // Message
+        'Gagal',
+        'Gagal mengirim OTP. Silahkan coba lagi nanti.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: theme.colors.primary,
         colorText: Colors.white,
@@ -336,7 +332,6 @@ class OTPViewModel extends ChangeNotifier {
     try {
       final userId = Uuid().v4();
 
-      // Create ResqUser object
       final newUser = ResqUser(
         userId: userId,
         phoneNumber: _otpModel!.phoneNumber,
@@ -344,14 +339,14 @@ class OTPViewModel extends ChangeNotifier {
         role: 'citizen',
       );
 
-      // Save user to Supabase
-      final result = await SupabaseService.createUser(newUser);
+      final result = await LoginServices.createUser(newUser);
 
       if (result != null) {
         this.userId = userId;
 
         _isLoading = false;
         notifyListeners();
+
         return true;
       } else {
         Get.snackbar(

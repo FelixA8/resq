@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../userNamePage/components/username_field.dart';
-import 'usernameInputViewModel.dart';
+import 'package:resqapp/pages/otpPage/components/username_field.dart';
+import 'username_input_view_model.dart';
 
 class UsernameInputView extends StatelessWidget {
   const UsernameInputView({super.key});
@@ -18,13 +18,17 @@ class UsernameInputView extends StatelessWidget {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
+
             const SizedBox(height: 8),
+
             const Text(
               'Nama anda akan digunakan untuk mengidentifikasikan diri anda pada fitur-fitur aplikasi.',
               style: TextStyle(fontSize: 12, color: Colors.black54),
               textAlign: TextAlign.center,
             ),
+
             const SizedBox(height: 15),
+
             UsernameField(
               value: viewModel.username,
               onChanged: viewModel.handleUsernameChanged,

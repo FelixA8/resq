@@ -5,7 +5,7 @@ import 'package:resqapp/theme/theme_app.dart';
 import '../settings_view_model.dart';
 
 class ProfileSection extends StatefulWidget {
-  const ProfileSection({Key? key}) : super(key: key);
+  const ProfileSection({super.key});
 
   @override
   State<ProfileSection> createState() => _ProfileSectionState();

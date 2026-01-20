@@ -5,8 +5,7 @@ import 'package:resqapp/theme/theme_app.dart';
 class LocationDisabledDialog extends StatefulWidget {
   final Future<bool> Function() onRetry;
 
-  const LocationDisabledDialog({Key? key, required this.onRetry})
-    : super(key: key);
+  const LocationDisabledDialog({super.key, required this.onRetry});
 
   @override
   State<LocationDisabledDialog> createState() => _LocationDisabledDialogState();
@@ -62,7 +61,6 @@ class _LocationDisabledDialogState extends State<LocationDisabledDialog> {
             ),
             const SizedBox(height: 20),
 
-            // Title
             const Text(
               'Layanan Lokasi Nonaktif',
               style: TextStyle(
@@ -73,9 +71,9 @@ class _LocationDisabledDialogState extends State<LocationDisabledDialog> {
               ),
               textAlign: TextAlign.center,
             ),
+
             const SizedBox(height: 12),
 
-            // Main message
             const Text(
               'Untuk menggunakan fitur ini, mohon aktifkan layanan lokasi pada perangkat Anda.',
               style: TextStyle(
@@ -86,9 +84,9 @@ class _LocationDisabledDialogState extends State<LocationDisabledDialog> {
               ),
               textAlign: TextAlign.center,
             ),
+
             const SizedBox(height: 20),
 
-            // Action Button
             _buildActionButton(),
           ],
         ),
@@ -96,7 +94,6 @@ class _LocationDisabledDialogState extends State<LocationDisabledDialog> {
     );
   }
 
-  /// Build the action button
   Widget _buildActionButton() {
     const theme = ResQTheme();
     return Container(

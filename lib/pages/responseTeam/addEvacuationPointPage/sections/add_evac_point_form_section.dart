@@ -16,7 +16,6 @@ class AddEvacPointFormSection extends GetView<AddEvacuationPointViewModel> {
     return Expanded(
       child: Column(
         children: [
-          // Map Section
           Expanded(
             child: Container(
               width: double.infinity,
@@ -152,7 +151,7 @@ class AddEvacPointFormSection extends GetView<AddEvacuationPointViewModel> {
               padding: EdgeInsets.symmetric(horizontal: theme.padding.lm),
               child: Center(
                 child: ConfirmationButton(
-                  onPressed: controller.onConfirmPressed,
+                  onPressed: controller.modifyEvacuationPoint,
                   isEnabled: true,
                   text: 'Konfirmasi',
                 ),

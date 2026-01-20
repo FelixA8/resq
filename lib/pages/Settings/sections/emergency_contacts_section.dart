@@ -9,7 +9,7 @@ import '../settings_view_model.dart';
 import '../components/emergency_settings_save_button.dart';
 
 class EmergencyContactsSection extends StatefulWidget {
-  const EmergencyContactsSection({Key? key}) : super(key: key);
+  const EmergencyContactsSection({super.key});
 
   @override
   State<EmergencyContactsSection> createState() =>
@@ -40,7 +40,6 @@ class _EmergencyContactsSectionState extends State<EmergencyContactsSection> {
   @override
   Widget build(BuildContext context) {
     final viewModel = Get.find<SettingsViewModel>();
-    // final phoneNumbers = viewModel.contactNumbers; // Accessed inside Obx
 
     final phoneIcons = [
       'assets/images/icons/phone-one.png',
@@ -116,6 +115,7 @@ class _EmergencyContactsSectionState extends State<EmergencyContactsSection> {
                                 ],
                               ),
                             ),
+                          
                           Expanded(
                             child: Padding(
                               padding: EdgeInsets.only(
@@ -179,6 +179,7 @@ class _EmergencyContactsSectionState extends State<EmergencyContactsSection> {
                                       ),
                             ),
                           ),
+                          
                           isEdit
                               ? Row(
                                 children: [
@@ -195,7 +196,9 @@ class _EmergencyContactsSectionState extends State<EmergencyContactsSection> {
                                       );
                                     },
                                   ),
+                                  
                                   SizedBox(width: 4),
+                                  
                                   SettingsCancelButton(
                                     onCancel: () {
                                       focusNodes[index].unfocus();
@@ -225,6 +228,7 @@ class _EmergencyContactsSectionState extends State<EmergencyContactsSection> {
                                           phoneNumbers[index]!;
                                     }
                                   });
+                                  
                                   Future.delayed(
                                     Duration(milliseconds: 100),
                                     () {

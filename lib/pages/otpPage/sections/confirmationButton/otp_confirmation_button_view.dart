@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../components/confirmation_button.dart';
-import 'confirmationButtonViewModel.dart';
+import 'otp_confirmation_button_view_model.dart';
 
-class ConfirmationButtonView extends StatelessWidget {
-  const ConfirmationButtonView({super.key});
+class OTPConfirmationButtonView extends StatelessWidget {
+  const OTPConfirmationButtonView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +18,7 @@ class ConfirmationButtonView extends StatelessWidget {
                     ? () => viewModel.handleConfirm(context)
                     : () {},
             isEnabled: viewModel.isEnabled,
-            text: 'Konfirmasi', // Add the required text parameter
+            text: 'Konfirmasi',
           ),
         );
       },

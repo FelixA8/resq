@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:resqapp/pages/loginPage/login_page_view_model.dart';
+import 'package:resqapp/pages/LoginPage/login_page_view_model.dart';
 import '../../../theme/theme_app.dart';
 import '../../../components/confirmation_button.dart';
 
@@ -11,7 +11,7 @@ class LoginFormSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = Provider.of<LoginPageViewModel>(context);
+    final viewModel = Provider.of<LoginViewModel>(context);
     const theme = ResQTheme();
 
     return Padding(
@@ -119,11 +119,11 @@ class LoginFormSection extends StatelessWidget {
                 ),
             ],
           ),
-            
+
           const SizedBox(height: 28),
           SizedBox(
             child: ConfirmationButton(
-              onPressed: () => viewModel.validate(context),
+              onPressed: () => viewModel.submitCredential(context),
               isEnabled: true,
               text: 'Kirim OTP',
             ),

@@ -12,13 +12,13 @@ class EvacuationPointDetailModal extends StatelessWidget {
   final VoidCallback? onCancelRoute;
 
   const EvacuationPointDetailModal({
-    Key? key,
+    super.key,
     required this.evacuationPoint,
     required this.onShowRoute,
     this.isNavigating = false,
     this.distanceKm = 0.0,
     this.onCancelRoute,
-  }) : super(key: key);
+  });
 
   static const theme = ResQTheme();
 
@@ -55,7 +55,9 @@ class EvacuationPointDetailModal extends StatelessWidget {
                 color: Colors.black,
               ),
             ),
+            
             const SizedBox(height: 4),
+            
             Text(
               evacuationPoint.locationDetail ?? 'Lokasi tidak tersedia',
               style: TextStyle(
@@ -92,7 +94,9 @@ class EvacuationPointDetailModal extends StatelessWidget {
                 color: theme.colors.primary,
               ),
             ),
+            
             const SizedBox(height: 20),
+            
             SizedBox(
               width: 65,
               child: ElevatedButton(
@@ -138,8 +142,11 @@ class EvacuationPointDetailModal extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 20),
+                    
                     _buildHeader(),
+                    
                     const SizedBox(height: 30),
+                    
                     if (isNavigating)
                       _buildNavigatingUI()
                     else
@@ -149,6 +156,7 @@ class EvacuationPointDetailModal extends StatelessWidget {
               ),
             ),
           ),
+          
           Positioned(
             top: 12,
             left: 0,

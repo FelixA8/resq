@@ -5,7 +5,7 @@ import 'package:resqapp/pages/settings/settings_view_model.dart';
 import 'package:resqapp/theme/theme_app.dart';
 
 class LogoutSection extends StatefulWidget {
-  const LogoutSection({Key? key}) : super(key: key);
+  const LogoutSection({super.key});
 
   @override
   State<LogoutSection> createState() => _LogoutSectionState();

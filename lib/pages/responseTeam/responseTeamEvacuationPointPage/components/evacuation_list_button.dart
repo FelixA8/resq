@@ -47,7 +47,7 @@ class EvacuationActionButton extends StatelessWidget {
                 margin: EdgeInsets.symmetric(
                   horizontal: theme.padding.s,
                 ),
-                color: Color(0x757B7979), // rgba(123, 121, 121, 0.46)
+                color: Color(0x757B7979),
               ),
               Text(
                 text,

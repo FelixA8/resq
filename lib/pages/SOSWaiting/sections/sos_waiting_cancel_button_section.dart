@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:resqapp/pages/userMap/user_map_view_model.dart';
-import 'package:resqapp/service/supabase_service.dart';
+import 'package:resqapp/services/sos_services.dart';
 import 'package:resqapp/theme/theme_app.dart';
 
 class SOSWaitingCancelButtonSection extends StatelessWidget {
-  const SOSWaitingCancelButtonSection({Key? key}) : super(key: key);
+  const SOSWaitingCancelButtonSection({super.key});
 
   void _showCancelConfirmationDialog(BuildContext context) {
     final theme = ResQTheme();
@@ -73,7 +73,7 @@ class SOSWaitingCancelButtonSection extends StatelessWidget {
                   if (userId != null) {
                     // Delete SOS event from database
                     print('🗑️ Cancelling SOS for user: $userId');
-                    final deleted = await SupabaseService.deleteSosEventByUserId(userId);
+                    final deleted = await SosServices.deleteSosEventByUserId(userId);
                     
                     if (deleted) {
                       print('✅ SOS event successfully deleted from database');
