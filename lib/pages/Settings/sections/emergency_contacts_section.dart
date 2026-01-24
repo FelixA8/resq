@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:resqapp/pages/settings/components/settings_cancel_button.dart';
+import 'package:resqapp/pages/settings/sections/contact_help_dialog.dart';
 import 'package:resqapp/theme/theme_app.dart';
 import '../settings_view_model.dart';
 import '../components/emergency_settings_save_button.dart';
@@ -50,14 +51,28 @@ class _EmergencyContactsSectionState extends State<EmergencyContactsSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Kontak Darurat',
-          style: TextStyle(
-            fontFamily: 'SF Pro',
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
-            color: Colors.black,
-          ),
+        Row(
+          children: [
+            Text(
+              'Kontak Darurat',
+              style: TextStyle(
+                fontFamily: 'SF Pro',
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                color: Colors.black,
+              ),
+            ),
+            IconButton(
+              icon: Image.asset(
+                'assets/images/icons/question-mark.png',
+                width: 18,
+                height: 18,
+              ),
+              onPressed: () {
+                Get.dialog(ContactHelpDialog(), barrierDismissible: false);
+              },
+            ),
+          ],
         ),
         SizedBox(height: 12),
         Obx(() {

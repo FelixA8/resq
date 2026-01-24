@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
+import 'package:resqapp/pages/sos/sos_view.dart';
 import 'package:resqapp/pages/userMap/components/radiant_marker.dart';
 import 'package:resqapp/pages/userMap/components/navigation_arrow_marker.dart';
 import 'package:resqapp/pages/userMap/components/navigation_banner.dart';
 import 'package:resqapp/pages/userMap/user_map_view_model.dart';
 import 'package:resqapp/theme/theme_app.dart';
-import 'package:resqapp/pages/SOS/sos_view.dart';
 import 'package:resqapp/pages/userMap/components/sos_active_banner.dart';
 import 'package:resqapp/pages/userMap/components/disaster_detail_modal.dart';
 import 'package:resqapp/pages/userMap/components/evacuation_point_detail_modal.dart';

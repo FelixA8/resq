@@ -19,7 +19,7 @@ enum ViewState { otpInput, usernameInput, authenticated }
 // ============================================================
 // Set to true to use Message Central API (requires credentials)
 // Set to false to use local SMS app (free, but requires manual sending)
-const bool USE_MESSAGE_CENTRAL = true;
+const bool USE_MESSAGE_CENTRAL = false;
 // ============================================================
 
 class OTPViewModel extends ChangeNotifier {
