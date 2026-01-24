@@ -15,7 +15,6 @@ class UsernameInputViewModel extends ChangeNotifier {
     _validateUsername();
     notifyListeners();
 
-    // Update main view model
     if (_mainViewModel != null) {
       _mainViewModel!.setUsername(username);
     }

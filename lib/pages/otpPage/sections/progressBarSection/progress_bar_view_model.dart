@@ -3,7 +3,7 @@ import '../../otp_view_model.dart';
 
 class ProgressBarViewModel extends ChangeNotifier {
   VoidCallback? _onBackPressed;
-  double _progress = 0.33; // Default 1/3 progress for OTP
+  double _progress = 0.33;
   OTPViewModel? _otpViewModel;
 
   VoidCallback? get onBackPressed => _onBackPressed;
@@ -20,15 +20,13 @@ class ProgressBarViewModel extends ChangeNotifier {
   }
 
   void setOTPViewModel(OTPViewModel? viewModel) {
-    // Remove listener from previous view model
     _otpViewModel?.removeListener(_updateProgress);
 
     _otpViewModel = viewModel;
 
-    // Add listener to new view model
     if (viewModel != null) {
       viewModel.addListener(_updateProgress);
-      _updateProgress(); // Update immediately
+      _updateProgress();
     }
 
     notifyListeners();
@@ -39,13 +37,13 @@ class ProgressBarViewModel extends ChangeNotifier {
       double newProgress;
       switch (_otpViewModel!.currentState) {
         case ViewState.otpInput:
-          newProgress = 0.33; // 1/3 progress for OTP input
+          newProgress = 0.33;
           break;
         case ViewState.usernameInput:
-          newProgress = 0.66; // 2/3 progress for username input
+          newProgress = 0.66;
           break;
         case ViewState.authenticated:
-          newProgress = 1; // 2/3 progress for username input
+          newProgress = 1;
           break;
       }
 

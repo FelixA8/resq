@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:resqapp/pages/responseLoginPage/response_login_page_view_model.dart';
 import 'package:resqapp/pages/responseTeam/response_team_dashboard_view.dart';
-import 'package:resqapp/pages/loginPage/login_page_view.dart';
+import 'package:resqapp/pages/LoginPage/login_page_view.dart';
 import 'package:resqapp/pages/userMap/user_map_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -26,7 +26,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
     // Check if there's a saved instanceCode
     final savedInstanceCode =
-        await ResponseLoginPageViewModel.getSavedInstanceCode();
+        await ResponseTeamLoginViewModel.getSavedInstanceCode();
 
     if (savedInstanceCode != null && savedInstanceCode.isNotEmpty) {
       // Navigate to Response Team Dashboard if instanceCode exists
@@ -48,7 +48,7 @@ class _SplashScreenState extends State<SplashScreen> {
       } else {
         // Not logged in; show login page
         Get.off(
-          () => const LoginPageView(),
+          () => const LoginView(),
           transition: Transition.fadeIn,
         );
       }

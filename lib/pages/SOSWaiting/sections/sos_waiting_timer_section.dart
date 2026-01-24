@@ -5,17 +5,16 @@ import 'package:resqapp/components/radiant_circle_button.dart';
 import 'package:resqapp/theme/theme_app.dart';
 
 class SOSWaitingTimerSection extends StatelessWidget {
-  const SOSWaitingTimerSection({Key? key}) : super(key: key);
+  const SOSWaitingTimerSection({super.key});
 
   @override
   Widget build(BuildContext context) {
     final theme = ResQTheme();
     final screenWidth = MediaQuery.of(context).size.width;
-    final responsiveFontSize = screenWidth * 0.08; // Scales with screen width
+    final responsiveFontSize = screenWidth * 0.08;
     
     return Consumer<SOSWaitingViewModel>(
       builder: (context, viewModel, child) {
-        // Change color to #F1C8C8 when response team is assigned
         final circleColor = viewModel.isResponseTeamAssigned
             ? Color(0xFFF1C8C8)
             : theme.colors.primary;

@@ -7,7 +7,7 @@ import 'sections/emergency_contacts_section.dart';
 import 'sections/logout_section.dart';
 
 class SettingsView extends GetView<SettingsViewModel> {
-  const SettingsView({Key? key}) : super(key: key);
+  const SettingsView({super.key});
 
   @override
   Widget build(BuildContext context) {

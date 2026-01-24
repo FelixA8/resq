@@ -1,5 +1,4 @@
 import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter/foundation.dart';
 import 'dart:developer' as developer;
 
 class SmsService {
@@ -29,7 +28,6 @@ class SmsService {
     }
   }
 
-  /// Check if SMS app can be launched
   static Future<bool> canSendSms() async {
     try {
       final smsUrl = Uri(scheme: 'sms', path: '');

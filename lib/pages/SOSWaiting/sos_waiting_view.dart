@@ -12,7 +12,7 @@ import '../userMap/user_map_view_model.dart';
 class SOSWaitingView extends StatelessWidget {
   final SOSWaitingViewModel? viewModel;
   
-  const SOSWaitingView({Key? key, this.viewModel}) : super(key: key);
+  const SOSWaitingView({super.key, this.viewModel});
 
   @override
   Widget build(BuildContext context) {

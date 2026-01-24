@@ -21,9 +21,9 @@ void main() async {
     await dotenv.load(fileName: '.env');
   } catch (e) {
     developer.log(
-      '🚨 Please create a .env file with SUPABASE_URL and SUPABASE_ANON_KEY',
+      'Please create a .env file with SUPABASE_URL and SUPABASE_ANON_KEY',
     );
-  } 
+  }
 
   final supabaseUrl = dotenv.env['SUPABASE_URL'] ?? "";
   final supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'] ?? "";
@@ -64,8 +64,8 @@ class MyApp extends StatelessWidget {
 
       //Old Routing Method (Still need /login, hence do not delete).
       routes: {
-        '/login': (context) => const LoginPageView(),
-        '/responseLogin': (context) => const ResponseLoginPageView(),
+        '/login': (context) => const LoginView(),
+        '/responseLogin': (context) => const ResponseTeamLoginView(),
         '/otpView': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as Map?;
           final phone = args?['phone'] ?? '';

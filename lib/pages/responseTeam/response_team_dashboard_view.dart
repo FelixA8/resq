@@ -4,7 +4,7 @@ import 'package:resqapp/components/logout_confirmation_dialog.dart';
 import 'package:resqapp/pages/responseTeam/response_team_dashboard_view_model.dart';
 import 'package:resqapp/pages/responseTeam/responseTeamEvacuationPointPage/response_team_evacuation_point_view.dart';
 import 'package:resqapp/pages/responseTeam/responseTeamMap/response_team_map_view.dart';
-import 'package:resqapp/pages/responseTeam/responseTeamSOSReport/response_team_sos_report_view.dart';
+import 'package:resqapp/pages/responseTeam/responseTeamSOSReport/sos_page_view.dart';
 import 'package:resqapp/theme/theme_app.dart';
 
 class ResponseTeamDashboardView
@@ -17,7 +17,6 @@ class ResponseTeamDashboardView
 
   @override
   Widget build(BuildContext context) {
-    // Register the controller if not already registered
     if (!Get.isRegistered<ResponseTeamDashboardViewModel>()) {
       Get.put(ResponseTeamDashboardViewModel(instanceCode: instanceCode));
     }
@@ -52,15 +51,17 @@ class ResponseTeamDashboardView
                   height: 14,
                 ),
                 const SizedBox(width: 2),
-                Obx(() => Text(
-                  controller.currentAddress.value,
-                  style: TextStyle(
-                    fontFamily: 'SF Pro',
-                    fontWeight: FontWeight.w400,
-                    fontSize: 13,
-                    color: theme.colors.primary,
+                Obx(
+                  () => Text(
+                    controller.currentAddress.value,
+                    style: TextStyle(
+                      fontFamily: 'SF Pro',
+                      fontWeight: FontWeight.w400,
+                      fontSize: 13,
+                      color: theme.colors.primary,
+                    ),
                   ),
-                )),
+                ),
               ],
             ),
           ],
@@ -86,7 +87,9 @@ class ResponseTeamDashboardView
                       maximumSize: Size(35, 35),
                     ),
                     onPressed: () async {
-                      Get.dialog(LogoutConfirmationDialog(onConfirm: controller.logout));
+                      Get.dialog(
+                        LogoutConfirmationDialog(onConfirm: controller.logout),
+                      );
                     },
                     child: Image.asset(
                       'assets/images/icons/logout.png',
@@ -107,7 +110,7 @@ class ResponseTeamDashboardView
           case 1:
             return ResponseTeamMapView(instanceCode: instanceCode);
           case 2:
-            return const ResponseTeamSOSReportView();
+            return const ResponseTeamSOSListView();
           default:
             return ResponseTeamMapView(instanceCode: instanceCode);
         }

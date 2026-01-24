@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:resqapp/pages/responseTeam/response_team_dashboard_view.dart';
-import 'package:resqapp/service/supabase_service.dart';
+import 'package:resqapp/services/login_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class ResponseLoginPageViewModel extends GetxController {
+class ResponseTeamLoginViewModel extends GetxController {
   final TextEditingController codeController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
@@ -15,7 +15,7 @@ class ResponseLoginPageViewModel extends GetxController {
       codeController.text.trim().isNotEmpty &&
       passwordController.text.isNotEmpty;
 
-  Future<void> handleLogin() async {
+  Future<void> submitLoginCredential() async {
     final code = codeController.text.trim();
     final password = passwordController.text;
 
@@ -28,7 +28,7 @@ class ResponseLoginPageViewModel extends GetxController {
     errorMessage.value = '';
 
     try {
-      final user = await SupabaseService.loginResponseTeam(code, password);
+      final user = await LoginServices.loginResponseTeam(code, password);
       if (user == null) {
         _showErrorSnackbar('Kode instansi atau kata sandi salah');
         isLoading.value = false;
@@ -46,7 +46,6 @@ class ResponseLoginPageViewModel extends GetxController {
     }
   }
 
-  /// Show error snackbar
   void _showErrorSnackbar(String message) {
     Get.snackbar(
       'Error',

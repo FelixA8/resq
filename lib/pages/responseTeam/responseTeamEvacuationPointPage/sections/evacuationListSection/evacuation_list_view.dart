@@ -35,7 +35,7 @@ class EvacuationListView extends StatelessWidget {
                 Container(
                   height: 2,
                   width: double.infinity,
-                  color: Color(0x30898989), // rgba(137, 137, 137, 0.19)
+                  color: Color(0x30898989),
                 ),
                 SizedBox(height: theme.size.m),
               ],
@@ -45,9 +45,7 @@ class EvacuationListView extends StatelessWidget {
             child: Obx(() {
               if (controller.isLoading.value) {
                 return Center(
-                  child: CircularProgressIndicator(
-                    color: theme.colors.primary,
-                  ),
+                  child: CircularProgressIndicator(color: theme.colors.primary),
                 );
               }
 
@@ -90,7 +88,8 @@ class EvacuationListView extends StatelessWidget {
                       onEdit:
                           () => controller.editEvacuationPoint(evacuationPoint),
                       onDelete:
-                          () => controller.deleteEvacuationPoint(evacuationPoint),
+                          () =>
+                              controller.deleteEvacuationPoint(evacuationPoint),
                     );
                   },
                 ),

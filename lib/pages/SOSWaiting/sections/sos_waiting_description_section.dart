@@ -2,19 +2,18 @@ import 'package:flutter/material.dart';
 
 class SOSWaitingDescriptionSection extends StatelessWidget {
   final bool isResponseTeamAssigned;
-  
+
   const SOSWaitingDescriptionSection({
-    Key? key,
+    super.key,
     this.isResponseTeamAssigned = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    // Responsive padding: 10% of screen width, but with min/max constraints
     final horizontalPadding = screenWidth * 0.1;
-    final responsiveFontSize = screenWidth * 0.037; // Scales with screen width
-    
+    final responsiveFontSize = screenWidth * 0.037;
+
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: horizontalPadding.clamp(16.0, 40.0),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
@@ -32,7 +31,6 @@ class SOSWaitingViewModel extends ChangeNotifier {
     _ticker = Ticker(_onTick);
     _ticker.start();
 
-    // Start polling to check for response team assignment
     _startPolling();
   }
 
@@ -45,7 +43,6 @@ class SOSWaitingViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Start polling every 5 seconds to check if response team has been assigned
   void _startPolling() {
     _scheduleNextPoll();
   }
@@ -64,14 +61,13 @@ class SOSWaitingViewModel extends ChangeNotifier {
     });
   }
 
-  /// Check if response team has been assigned to this SOS event
   Future<void> _checkResponseTeamStatus() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final userId = prefs.getString('userId');
 
       if (userId == null) {
-        developer.log('⚠️ Cannot check SOS status: userId not found');
+        developer.log('Cannot check SOS status: userId not found');
         return;
       }
 
@@ -89,9 +85,8 @@ class SOSWaitingViewModel extends ChangeNotifier {
         final isCurrent = response['is_current'] as bool?;
         final responseTeamId = response['response_team_id'] as String?;
 
-        // Check if SOS was cancelled (isCurrent became false)
         if (isCurrent == false) {
-          developer.log('🛑 SOS cancelled → stopping polling');
+          developer.log('SOS cancelled → stopping polling');
 
           stopPolling();
 
@@ -99,20 +94,19 @@ class SOSWaitingViewModel extends ChangeNotifier {
           return;
         }
 
-        // Check response team assignment status
         final hadResponseTeam = _isResponseTeamAssigned;
         final hasResponseTeam = responseTeamId != null;
 
         if (hasResponseTeam != hadResponseTeam) {
           _isResponseTeamAssigned = hasResponseTeam;
           developer.log(
-            '✅ Response team status changed: ${hasResponseTeam ? "ASSIGNED" : "UNASSIGNED"}',
+            'Response team status changed: ${hasResponseTeam ? "ASSIGNED" : "UNASSIGNED"}',
           );
           notifyListeners();
         }
       }
     } catch (e) {
-      developer.log('⚠️ Error checking response team status: $e');
+      developer.log('Error checking response team status: $e');
     }
   }
 
@@ -121,15 +115,7 @@ class SOSWaitingViewModel extends ChangeNotifier {
     _pollingTimer = null;
   }
 
-  /// Placeholder condition to stop the stopwatch
-  /// TODO: Replace with actual condition (e.g., response received, user cancels, etc.)
   bool _shouldStopStopwatch() {
-    // Placeholder: return false to run endlessly
-    // Example conditions you might want to check:
-    // - Response received from emergency services
-    // - User manually cancels SOS
-    // - Maximum time limit reached
-    // - Connection established with responder
     return false;
   }
 

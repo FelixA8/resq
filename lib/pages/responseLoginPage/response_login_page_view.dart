@@ -5,13 +5,13 @@ import 'package:resqapp/pages/responseLoginPage/component/response_login_logo.da
 import 'response_login_page_view_model.dart';
 import 'sections/response_login_form_section.dart';
 
-class ResponseLoginPageView extends GetView<ResponseLoginPageViewModel> {
-  const ResponseLoginPageView({super.key});
+class ResponseTeamLoginView extends GetView<ResponseTeamLoginViewModel> {
+  const ResponseTeamLoginView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    if (!Get.isRegistered<ResponseLoginPageViewModel>()) {
-      Get.put(ResponseLoginPageViewModel(), permanent: false);
+    if (!Get.isRegistered<ResponseTeamLoginViewModel>()) {
+      Get.put(ResponseTeamLoginViewModel(), permanent: false);
     }
 
     final screenHeight = MediaQuery.of(context).size.height;
@@ -33,22 +33,24 @@ class ResponseLoginPageView extends GetView<ResponseLoginPageViewModel> {
                         const ResponseLoginBackButton(),
 
                         SizedBox(height: screenHeight * 0.10),
+
                         const ResponseLoginLogo(),
+
                         const Spacer(),
 
-                        // Illustration
                         Padding(
-                          padding: const EdgeInsets.only(top: 24.0, bottom: 0.0),
+                          padding: const EdgeInsets.only(
+                            top: 24.0,
+                            bottom: 0.0,
+                          ),
                           child: SizedBox(
-                            height: screenHeight * 0.11, // slightly smaller
+                            height: screenHeight * 0.11,
                             child: Image.asset(
                               'assets/images/illustrations/response-team.png',
                               fit: BoxFit.contain,
                             ),
                           ),
                         ),
-
-                         // 👈 pushes the form section down like before
 
                         const ResponseLoginFormSection(),
 

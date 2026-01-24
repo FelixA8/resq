@@ -4,9 +4,9 @@ class SOSWaitingIllustrationSection extends StatelessWidget {
   final bool isResponseTeamAssigned;
   
   const SOSWaitingIllustrationSection({
-    Key? key,
+    super.key,
     this.isResponseTeamAssigned = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:resqapp/theme/theme_app.dart';
 
-class LoginPageViewModel extends ChangeNotifier {
+class LoginViewModel extends ChangeNotifier {
   final TextEditingController phoneController = TextEditingController();
   bool isResponseTeam = false;
   final FocusNode phoneFocus = FocusNode();
-  final theme = ResQTheme();
 
   String? phoneError;
 
@@ -14,11 +12,10 @@ class LoginPageViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void validate(BuildContext context) {
+  void submitCredential(BuildContext context) {
     final phone = phoneController.text;
-    final isNumeric = RegExp(r'^[0-9]+$').hasMatch(phone);
-
-    if (phone.isNotEmpty && isNumeric && phone.length >= 10 && phone.length <= 15) {
+    
+    if (validateUser()) {
       phoneError = null;
       notifyListeners();
       Navigator.pushNamed(
@@ -32,6 +29,17 @@ class LoginPageViewModel extends ChangeNotifier {
     } else {
       phoneError = 'Nomor telepon harus numerik dan 10 - 15 angka';
       notifyListeners();
+    }
+  }
+
+  bool validateUser() {
+    final phone = phoneController.text;
+    final isNumeric = RegExp(r'^[0-9]+$').hasMatch(phone);
+
+    if (phone.isNotEmpty && isNumeric && phone.length >= 10 && phone.length <= 15) {
+      return true;
+    } else {
+      return false;
     }
   }
 

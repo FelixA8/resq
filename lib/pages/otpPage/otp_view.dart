@@ -5,10 +5,10 @@ import 'sections/progressBarSection/progress_bar_view.dart';
 import 'sections/progressBarSection/progress_bar_view_model.dart';
 import 'sections/otpInputSection/otp_input_view.dart';
 import 'sections/resendOtpSection/resend_otp_view.dart';
-import 'sections/usernameInput/usernameInputView.dart';
-import 'sections/usernameInput/usernameInputViewModel.dart';
-import 'sections/confirmationButton/confirmationButtonView.dart';
-import 'sections/confirmationButton/confirmationButtonViewModel.dart';
+import 'sections/usernameInputSection/username_input_view.dart';
+import 'sections/usernameInputSection/username_input_view_model.dart';
+import 'sections/confirmationButton/otp_confirmation_button_view.dart';
+import 'sections/confirmationButton/otp_confirmation_button_view_model.dart';
 import '../userMap/user_map_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -48,11 +48,13 @@ class OTPScreen extends StatelessWidget {
                         ..setOnBackPressed(() => Navigator.of(context).pop())
                         ..setOTPViewModel(otpViewModel),
             ),
+
             ChangeNotifierProvider(
               create:
                   (context) =>
                       UsernameInputViewModel()..setMainViewModel(otpViewModel),
             ),
+
             ChangeNotifierProvider(
               create:
                   (context) =>
@@ -77,14 +79,17 @@ class OTPScreen extends StatelessWidget {
                             child: Column(
                               children: [
                                 const SizedBox(height: 20),
+
                                 OTPInputView(
                                   phoneNumber:
                                       otpViewModel.otpModel?.phoneNumber ?? '',
                                   onOTPCompleted: (otp) {
-                                    otpViewModel.validateOTP(otp);
+                                    otpViewModel.verifyOTP(otp);
                                   },
                                 ),
+
                                 const SizedBox(height: 40),
+
                                 ResendOTPSection(
                                   timeLeft: otpViewModel.resendTimeLeft,
                                   canResend: otpViewModel.canResendOTP,
@@ -107,9 +112,12 @@ class OTPScreen extends StatelessWidget {
                                     child: Column(
                                       children: [
                                         const SizedBox(height: 20),
+
                                         const UsernameInputView(),
+
                                         const Spacer(),
-                                        const ConfirmationButtonView(),
+
+                                        const OTPConfirmationButtonView(),
                                       ],
                                     ),
                                   ),
@@ -146,6 +154,7 @@ class OTPScreen extends StatelessWidget {
                               );
                             },
                           ),
+
                         if (otpViewModel.isLoading)
                           Container(
                             color: Colors.black26,

@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:resqapp/pages/responseTeam/responseTeamSOSReport/components/sos_centered_info_text.dart';
-import 'response_team_sos_report_view_model.dart';
+import 'sos_page_view_model.dart';
 import 'components/title_section.dart';
 import 'components/sos_report_card.dart';
 
-class ResponseTeamSOSReportView extends StatelessWidget {
-  const ResponseTeamSOSReportView({super.key});
+class ResponseTeamSOSListView extends StatelessWidget {
+  const ResponseTeamSOSListView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = Get.put(ResponseTeamSOSReportViewModel());
+    final viewModel = Get.put(ResponseTeamSOSListViewModel());
 
     return Column(
       children: [
-        const TitleSection(),
+        const SOSListTitleSection(),
         Expanded(
           child: Obx(() {
             if (viewModel.isLoading.value) {

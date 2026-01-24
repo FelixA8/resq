@@ -27,8 +27,7 @@ class OTPInputBox extends StatelessWidget {
         border: Border.all(color: Colors.grey),
         borderRadius: BorderRadius.circular(8),
       ),
-      // We use CallbackShortcuts or RawKeyboardListener to catch backspace
-      // without interfering with the TextField's focusNode.
+
       child: CallbackShortcuts(
         bindings: <ShortcutActivator, VoidCallback>{
           const SingleActivator(LogicalKeyboardKey.backspace): () {
@@ -39,15 +38,16 @@ class OTPInputBox extends StatelessWidget {
         },
         child: TextField(
           controller: controller,
-          focusNode: focusNode, // Re-attached so auto-navigation works
+          focusNode: focusNode,
           autofocus: autoFocus,
           textAlign: TextAlign.center,
-          keyboardType: Platform.isIOS
-              ? const TextInputType.numberWithOptions(
-                  signed: true,
-                  decimal: true,
-                )
-              : TextInputType.number,
+          keyboardType:
+              Platform.isIOS
+                  ? const TextInputType.numberWithOptions(
+                    signed: true,
+                    decimal: true,
+                  )
+                  : TextInputType.number,
           maxLength: 1,
           style: const TextStyle(fontSize: 24),
           decoration: const InputDecoration(
@@ -56,7 +56,6 @@ class OTPInputBox extends StatelessWidget {
           ),
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           onChanged: (value) {
-            // This handles moving FORWARD
             if (value.isNotEmpty) {
               onChanged(value);
             }

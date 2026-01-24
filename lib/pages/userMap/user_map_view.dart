@@ -7,6 +7,8 @@ import 'package:resqapp/pages/userMap/components/navigation_arrow_marker.dart';
 import 'package:resqapp/pages/userMap/components/navigation_banner.dart';
 import 'package:resqapp/pages/userMap/user_map_view_model.dart';
 import 'package:resqapp/theme/theme_app.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:resqapp/pages/SOS/sos_view.dart';
 import 'package:resqapp/pages/userMap/components/sos_active_banner.dart';
 import 'package:resqapp/pages/userMap/components/disaster_detail_modal.dart';
 import 'package:resqapp/pages/userMap/components/evacuation_point_detail_modal.dart';
@@ -150,7 +152,7 @@ class UserMapView extends GetView<UserMapViewModel> {
                                       enableDrag: true,
                                       backgroundColor: Colors.transparent,
                                       builder: (modalContext) {
-                                        return const SOSView();
+                                        return const UserSOSView();
                                       },
                                       shape: const RoundedRectangleBorder(
                                         borderRadius: BorderRadius.vertical(
@@ -180,7 +182,7 @@ class UserMapView extends GetView<UserMapViewModel> {
             return Column(
               children: [
                 SOSActiveBanner(),
-                NavigationBanner(),
+                UserNavigationBanner(),
                 Expanded(
                   child: Stack(
                     children: [
@@ -266,11 +268,11 @@ class UserMapView extends GetView<UserMapViewModel> {
                           // Evacuation Points
                           MarkerLayer(
                             markers:
-                                controller.evacuationPoints.map((point) {
+                                controller.evacuationPointsData.map((point) {
                                   final evacuationPoint = controller
-                                      .findEvacuationPointByLocation(point);
+                                      .findEvacuationPointById(point.evacuationId ?? "");
                                   return Marker(
-                                    point: point,
+                                    point: LatLng(point.locationLat ?? 0, point.locationLng ?? 0),
                                     width: 42,
                                     height: 42,
                                     child: GestureDetector(
@@ -307,14 +309,15 @@ class UserMapView extends GetView<UserMapViewModel> {
                                   );
                                 }).toList(),
                           ),
-                          // Disasters
+                          // Disasters 
+                          
                           MarkerLayer(
                             markers:
-                                controller.disasterPoints.map((point) {
+                                controller.disasterPointsData.map((point) {
                                   final disaster = controller
-                                      .findDisasterByLocation(point);
+                                      .findDisasterById(point.disasterId);
                                   return Marker(
-                                    point: point,
+                                    point: LatLng(disaster?.centerLat ?? 0, disaster?.centerLng ?? 0),
                                     width: 42,
                                     height: 42,
                                     child: GestureDetector(

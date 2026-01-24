@@ -23,20 +23,17 @@ class ResponseTeamEvacuationPointView extends StatelessWidget {
     }
 
     return SafeArea(
-      child: Column(
-        children: [
-          Expanded(
-            child: Column(
-              children: [
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: theme.padding.m),
-                  child: EvacuationHeaderView(),
-                ),
-                EvacuationListView(),
-              ],
+      child: Expanded(
+        child: Column(
+          children: [
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: theme.padding.m),
+              child: EvacuationHeaderView(),
             ),
-          ),
-        ],
+
+            EvacuationListView(),
+          ],
+        ),
       ),
     );
   }

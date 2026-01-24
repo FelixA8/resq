@@ -5,14 +5,14 @@ import 'package:resqapp/models/supabase_models.dart';
 import 'package:resqapp/pages/responseTeam/response_team_dashboard_view_model.dart';
 import 'package:resqapp/pages/responseTeam/responseTeamMap/response_team_map_view_model.dart';
 import 'package:resqapp/pages/responseLoginPage/response_login_page_view_model.dart';
-import 'package:resqapp/service/supabase_service.dart';
-import 'package:resqapp/services/distance_calculator.dart' as distance_calc;
-import 'package:resqapp/services/location_helper.dart';
+import 'package:resqapp/services/login_services.dart';
+import 'package:resqapp/services/sos_services.dart';
+import 'package:resqapp/services/location_services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'models/sos_report_item.dart';
 import 'dart:developer' as developer;
 
-class ResponseTeamSOSReportViewModel extends GetxController {
+class ResponseTeamSOSListViewModel extends GetxController {
   final RxList<SosReportItem> sosReports = <SosReportItem>[].obs;
   final Map<String, ResqUser> _userCache = {};
   final RxBool isLoading = false.obs;
@@ -34,28 +34,26 @@ class ResponseTeamSOSReportViewModel extends GetxController {
     _initialize();
   }
 
-  /// Initialize: load first page and set up real-time subscription
   Future<void> _initialize() async {
-    await _loadSOSReports();
+    await _fetchSOSEvents();
     await _initializeLocation();
     _subscribeToSOSEvents();
   }
 
-  /// Initialize response team location
   Future<void> _initializeLocation() async {
     try {
-      final result = await LocationHelper.getCurrentLocationSilent();
+      final result = await LocationServices.getCurrentLocationSilent();
       if (result.hasPermission) {
         responseTeamLocation.value = result.location;
       } else {
         developer.log(
           'Location permission not granted, using default location',
         );
-        responseTeamLocation.value = LocationHelper.defaultLocation;
+        responseTeamLocation.value = LocationServices.defaultLocation;
       }
     } catch (e) {
       developer.log('Could not get response team location: $e');
-      responseTeamLocation.value = LocationHelper.defaultLocation;
+      responseTeamLocation.value = LocationServices.defaultLocation;
     }
   }
 
@@ -65,15 +63,14 @@ class ResponseTeamSOSReportViewModel extends GetxController {
     super.onClose();
   }
 
-  /// Load initial SOS reports from Supabase
-  Future<void> _loadSOSReports() async {
+  Future<void> _fetchSOSEvents() async {
     isLoading.value = true;
     errorMessage.value = null;
     _currentOffset = 0;
     hasMoreData.value = true;
 
     try {
-      final sosEvents = await SupabaseService.getPaginatedSosEvents(
+      final sosEvents = await SosServices.getPaginatedSosEvents(
         limit: _pageSize,
         offset: _currentOffset,
       );
@@ -92,7 +89,6 @@ class ResponseTeamSOSReportViewModel extends GetxController {
     }
   }
 
-  /// Load more SOS reports (pagination)
   Future<void> loadMoreReports() async {
     if (isLoadingMore.value || !hasMoreData.value || isLoading.value) return;
 
@@ -101,8 +97,7 @@ class ResponseTeamSOSReportViewModel extends GetxController {
     try {
       developer.log('📋 Loading more SOS reports (offset: $_currentOffset)...');
 
-      // Fetch next page
-      final sosEvents = await SupabaseService.getPaginatedSosEvents(
+      final sosEvents = await SosServices.getPaginatedSosEvents(
         limit: _pageSize,
         offset: _currentOffset,
       );
@@ -120,14 +115,13 @@ class ResponseTeamSOSReportViewModel extends GetxController {
     }
   }
 
-  /// Enrich SOS events with user data and calculate distances
   Future<List<SosReportItem>> _enrichSOSEventsWithUserData(
     List<SosEvent> sosEvents,
   ) async {
     final reportItems = <SosReportItem>[];
 
     if (responseTeamLocation.value == null) {
-      developer.log('⚠️ Response team location not available yet, waiting...');
+      developer.log('Response team location not available yet, waiting...');
       await _initializeLocation();
     }
 
@@ -138,12 +132,12 @@ class ResponseTeamSOSReportViewModel extends GetxController {
         user = _userCache[sosEvent.userId];
       } else if (sosEvent.userId != null) {
         try {
-          user = await SupabaseService.getUserById(sosEvent.userId!);
+          user = await LoginServices.getUserById(sosEvent.userId!);
           if (user != null) {
             _userCache[sosEvent.userId!] = user;
           }
         } catch (e) {
-          developer.log('⚠️ Error fetching user ${sosEvent.userId}: $e');
+          developer.log('Error fetching user ${sosEvent.userId}: $e');
         }
       }
 
@@ -151,7 +145,7 @@ class ResponseTeamSOSReportViewModel extends GetxController {
       if (responseTeamLocation.value != null &&
           sosEvent.locationLat != null &&
           sosEvent.locationLng != null) {
-        distanceKm = distance_calc.GeoDistanceCalculator.calculateDistance(
+        distanceKm = GeoDistanceCalculator.calculateDistance(
           responseTeamLocation.value!,
           LatLng(sosEvent.locationLat!, sosEvent.locationLng!),
         );
@@ -231,7 +225,7 @@ class ResponseTeamSOSReportViewModel extends GetxController {
             if (_userCache.containsKey(sosEvent.userId)) {
               user = _userCache[sosEvent.userId];
             } else {
-              user = await SupabaseService.getUserById(sosEvent.userId!);
+              user = await LoginServices.getUserById(sosEvent.userId!);
               if (user != null) {
                 _userCache[sosEvent.userId!] = user;
               }
@@ -242,7 +236,7 @@ class ResponseTeamSOSReportViewModel extends GetxController {
           if (responseTeamLocation.value != null &&
               sosEvent.locationLat != null &&
               sosEvent.locationLng != null) {
-            distanceKm = distance_calc.GeoDistanceCalculator.calculateDistance(
+            distanceKm = GeoDistanceCalculator.calculateDistance(
               responseTeamLocation.value!,
               LatLng(sosEvent.locationLat!, sosEvent.locationLng!),
             );
@@ -278,7 +272,6 @@ class ResponseTeamSOSReportViewModel extends GetxController {
         );
 
         if (index != -1) {
-          // Update the existing item
           final oldItem = sosReports[index];
           sosReports[index] = oldItem.copyWith(sosEvent: newSosEvent);
         }
@@ -298,7 +291,7 @@ class ResponseTeamSOSReportViewModel extends GetxController {
 
         if (sosReports.length < initialLength) {
           _currentOffset--;
-          developer.log('✅ Removed SOS event: ${sosEvent.sosId}');
+          developer.log('Removed SOS event: ${sosEvent.sosId}');
         }
       }
     } catch (e) {
@@ -308,7 +301,7 @@ class ResponseTeamSOSReportViewModel extends GetxController {
 
   Future<void> refreshReports() async {
     await _initializeLocation();
-    await _loadSOSReports();
+    await _fetchSOSEvents();
   }
 
   Future<void> updateLocation(LatLng newLocation) async {
@@ -317,8 +310,7 @@ class ResponseTeamSOSReportViewModel extends GetxController {
         sosReports.map((item) {
           if (item.sosEvent.locationLat != null &&
               item.sosEvent.locationLng != null) {
-            final distanceKm = distance_calc
-                .GeoDistanceCalculator.calculateDistance(
+            final distanceKm = GeoDistanceCalculator.calculateDistance(
               newLocation,
               LatLng(item.sosEvent.locationLat!, item.sosEvent.locationLng!),
             );
@@ -352,7 +344,7 @@ class ResponseTeamSOSReportViewModel extends GetxController {
       final location = LatLng(sosEvent.locationLat!, sosEvent.locationLng!);
 
       final instanceCode =
-          await ResponseLoginPageViewModel.getSavedInstanceCode();
+          await ResponseTeamLoginViewModel.getSavedInstanceCode();
       if (instanceCode == null || instanceCode.isEmpty) {
         developer.log('⚠️ Instance code not found');
         return;
