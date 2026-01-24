@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
-import 'package:resqapp/pages/sos/sos_view.dart';
 import 'package:resqapp/pages/userMap/components/radiant_marker.dart';
 import 'package:resqapp/pages/userMap/components/navigation_arrow_marker.dart';
 import 'package:resqapp/pages/userMap/components/navigation_banner.dart';
@@ -152,7 +151,7 @@ class UserMapView extends GetView<UserMapViewModel> {
                                       enableDrag: true,
                                       backgroundColor: Colors.transparent,
                                       builder: (modalContext) {
-                                        return const UserSOSView();
+                                        return UserSOSView();
                                       },
                                       shape: const RoundedRectangleBorder(
                                         borderRadius: BorderRadius.vertical(
