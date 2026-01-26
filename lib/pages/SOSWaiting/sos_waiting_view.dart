@@ -11,7 +11,7 @@ import '../userMap/user_map_view_model.dart';
 
 class SOSWaitingView extends StatelessWidget {
   final SOSWaitingViewModel? viewModel;
-  
+
   const SOSWaitingView({super.key, this.viewModel});
 
   @override
@@ -25,7 +25,7 @@ class SOSWaitingView extends StatelessWidget {
       } catch (e) {
         print('⚠️ Could not find UserMapViewModel: $e');
       }
-      
+
       // Exit the SOSWaitingView
       Navigator.of(context).pop();
     }
@@ -40,9 +40,8 @@ class SOSWaitingView extends StatelessWidget {
       );
     } else {
       return ChangeNotifierProvider(
-        create: (_) => SOSWaitingViewModel(
-          onSOSCancelled: handleSOSCancellation,
-        ),
+        create:
+            (_) => SOSWaitingViewModel(onSOSCancelled: handleSOSCancellation),
         child: _SOSWaitingContent(),
       );
     }
@@ -55,13 +54,13 @@ class _SOSWaitingContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    
+
     // Responsive spacing based on screen height
     final spacing8 = screenHeight * 0.01;
     final spacing16 = screenHeight * 0.02;
     final spacing24 = screenHeight * 0.03;
     final spacing32 = screenHeight * 0.04;
-    
+
     return Consumer<SOSWaitingViewModel>(
       builder: (context, viewModel, child) {
         return Scaffold(
