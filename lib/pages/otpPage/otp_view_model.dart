@@ -13,13 +13,8 @@ import '../../services/message_central_service.dart';
 
 enum ViewState { otpInput, usernameInput, authenticated }
 
-// ============================================================
 // FEATURE FLAG: Toggle between Message Central API and Local SMS
-// ============================================================
-// Set to true to use Message Central API (requires credentials)
-// Set to false to use local SMS app (free, but requires manual sending)
-const bool USE_MESSAGE_CENTRAL = false;
-// ============================================================
+const bool USE_MESSAGE_CENTRAL = true;
 
 class OTPViewModel extends ChangeNotifier {
   OTPModel? _otpModel;
